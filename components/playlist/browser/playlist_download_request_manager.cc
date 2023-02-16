@@ -114,8 +114,9 @@ void PlaylistDownloadRequestManager::GetMediaFilesFromPage(Request request) {
 }
 
 void PlaylistDownloadRequestManager::FetchPendingRequest() {
-  if (pending_requests_.empty() || !ReadyToRunMediaDetectorScript())
+  if (pending_requests_.empty() || !ReadyToRunMediaDetectorScript()) {
     return;
+  }
 
   auto request = std::move(pending_requests_.front());
   pending_requests_.pop_front();
@@ -189,8 +190,9 @@ void PlaylistDownloadRequestManager::DidFinishLoad(
     return;
   }
 
-  if (render_frame_host != web_contents_->GetPrimaryMainFrame())
+  if (render_frame_host != web_contents_->GetPrimaryMainFrame()) {
     return;
+  }
 
   if (in_progress_urls_count_ == 0 || callback_for_current_request_.is_null()) {
     // As we don't support canceling at this moment, this shouldn't happen.
@@ -391,8 +393,10 @@ void PlaylistDownloadRequestManager::ProcessFoundMedia(
     item->id = base::Token::CreateRandom().ToString();
     item->page_source = GURL(*page_source);
     item->name = *name;
+
     // URL data
-    if (GURL media_url(*src); !media_url.SchemeIsHTTPOrHTTPS()) {
+    if (GURL media_url(*src);
+        !media_url.SchemeIsHTTPOrHTTPS() && !media_url.SchemeIsBlob()) {
       LOG(ERROR) << __func__ << "media scheme";
       continue;
     }
@@ -415,8 +419,9 @@ void PlaylistDownloadRequestManager::ProcessFoundMedia(
     }
     item->media_source = GURL(*src);
     item->media_path = GURL(*src);
-    if (author)
+    if (author) {
       item->author = *author;
+    }
 
     items.push_back(std::move(item));
   }
