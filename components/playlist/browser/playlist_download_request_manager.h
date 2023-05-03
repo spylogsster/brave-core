@@ -53,6 +53,8 @@ class PlaylistDownloadRequestManager : public content::WebContentsObserver {
     absl::variant<std::string, base::WeakPtr<content::WebContents>>
         url_or_contents;
     Callback callback = base::NullCallback();
+    base::RepeatingCallback<void(const content::MediaPlayerId&)>
+        on_media_source_end_of_stream = base::NullCallback();
   };
 
   static void SetPlaylistJavaScriptWorldId(const int32_t id);
@@ -110,6 +112,10 @@ class PlaylistDownloadRequestManager : public content::WebContentsObserver {
   // content::WebContentsObserver overrides:
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
                      const GURL& validated_url) override;
+  void MediaPlayerCreated(content::WebContents* web_contents,
+                          const content::MediaPlayerId& player_id) override;
+  void MediaPlayerEndOfStream(content::WebContents* web_contents,
+                              const content::MediaPlayerId& player_id) override;
 
   // We create |web_contents_| on demand. So, when downloading media is
   // requested, |web_contents_| may not be ready to inject js script. This

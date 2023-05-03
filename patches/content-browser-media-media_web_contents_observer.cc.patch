@@ -1,0 +1,13 @@
+diff --git a/content/browser/media/media_web_contents_observer.cc b/content/browser/media/media_web_contents_observer.cc
+index 936f262a7d93c74c5d611c4991bfd177d436a3cd..91e4085fbf92d146dbcfce37335684a907ddd00e 100644
+--- a/content/browser/media/media_web_contents_observer.cc
++++ b/content/browser/media/media_web_contents_observer.cc
+@@ -681,6 +681,8 @@ void MediaWebContentsObserver::OnMediaPlayerAdded(
+       std::make_unique<MediaPlayerObserverHostImpl>(player_id, this));
+   observer_it.first->second->BindMediaPlayerObserverReceiver(
+       std::move(media_player_observer));
++
++  BRAVE_MEDIA_WEB_CONTENTS_OBSERVER_ON_MEDIA_PLAYER_ADDED
+ }
+ 
+ void MediaWebContentsObserver::SuspendAllMediaPlayers() {

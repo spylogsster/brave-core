@@ -8,12 +8,14 @@
 #include <utility>
 
 #include "base/check_is_test.h"
+#include "base/files/file_util.h"
 #include "base/functional/bind.h"
 #include "base/json/values_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/time/time.h"
 #include "base/timer/timer.h"
 #include "brave/components/playlist/common/features.h"
+#include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
@@ -25,6 +27,10 @@
 #include "third_party/blink/public/common/web_preferences/web_preferences.h"
 #include "third_party/re2/src/re2/re2.h"
 #include "ui/base/page_transition_types.h"
+
+#include "base/logging.h"
+#undef DVLOG
+#define DVLOG(i) LOG(ERROR)
 
 namespace playlist {
 
@@ -179,6 +185,10 @@ bool PlaylistDownloadRequestManager::ReadyToRunMediaDetectorScript() const {
 void PlaylistDownloadRequestManager::DidFinishLoad(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url) {
+  if (base::FeatureList::IsEnabled(playlist::features::kPlaylistNative)) {
+    return;
+  }
+
   if (render_frame_host != web_contents_->GetPrimaryMainFrame())
     return;
 
@@ -190,6 +200,52 @@ void PlaylistDownloadRequestManager::DidFinishLoad(
 
   DVLOG(2) << __func__;
   GetMedia(web_contents_.get());
+}
+
+void PlaylistDownloadRequestManager::MediaPlayerCreated(
+    content::WebContents* web_contents,
+    const content::MediaPlayerId& player_id) {
+  if (!base::FeatureList::IsEnabled(playlist::features::kPlaylistNative)) {
+    return;
+  }
+
+  if (in_progress_urls_count_ == 0 || callback_for_current_request_.is_null()) {
+    // As we don't support canceling at this moment, this shouldn't happen.
+    CHECK_IS_TEST();
+    return;
+  }
+
+  DVLOG(2) << __func__;
+  // TODO(sko) Get media source or url and notify observer and run callback.
+}
+
+void PlaylistDownloadRequestManager::MediaPlayerEndOfStream(
+    content::WebContents* web_contents,
+    const content::MediaPlayerId& player_id) {
+  if (!base::FeatureList::IsEnabled(playlist::features::kPlaylistNative)) {
+    return;
+  }
+
+  if (in_progress_urls_count_ == 0 || callback_for_current_request_.is_null()) {
+    // As we don't support canceling at this moment, this shouldn't happen.
+    CHECK_IS_TEST();
+    return;
+  }
+
+  DVLOG(2) << __func__;
+
+  // TODO(sko) For POC, Cache every media source.
+  auto cache_path = context_->GetPath()
+                        .Append(FILE_PATH_LITERAL("playlist"))
+                        .AppendASCII(base::TimeFormatHTTP(base::Time::Now()))
+                        .AddExtension("mp4");
+
+  // Create empty file for renderer
+  base::ScopedAllowBlockingForTesting test_allow;
+
+  if (!base::WriteFile(cache_path, base::span<const uint8_t>())) {
+    DVLOG(2) << __func__ << "Failed to create a file";
+  }
 }
 
 void PlaylistDownloadRequestManager::GetMedia(content::WebContents* contents) {
@@ -344,8 +400,10 @@ void PlaylistDownloadRequestManager::ConfigureWebPrefsForBackgroundWebContents(
     blink::web_pref::WebPreferences* web_prefs) {
   if (web_contents_ && web_contents_.get() == web_contents) {
     web_prefs->force_cosmetic_filtering = true;
-    web_prefs->hide_media_src_api = true;
-    web_prefs->should_detect_media_files = true;
+    web_prefs->hide_media_src_api =
+        !base::FeatureList::IsEnabled(playlist::features::kPlaylistNative);
+    web_prefs->should_detect_media_files =
+        !base::FeatureList::IsEnabled(playlist::features::kPlaylistNative);
   }
 }
 

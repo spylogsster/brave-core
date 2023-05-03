@@ -14,6 +14,8 @@ BASE_DECLARE_FEATURE(kPlaylist);
 
 BASE_DECLARE_FEATURE(kPlaylistFakeUA);
 
+BASE_DECLARE_FEATURE(kPlaylistNative);
+
 }  // namespace playlist::features
 
 #endif  // BRAVE_COMPONENTS_PLAYLIST_COMMON_FEATURES_H_

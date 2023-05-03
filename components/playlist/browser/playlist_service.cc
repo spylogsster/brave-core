@@ -585,7 +585,8 @@ void PlaylistService::CreatePlaylistItem(const mojom::PlaylistItemPtr& item,
 
 bool PlaylistService::ShouldGetMediaFromBackgroundWebContents(
     content::WebContents* contents) const {
-  if (base::FeatureList::IsEnabled(features::kPlaylistFakeUA)) {
+  if (base::FeatureList::IsEnabled(features::kPlaylistFakeUA) ||
+      base::FeatureList::IsEnabled(features::kPlaylistNative)) {
     return true;
   }
 
