@@ -106,6 +106,8 @@ class PlaylistDownloadRequestManager : public content::WebContentsObserver {
   void ProcessFoundMedia(base::WeakPtr<content::WebContents> contents,
                          base::Value value);
 
+  void OnGetCachedMediaSourceURL(const std::string& url_string);
+
   // Pop a task from queue and detect media from the page if any.
   void FetchPendingRequest();
 

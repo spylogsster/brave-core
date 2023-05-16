@@ -234,18 +234,22 @@ void PlaylistDownloadRequestManager::MediaPlayerEndOfStream(
 
   DVLOG(2) << __func__;
 
-  // TODO(sko) For POC, Cache every media source.
-  auto cache_path = context_->GetPath()
-                        .Append(FILE_PATH_LITERAL("playlist"))
-                        .AppendASCII(base::TimeFormatHTTP(base::Time::Now()))
-                        .AddExtension("mp4");
+  // // TODO(sko) For POC, Cache every media source.
+  // auto cache_path = context_->GetPath()
+  //                       .Append(FILE_PATH_LITERAL("playlist"))
+  //                       .AppendASCII(base::TimeFormatHTTP(base::Time::Now()))
+  //                       .AddExtension("mp4");
 
-  // Create empty file for renderer
-  base::ScopedAllowBlockingForTesting test_allow;
+  // // Create empty file for renderer
+  // base::ScopedAllowBlockingForTesting test_allow;
 
-  if (!base::WriteFile(cache_path, base::span<const uint8_t>())) {
-    DVLOG(2) << __func__ << "Failed to create a file";
-  }
+  // if (!base::WriteFile(cache_path, base::span<const uint8_t>())) {
+  //   DVLOG(2) << __func__ << "Failed to create a file";
+  // }
+  web_contents->GetCachedMediaSourceURL(
+      player_id,
+      base::BindOnce(&PlaylistDownloadRequestManager::OnGetCachedMediaSourceURL,
+                     weak_factory_.GetWeakPtr()));
 }
 
 void PlaylistDownloadRequestManager::GetMedia(content::WebContents* contents) {
@@ -286,6 +290,39 @@ void PlaylistDownloadRequestManager::OnGetMedia(
   DVLOG(2) << __func__;
   ProcessFoundMedia(contents, std::move(value));
   FetchPendingRequest();
+}
+
+void PlaylistDownloadRequestManager::OnGetCachedMediaSourceURL(
+    const std::string& url_string) {
+  DVLOG(2) << __FUNCTION__ << " " << url_string;
+  if (callback_for_current_request_.is_null()) {
+    // TODO(sko) multiple items in a page.
+    return;
+  }
+
+  auto callback = std::move(callback_for_current_request_);
+  DCHECK_GT(in_progress_urls_count_, 0);
+  in_progress_urls_count_--;
+  Observe(nullptr);
+  if (!web_contents_) {
+    return;
+  }
+
+  GURL media_url(url_string);
+  if (!media_url.SchemeIsBlob()) {
+    return;
+  }
+
+  std::vector<mojom::PlaylistItemPtr> items;
+  auto item = mojom::PlaylistItem::New();
+  item->id = base::Token::CreateRandom().ToString();
+  item->page_source = web_contents_->GetVisibleURL();
+  item->name = "Test";
+  item->media_source = media_url;
+  item->media_path = media_url;
+  items.push_back(std::move(item));
+
+  std::move(callback).Run(std::move(items));
 }
 
 void PlaylistDownloadRequestManager::ProcessFoundMedia(

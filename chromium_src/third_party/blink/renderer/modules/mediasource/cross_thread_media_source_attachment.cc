@@ -13,12 +13,9 @@ void CrossThreadMediaSourceAttachment::NotifyEndOfStream(
   // NOTIMPLEMENTED();
 }
 
-void CrossThreadMediaSourceAttachment::WriteCurrentSourceBufferToFile(
-    MediaSourceTracer* tracer,
-    const WTF::String& path,
-    base::OnceCallback<void(bool)> callback) {
-  // TODO(sko) Post task to write file.
+Blob* CrossThreadMediaSourceAttachment::GetBufferCache(MediaSourceTracer*) {
   // NOTIMPLEMENTED();
+  return nullptr;
 }
 
 }  // namespace blink

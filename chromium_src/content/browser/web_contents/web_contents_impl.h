@@ -6,13 +6,15 @@
 #ifndef CHROMIUM_SRC_CONTENT_BROWSER_WEB_CONTENTS_WEB_CONTENTS_IMPL_H_
 #define CHROMIUM_SRC_CONTENT_BROWSER_WEB_CONTENTS_WEB_CONTENTS_IMPL_H_
 
-#define MediaPlayerSeek                                               \
-  GetMediaLoadTypeAndURL(                                             \
-      const MediaPlayerId& id,                                        \
-      media::mojom::MediaPlayer::GetLoadTypeAndURLCallback callback); \
-  void CacheCurrentMediaSource() {}                                   \
-  void MediaPlayerSeek(const MediaPlayerId& id);                      \
-  void MediaPlayerCreated(const MediaPlayerId& id);                   \
+#define MediaPlayerSeek                                                \
+  GetMediaLoadTypeAndURL(                                              \
+      const MediaPlayerId& id,                                         \
+      media::mojom::MediaPlayer::GetLoadTypeAndURLCallback callback);  \
+  void MediaPlayerSeek(const MediaPlayerId& id);                       \
+  void MediaPlayerCreated(const MediaPlayerId& id);                    \
+  void GetCachedMediaSourceURL(                                        \
+      const MediaPlayerId& id,                                         \
+      base::OnceCallback<void(const std::string&)> callback) override; \
   void MediaPlayerEndOfStream
 
 #include "src/content/browser/web_contents/web_contents_impl.h"

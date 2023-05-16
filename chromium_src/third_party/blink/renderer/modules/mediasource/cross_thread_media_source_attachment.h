@@ -12,9 +12,7 @@
   VerifyCalledWhileContextsAliveForDebugging_Unused();        \
   void NotifyEndOfStream(MediaSourceTracer*)                  \
       final EXCLUSIVE_LOCKS_REQUIRED(attachment_state_lock_); \
-  void WriteCurrentSourceBufferToFile(                        \
-      MediaSourceTracer*, const WTF::String& path,            \
-      base::OnceCallback<void(bool)> callback) final;         \
+  Blob* GetBufferCache(MediaSourceTracer*) final;             \
   void VerifyCalledWhileContextsAliveForDebugging
 
 #include "src/third_party/blink/renderer/modules/mediasource/cross_thread_media_source_attachment.h"

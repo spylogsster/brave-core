@@ -11,9 +11,7 @@
 #define VerifyCalledWhileContextsAliveForDebugging     \
   VerifyCalledWhileContextsAliveForDebugging_Unused(); \
   void NotifyEndOfStream(MediaSourceTracer*) final;    \
-  void WriteCurrentSourceBufferToFile(                 \
-      MediaSourceTracer*, const WTF::String& path,     \
-      base::OnceCallback<void(bool)> callback) final;  \
+  Blob* GetBufferCache(MediaSourceTracer*) final;      \
   void VerifyCalledWhileContextsAliveForDebugging
 
 #include "src/third_party/blink/renderer/modules/mediasource/same_thread_media_source_attachment.h"

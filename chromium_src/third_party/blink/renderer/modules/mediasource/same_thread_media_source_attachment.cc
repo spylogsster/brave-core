@@ -12,20 +12,18 @@ void SameThreadMediaSourceAttachment::NotifyEndOfStream(
   GetMediaElement(tracer)->NotifyEndOfStream();
 }
 
-void SameThreadMediaSourceAttachment::WriteCurrentSourceBufferToFile(
-    MediaSourceTracer* tracer,
-    const WTF::String& path,
-    base::OnceCallback<void(bool)> callback) {
+Blob* SameThreadMediaSourceAttachment::GetBufferCache(
+    MediaSourceTracer* tracer) {
   auto* media_source = GetMediaSource(tracer);
   if (!media_source) {
     DVLOG(2) << "Are we in the middle of detaching process?";
-    std::move(callback).Run(false);
+    return nullptr;
   }
 
   auto* source_buffers = media_source->activeSourceBuffers();
   if (!source_buffers || source_buffers->length() == 0) {
     DVLOG(2) << "source buffer might be removed.";
-    std::move(callback).Run(false);
+    return nullptr;
   }
 
   if (source_buffers->length() > 1) {
@@ -33,13 +31,16 @@ void SameThreadMediaSourceAttachment::WriteCurrentSourceBufferToFile(
                 "mixing them into one file.";
     // TODO(sko) What should we do for this case? Should we cache multiple
     // files? or mixing them into one file? The latter would be quite tricky.
-    std::move(callback).Run(false);
+    return nullptr;
   }
 
   auto* source_buffer = source_buffers->item(0);
   DCHECK(source_buffer);
 
-  source_buffer->WriteToFile(path, std::move(callback));
+  const auto& cached_buffer = source_buffer->GetBufferCache();
+  return Blob::Create(
+      reinterpret_cast<const unsigned char*>(cached_buffer->data()),
+      cached_buffer->length(), "video/mp4");
 }
 
 }  // namespace blink

@@ -15,8 +15,14 @@ namespace {
 // TODO(sko) Move to member.
 std::vector<const unsigned char> g_cache;
 
-bool CopyToCache(const unsigned char* data, size_t length) {
-  g_cache = std::vector<const unsigned char>(data, data + length);
+bool AppendToCache(scoped_refptr<blink::RawData>& cache,
+                   const unsigned char* data,
+                   size_t length) {
+  if (!cache) {
+    cache = blink::RawData::Create();
+  }
+
+  cache->MutableData()->Append(data, length);
   return true;
 }
 
@@ -27,7 +33,8 @@ bool CopyToCache(const unsigned char* data, size_t length) {
 
 // This version is invocation of demuxer and we want to override this.
 #define AppendToParseBuffer_With3Args(ID, DATA, LENGTH) \
-  AppendToParseBuffer(ID, DATA, LENGTH) && (CopyToCache(DATA, LENGTH))
+  AppendToParseBuffer(ID, DATA, LENGTH) &&              \
+      (AppendToCache(buffer_cache_, DATA, LENGTH))
 
 // When arg num is two, this would be expanded like
 //
@@ -50,12 +57,17 @@ bool CopyToCache(const unsigned char* data, size_t length) {
 
 namespace blink {
 
-void WebSourceBufferImpl::WriteToFile(const WTF::String& path,
-                                      base::OnceCallback<void(bool)> callback) {
-  auto result = base::WriteFile(
-      base::FilePath(FILE_PATH_LITERAL("./test45.mp4")),
-      reinterpret_cast<const char*>(g_cache.data()), g_cache.size());
-  std::move(callback).Run(result != -1);
+// void WebSourceBufferImpl::WriteToFile(const WTF::String& path,
+//                                       base::OnceCallback<void(bool)>
+//                                       callback) {
+//   auto result = base::WriteFile(
+//       base::FilePath(FILE_PATH_LITERAL("./test45.mp4")),
+//       reinterpret_cast<const char*>(g_cache.data()), g_cache.size());
+//   std::move(callback).Run(result != -1);
+// }
+
+const scoped_refptr<RawData>& WebSourceBufferImpl::GetBufferCache() const {
+  return buffer_cache_;
 }
 
 }  // namespace blink

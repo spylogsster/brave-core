@@ -6,15 +6,19 @@
 #ifndef BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_HTML_MEDIA_ELEMENT_H_
 #define BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_HTML_MEDIA_ELEMENT_H_
 
-#include "third_party/blink/renderer/core/dom/events/native_event_listener.h"
-#include "third_party/blink/renderer/platform/heap/garbage_collected.h"
+#include "third_party/blink/renderer/core/fileapi/blob.h"
 
 #define SetSrc                                                           \
   NotifyEndOfStream();                                                   \
   void GetLoadTypeAndURL(GetLoadTypeAndURLCallback) override;            \
-  void CacheCurrentMediaSource(const WTF::String& path,                  \
-                               CacheCurrentMediaSourceCallback callback) \
+  void GetCachedMediaSourceURL(GetCachedMediaSourceURLCallback callback) \
       override;                                                          \
+  void RevokeCachedMediaSource(const WTF::String& url) override;         \
+                                                                         \
+ private:                                                                \
+  WTF::HashSet<WTF::String> cached_urls_;                                \
+                                                                         \
+ public:                                                                 \
   void SetSrc
 
 #include "src/third_party/blink/renderer/core/html/media/html_media_element.h"

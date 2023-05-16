@@ -7,14 +7,12 @@
 
 namespace blink {
 
-void SourceBuffer::WriteToFile(const WTF::String& path,
-                               base::OnceCallback<void(bool)> callback) {
+const scoped_refptr<RawData>& SourceBuffer::GetBufferCache() const {
   if (!web_source_buffer_) {
-    LOG(ERROR) << "Can this happen?";
-    std::move(callback).Run(false);
+    NOTREACHED() << "Can this happen?";
   }
 
-  web_source_buffer_->WriteToFile(path, std::move(callback));
+  return web_source_buffer_->GetBufferCache();
 }
 
 }  // namespace blink

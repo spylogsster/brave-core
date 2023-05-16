@@ -5,6 +5,7 @@
 
 #include "third_party/blink/renderer/core/html/media/html_media_element.h"
 
+#include "third_party/blink/renderer/core/fileapi/public_url_manager.h"
 #include "third_party/blink/renderer/core/html/media/autoplay_policy.h"
 
 #include "base/logging.h"
@@ -60,28 +61,37 @@ void HTMLMediaElement::GetLoadTypeAndURL(GetLoadTypeAndURLCallback callback) {
   }
 }
 
-void HTMLMediaElement::CacheCurrentMediaSource(
-    const WTF::String& path,
-    CacheCurrentMediaSourceCallback callback) {
+void HTMLMediaElement::GetCachedMediaSourceURL(
+    GetCachedMediaSourceURLCallback callback) {
   if (!media_source_attachment_) {
     DVLOG(2) << "Media source seems to be detached.";
-    std::move(callback).Run(false);
+    std::move(callback).Run("");
   }
 
-  media_source_attachment_->WriteCurrentSourceBufferToFile(
-      media_source_tracer_, path, std::move(callback));
+  auto* blob = media_source_attachment_->GetBufferCache(media_source_tracer_);
+  if (!blob) {
+    DVLOG(2) << "Couldn't create blob";
+    std::move(callback).Run("");
+  }
+
+  // media_source_attachment_->WriteCurrentSourceBufferToFile(
+  //     media_source_tracer_, path, std::move(callback));
+  auto blob_url =
+      GetExecutionContext()->GetPublicURLManager().RegisterURL(blob);
+
+  // check if blob url is valid.
+
+  cached_urls_.insert(blob_url);
+  DVLOG(2) << "Blob was shared via url: " << blob_url;
+  std::move(callback).Run(blob_url);
 }
+
+void HTMLMediaElement::RevokeCachedMediaSource(const WTF::String& url) {}
 
 void HTMLMediaElement::NotifyEndOfStream() {
   for (auto& observer : media_player_observer_remote_set_->Value()) {
     observer->OnEndOfStream();
   }
-
-  // REMOVE:
-  CacheCurrentMediaSource("", base::BindOnce([](bool result) {
-                            LOG(ERROR)
-                                << "DUMP SOURCE BUFFER RESULT: " << result;
-                          }));
 }
 
 }  // namespace blink

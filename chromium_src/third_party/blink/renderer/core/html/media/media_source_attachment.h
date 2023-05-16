@@ -6,6 +6,8 @@
 #ifndef BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_MEDIA_SOURCE_ATTACHMENT_H_
 #define BRAVE_CHROMIUM_SRC_THIRD_PARTY_BLINK_RENDERER_CORE_HTML_MEDIA_MEDIA_SOURCE_ATTACHMENT_H_
 
+#include "third_party/blink/renderer/core/fileapi/blob.h"
+
 namespace blink {
 class MediaSource;
 }  // namespace blink
@@ -13,9 +15,7 @@ class MediaSource;
 #define OnTrackChanged                                    \
   OnTrackChanged_Unused() {}                              \
   virtual void NotifyEndOfStream(MediaSourceTracer*) = 0; \
-  virtual void WriteCurrentSourceBufferToFile(            \
-      MediaSourceTracer*, const WTF::String& path,        \
-      base::OnceCallback<void(bool)> callback) = 0;       \
+  virtual Blob* GetBufferCache(MediaSourceTracer*) = 0;   \
   virtual void OnTrackChanged
 
 #include "src/third_party/blink/renderer/core/html/media/media_source_attachment.h"

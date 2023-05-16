@@ -15,7 +15,9 @@ enum LoadType {
 [BraveExtend]
 interface MediaPlayer {
   GetLoadTypeAndURL() => (LoadType type, string source);
-  CacheCurrentMediaSource(string path) => (bool result);
+
+  GetCachedMediaSourceURL() => (string url);
+  RevokeCachedMediaSource(string url);
 };
 
 [BraveExtend]

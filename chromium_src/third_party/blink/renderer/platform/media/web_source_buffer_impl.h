@@ -8,10 +8,14 @@
 
 #include "third_party/blink/public/platform/web_source_buffer.h"
 
-#define SetClient                                                           \
-  SetClient_Unused() override {}                                            \
-  void WriteToFile(const WTF::String& path, base::OnceCallback<void(bool)>) \
-      override;                                                             \
+#define SetClient                                                \
+  SetClient_Unused() override {}                                 \
+  const scoped_refptr<RawData>& GetBufferCache() const override; \
+                                                                 \
+ private:                                                        \
+  scoped_refptr<RawData> buffer_cache_;                          \
+                                                                 \
+ public:                                                         \
   void SetClient
 
 #include "src/third_party/blink/renderer/platform/media/web_source_buffer_impl.h"

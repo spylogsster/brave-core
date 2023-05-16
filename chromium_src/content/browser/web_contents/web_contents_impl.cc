@@ -47,4 +47,17 @@ void WebContentsImpl::MediaPlayerEndOfStream(const MediaPlayerId& id) {
   }
 }
 
+void WebContentsImpl::GetCachedMediaSourceURL(
+    const MediaPlayerId& id,
+    base::OnceCallback<void(const std::string&)> callback) {
+  DVLOG(2) << __FUNCTION__;
+
+  DCHECK(media_web_contents_observer_->IsMediaPlayerRemoteAvailable(id));
+
+  auto& player_remote = media_web_contents_observer_->GetMediaPlayerRemote(id);
+  DCHECK(player_remote.is_bound());
+
+  player_remote->GetCachedMediaSourceURL(std::move(callback));
+}
+
 }  // namespace content
