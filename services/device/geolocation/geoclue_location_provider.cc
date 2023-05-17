@@ -14,39 +14,29 @@
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_forward.h"
-#include "base/functional/callback_helpers.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/weak_ptr.h"
 #include "base/ranges/algorithm.h"
+#include "base/threading/scoped_blocking_call.h"
 #include "base/time/time.h"
+#include "brave/services/device/geolocation/geoclue_client_object.h"
 #include "components/dbus/thread_linux/dbus_thread_linux.h"
-#include "dbus/property.h"
 #include "services/device/public/cpp/device_features.h"
 #include "services/device/public/cpp/geolocation/geoposition.h"
+#include "services/device/public/mojom/geoposition.mojom.h"
 
 namespace device {
 
 namespace {
 
-constexpr char kServiceName[] = "org.freedesktop.GeoClue2";
-constexpr char kLocationInterfaceName[] = "org.freedesktop.GeoClue2.Location";
-constexpr char kClientInterfaceName[] = "org.freedesktop.GeoClue2.Client";
-constexpr char kManagerInterfaceName[] = "org.freedesktop.GeoClue2.Manager";
-constexpr char kManagerObjectPath[] = "/org/freedesktop/GeoClue2/Manager";
 constexpr char kBraveDesktopId[] = "com.brave.Browser";
 
-// This corresponds to the GeoClue2 AccuracyLevel: Neighborhood
-constexpr uint32_t kGeoClueAccuracyLow = 5;
-
-// This corresponds to the GeoClue2 AccuracyLevel: Exact
-constexpr uint32_t kGeoClueAccuracyHigh = 8;
-
-mojom::Geoposition GetErrorPosition() {
-  mojom::Geoposition response;
-  response.error_code = mojom::Geoposition_ErrorCode::POSITION_UNAVAILABLE;
-  response.error_message = "Unable to create instance of Geolocation API";
-  return response;
+mojom::GeopositionResultPtr GetError() {
+  auto error = mojom::GeopositionError::New();
+  error->error_code = mojom::GeopositionErrorCode::kPositionUnavailable;
+  error->error_message = "Unable to create instance of Geolocation API";
+  return mojom::GeopositionResult::NewError(std::move(error));
 }
 
 // Note: This method blocks because the call to NewSystemProvider is not
@@ -57,15 +47,20 @@ mojom::Geoposition GetErrorPosition() {
 // |GeoClue2.Manager.GetClient| (this is cached on the GeoClue2 side, so it will
 // be the same client we get when we start our service).
 bool GeoClueAvailable() {
+  base::ScopedBlockingCall scoped_blocking_call(FROM_HERE,
+                                                base::BlockingType::WILL_BLOCK);
+
   dbus::Bus::Options options;
   options.bus_type = dbus::Bus::SYSTEM;
   options.connection_type = dbus::Bus::PRIVATE;
   auto bus = base::MakeRefCounted<dbus::Bus>(options);
 
-  dbus::ObjectProxy* proxy =
-      bus->GetObjectProxy(kServiceName, dbus::ObjectPath(kManagerObjectPath));
+  dbus::ObjectProxy* proxy = bus->GetObjectProxy(
+      GeoClueClientObject::kServiceName,
+      dbus::ObjectPath(GeoClueClientObject::kManagerObjectPath));
 
-  dbus::MethodCall call(kManagerInterfaceName, "GetClient");
+  dbus::MethodCall call(GeoClueClientObject::kManagerInterfaceName,
+                        "GetClient");
   auto response =
       proxy->CallMethodAndBlock(&call, dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
 
@@ -79,61 +74,7 @@ bool GeoClueAvailable() {
   return available;
 }
 
-struct GeoClueProperties : public dbus::PropertySet {
-  dbus::Property<std::string> desktop_id;
-  dbus::Property<uint32_t> requested_accuracy_level;
-
-  explicit GeoClueProperties(dbus::ObjectProxy* proxy)
-      : dbus::PropertySet(proxy, kClientInterfaceName, base::NullCallback()) {
-    RegisterProperty("DesktopId", &desktop_id);
-    RegisterProperty("RequestedAccuracyLevel", &requested_accuracy_level);
-  }
-
-  ~GeoClueProperties() override = default;
-};
-
 }  // namespace
-
-struct GeoClueLocationProperties : public dbus::PropertySet {
-  dbus::Property<double> latitude;
-  dbus::Property<double> longitude;
-  dbus::Property<double> accuracy;
-  dbus::Property<double> altitude;
-  dbus::Property<double> speed;
-  dbus::Property<double> heading;
-
-  explicit GeoClueLocationProperties(dbus::ObjectProxy* proxy)
-      : dbus::PropertySet(proxy, kLocationInterfaceName, base::NullCallback()) {
-    RegisterProperty("Latitude", &latitude);
-    RegisterProperty("Longitude", &longitude);
-    RegisterProperty("Accuracy", &accuracy);
-    RegisterProperty("Altitude", &altitude);
-    RegisterProperty("Speed", &speed);
-    RegisterProperty("Heading", &heading);
-  }
-
-  ~GeoClueLocationProperties() override = default;
-
-  using dbus::PropertySet::GetAll;
-  void GetAll(base::OnceCallback<void()> on_got_all) {
-    // We only support this one at a time. It's fine for now.
-    DCHECK(!on_got_all_);
-    on_got_all_ = std::move(on_got_all);
-    dbus::PropertySet::GetAll();
-  }
-
-  // dbus::PropertySet:
-  void OnGetAll(dbus::Response* response) override {
-    dbus::PropertySet::OnGetAll(response);
-
-    if (on_got_all_) {
-      std::move(on_got_all_).Run();
-    }
-  }
-
- private:
-  base::OnceCallback<void()> on_got_all_;
-};
 
 GeoClueLocationProvider::GeoClueLocationProvider() {
   dbus::Bus::Options options;
@@ -170,14 +111,9 @@ void GeoClueLocationProvider::StartProvider(bool high_accuracy) {
   }
   client_state_ = kInitializing;
 
-  dbus::ObjectProxy* proxy =
-      bus_->GetObjectProxy(kServiceName, dbus::ObjectPath(kManagerObjectPath));
-
-  dbus::MethodCall call(kManagerInterfaceName, "GetClient");
-  proxy->CallMethod(
-      &call, dbus::ObjectProxy::TIMEOUT_USE_DEFAULT,
-      base::BindOnce(&GeoClueLocationProvider::OnGetClientCompleted,
-                     weak_ptr_factory_.GetWeakPtr()));
+  GeoClueClientObject::GetClient(
+      bus_, base::BindOnce(&GeoClueLocationProvider::OnGetClientCompleted,
+                           weak_ptr_factory_.GetWeakPtr()));
 }
 
 void GeoClueLocationProvider::StopProvider() {
@@ -190,21 +126,19 @@ void GeoClueLocationProvider::StopProvider() {
   // Invalidate weak pointers, so we don't continue any async operations.
   weak_ptr_factory_.InvalidateWeakPtrs();
 
-  // Stop can be called before the gclue_client_ has resolved.
-  if (!gclue_client_) {
+  // Stop can be called before the client_ has resolved.
+  if (!client_) {
     return;
   }
 
-  dbus::MethodCall stop(kClientInterfaceName, "Stop");
-  gclue_client_->CallMethod(&stop, dbus::ObjectProxy::TIMEOUT_USE_DEFAULT,
-                            base::DoNothing());
+  client_->Stop();
 
-  // Reset pointers to dbus objects.
-  gclue_client_.reset();
+  // Reset the client.
+  client_.reset();
 }
 
-const mojom::Geoposition& GeoClueLocationProvider::GetPosition() {
-  return last_position_;
+const mojom::GeopositionResult* GeoClueLocationProvider::GetPosition() {
+  return last_position_.get();
 }
 
 void GeoClueLocationProvider::OnPermissionGranted() {
@@ -212,60 +146,53 @@ void GeoClueLocationProvider::OnPermissionGranted() {
   MaybeStartClient();
 }
 
-void GeoClueLocationProvider::SetPosition(const mojom::Geoposition& position) {
-  last_position_ = position;
+void GeoClueLocationProvider::SetPosition(
+    mojom::GeopositionResultPtr position) {
+  last_position_ = std::move(position);
 
   if (client_state_ != kStarted) {
     return;
   }
 
-  if (last_position_.error_code == mojom::Geoposition_ErrorCode::NONE &&
-      !device::ValidateGeoposition(last_position_)) {
+  if (last_position_->is_position() &&
+      device::ValidateGeoposition(*last_position_->get_position())) {
+    position_update_callback_.Run(this, last_position_.Clone());
     return;
   }
-  position_update_callback_.Run(this, last_position_);
 }
 
-void GeoClueLocationProvider::OnGetClientCompleted(dbus::Response* response) {
-  if (!response) {
-    SetPosition(GetErrorPosition());
+void GeoClueLocationProvider::OnGetClientCompleted(
+    std::unique_ptr<GeoClueClientObject> client) {
+  if (!client) {
+    SetPosition(GetError());
     return;
   }
 
-  dbus::MessageReader reader(response);
-  dbus::ObjectPath path;
-  if (!reader.PopObjectPath(&path)) {
-    SetPosition(GetErrorPosition());
-    return;
-  }
-
-  gclue_client_ = bus_->GetObjectProxy(kServiceName, path);
+  client_ = std::move(client);
   SetClientProperties();
 }
 
 void GeoClueLocationProvider::SetClientProperties() {
-  auto properties = std::make_unique<GeoClueProperties>(gclue_client_.get());
-  auto* properties_raw = properties.get();
+  auto* properties = client_->properties();
 
   // Wait for all properties to be set before starting the client.
   const auto callback = base::BarrierCallback<bool>(
       2, base::BindOnce(&GeoClueLocationProvider::OnSetClientProperties,
-                        weak_ptr_factory_.GetWeakPtr(), std::move(properties)));
+                        weak_ptr_factory_.GetWeakPtr()));
 
-  properties_raw->requested_accuracy_level.Set(
-      high_accuracy_requested_ ? kGeoClueAccuracyHigh : kGeoClueAccuracyLow,
+  properties->requested_accuracy_level.Set(
+      high_accuracy_requested_ ? GeoClueClientObject::AccuracyLevel::kExact
+                               : GeoClueClientObject::AccuracyLevel::kCity,
       callback);
 
-  properties_raw->desktop_id.Set(kBraveDesktopId, callback);
+  properties->desktop_id.Set(kBraveDesktopId, callback);
 }
 
-void GeoClueLocationProvider::OnSetClientProperties(
-    std::unique_ptr<dbus::PropertySet> property_set,
-    std::vector<bool> success) {
+void GeoClueLocationProvider::OnSetClientProperties(std::vector<bool> success) {
   if (base::ranges::any_of(success, [](const auto& value) { return !value; })) {
     VLOG(1) << "Failed to set properties. GeoClue2 location provider will "
                "not work properly";
-    SetPosition(GetErrorPosition());
+    SetPosition(GetError());
     return;
   }
 
@@ -273,32 +200,11 @@ void GeoClueLocationProvider::OnSetClientProperties(
 }
 
 void GeoClueLocationProvider::ConnectSignal() {
-  // If the client has been shutdown don't try and connect the signal.
-  if (!gclue_client_) {
-    return;
-  }
+  CHECK(client_);
 
-  gclue_client_->ConnectToSignal(
-      kClientInterfaceName, "LocationUpdated",
-      base::BindRepeating(
-          [](base::WeakPtr<GeoClueLocationProvider> provider,
-             dbus::Signal* signal) {
-            dbus::MessageReader reader(signal);
-            dbus::ObjectPath old_location;
-            dbus::ObjectPath new_location;
-            if (!reader.PopObjectPath(&old_location) ||
-                !reader.PopObjectPath(&new_location)) {
-              if (provider) {
-                provider->SetPosition(GetErrorPosition());
-              }
-              return;
-            }
-
-            if (provider) {
-              provider->ReadGeoClueLocation(new_location);
-            }
-          },
-          weak_ptr_factory_.GetWeakPtr()),
+  client_->ConnectToLocationUpdatedSignal(
+      base::BindRepeating(&GeoClueLocationProvider::OnReadGeoClueLocation,
+                          weak_ptr_factory_.GetWeakPtr()),
       base::BindOnce(&GeoClueLocationProvider::OnSignalConnected,
                      weak_ptr_factory_.GetWeakPtr()));
 }
@@ -311,7 +217,7 @@ void GeoClueLocationProvider::OnSignalConnected(
     VLOG(1) << "Failed to connect to LocationUpdated Signal. GeoClue2 "
                "location provider will "
                "not work properly";
-    SetPosition(GetErrorPosition());
+    SetPosition(GetError());
     return;
   }
 
@@ -320,44 +226,37 @@ void GeoClueLocationProvider::OnSignalConnected(
 }
 
 void GeoClueLocationProvider::MaybeStartClient() {
-  if (!gclue_client_ || !permission_granted_ || client_state_ != kInitialized) {
+  if (!client_ || !permission_granted_ || client_state_ != kInitialized) {
     return;
   }
 
   client_state_ = kStarting;
 
-  dbus::MethodCall start(kClientInterfaceName, "Start");
-  gclue_client_->CallMethod(
-      &start, dbus::ObjectProxy::TIMEOUT_USE_DEFAULT,
-      base::BindOnce(&GeoClueLocationProvider::OnClientStarted,
-                     weak_ptr_factory_.GetWeakPtr()));
+  client_->Start(base::BindOnce(&GeoClueLocationProvider::OnClientStarted,
+                                weak_ptr_factory_.GetWeakPtr()));
 }
 
 void GeoClueLocationProvider::OnClientStarted(dbus::Response* response) {
   client_state_ = kStarted;
 }
 
-void GeoClueLocationProvider::ReadGeoClueLocation(
-    const dbus::ObjectPath& location_path) {
-  auto location_properties = std::make_unique<GeoClueLocationProperties>(
-      bus_->GetObjectProxy(kServiceName, location_path));
-  location_properties->GetAll(base::BindOnce(
-      &GeoClueLocationProvider::OnReadGeoClueLocation,
-      weak_ptr_factory_.GetWeakPtr(), std::move(location_properties)));
-}
-
 void GeoClueLocationProvider::OnReadGeoClueLocation(
-    std::unique_ptr<GeoClueLocationProperties> properties) {
-  mojom::Geoposition position;
-  position.latitude = properties->latitude.value();
-  position.longitude = properties->longitude.value();
-  position.accuracy = properties->accuracy.value();
-  position.altitude = properties->altitude.value();
-  position.heading = properties->heading.value();
-  position.speed = properties->speed.value();
-  position.error_code = mojom::Geoposition::ErrorCode::NONE;
-  position.timestamp = base::Time::Now();
-  SetPosition(position);
+    std::unique_ptr<GeoClueClientObject::LocationProperties> properties) {
+  if (!properties) {
+    SetPosition(GetError());
+    return;
+  }
+
+  auto position = mojom::Geoposition::New();
+  position->latitude = properties->latitude.value();
+  position->longitude = properties->longitude.value();
+  position->accuracy = properties->accuracy.value();
+  position->altitude = properties->altitude.value();
+  position->heading = properties->heading.value();
+  position->speed = properties->speed.value();
+  position->timestamp = base::Time::Now();
+
+  SetPosition(mojom::GeopositionResult::NewPosition(std::move(position)));
 }
 
 std::unique_ptr<GeoClueLocationProvider> MaybeCreateGeoClueLocationProvider() {

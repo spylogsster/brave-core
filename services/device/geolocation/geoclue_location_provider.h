@@ -13,6 +13,7 @@
 #include "base/component_export.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
+#include "brave/services/device/geolocation/geoclue_client_object.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
 #include "dbus/object_path.h"
@@ -22,8 +23,6 @@
 #include "services/device/public/mojom/geoposition.mojom.h"
 
 namespace device {
-
-struct GeoClueLocationProperties;
 
 class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
     : public LocationProvider {
@@ -40,7 +39,7 @@ class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
       const LocationProviderUpdateCallback& callback) override;
   void StartProvider(bool high_accuracy) override;
   void StopProvider() override;
-  const mojom::Geoposition& GetPosition() override;
+  const mojom::GeopositionResult* GetPosition() override;
   void OnPermissionGranted() override;
 
  protected:
@@ -58,7 +57,7 @@ class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
   bool permission_granted_ = false;
   bool high_accuracy_requested_ = false;
 
-  void SetPosition(const mojom::Geoposition& position);
+  void SetPosition(mojom::GeopositionResultPtr position);
 
  private:
   // There is a bit of a process to setup a GeoClue2.Client and start listening
@@ -80,12 +79,11 @@ class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
 
   // Step 2
   void GetClient();
-  void OnGetClientCompleted(dbus::Response* response);
+  void OnGetClientCompleted(std::unique_ptr<GeoClueClientObject> client);
 
   // Step 3
   void SetClientProperties();
-  void OnSetClientProperties(std::unique_ptr<dbus::PropertySet> property_set,
-                             std::vector<bool> success);
+  void OnSetClientProperties(std::vector<bool> success);
 
   // Step 4
   void ConnectSignal();
@@ -102,12 +100,12 @@ class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
   // callback for when it has been read.
   void ReadGeoClueLocation(const dbus::ObjectPath& path);
   void OnReadGeoClueLocation(
-      std::unique_ptr<GeoClueLocationProperties> properties);
+      std::unique_ptr<GeoClueClientObject::LocationProperties> properties);
 
   scoped_refptr<dbus::Bus> bus_;
-  scoped_refptr<dbus::ObjectProxy> gclue_client_;
+  std::unique_ptr<GeoClueClientObject> client_;
 
-  mojom::Geoposition last_position_;
+  mojom::GeopositionResultPtr last_position_;
   LocationProviderUpdateCallback position_update_callback_;
 
   base::WeakPtrFactory<GeoClueLocationProvider> weak_ptr_factory_{this};
