@@ -6,6 +6,7 @@
 #include "brave/services/device/geolocation/geoclue_location_provider.h"
 
 #include <memory>
+#include <utility>
 
 #include "base/feature_list.h"
 #include "base/functional/bind.h"
@@ -27,12 +28,9 @@ class TestGeoClueLocationProvider : public GeoClueLocationProvider {
 
   bool Started() { return client_state_ != kStopped; }
 
-  void SetPositionForTesting(const mojom::Geoposition& position) {
-    SetPosition(position);
+  void SetPositionForTesting(mojom::GeopositionPtr position) {
+    SetPosition(mojom::GeopositionResult::NewPosition(std::move(position)));
   }
-
- private:
-  mojom::Geoposition position_;
 };
 
 class GeoClueLocationProviderTest : public testing::Test {
@@ -44,7 +42,7 @@ class GeoClueLocationProviderTest : public testing::Test {
     provider_ = std::make_unique<TestGeoClueLocationProvider>();
     provider_->SetUpdateCallback(base::BindRepeating(
         [](GeoClueLocationProviderTest* test, const LocationProvider* provider,
-           const mojom::Geoposition& position) {
+           mojom::GeopositionResultPtr position) {
           test->loop_->Quit();
           test->update_count_++;
         },
@@ -132,13 +130,12 @@ TEST_F(GeoClueLocationProviderTest, CanStopStartedAndPermissionGranted) {
   // After stopping, further updates should no propagate.
   provider_->StopProvider();
 
-  mojom::Geoposition fake_position;
-  fake_position.latitude = 0;
-  fake_position.longitude = 0;
-  fake_position.accuracy = 1;
-  fake_position.timestamp = base::Time::Now();
-  fake_position.error_code = mojom::Geoposition_ErrorCode::NONE;
-  provider_->SetPositionForTesting(fake_position);
+  auto fake_position = mojom::Geoposition::New();
+  fake_position->latitude = 0;
+  fake_position->longitude = 0;
+  fake_position->accuracy = 1;
+  fake_position->timestamp = base::Time::Now();
+  provider_->SetPositionForTesting(std::move(fake_position));
 
   EXPECT_EQ(1, update_count_);
 }
@@ -173,14 +170,13 @@ TEST_F(GeoClueLocationProviderTest, NoLocationUntilPermissionGranted) {
   EXPECT_FALSE(provider_->HasPermission());
   EXPECT_EQ(0, update_count_);
 
-  mojom::Geoposition fake_position;
-  fake_position.latitude = 0;
-  fake_position.longitude = 0;
-  fake_position.accuracy = 1;
-  fake_position.timestamp = base::Time::Now();
-  fake_position.error_code = mojom::Geoposition_ErrorCode::NONE;
+  auto fake_position = mojom::Geoposition::New();
+  fake_position->latitude = 0;
+  fake_position->longitude = 0;
+  fake_position->accuracy = 1;
+  fake_position->timestamp = base::Time::Now();
 
-  provider_->SetPositionForTesting(fake_position);
+  provider_->SetPositionForTesting(fake_position->Clone());
   EXPECT_EQ(0, update_count_);
 
   provider_->OnPermissionGranted();
@@ -189,8 +185,8 @@ TEST_F(GeoClueLocationProviderTest, NoLocationUntilPermissionGranted) {
   WaitForUpdate();
   EXPECT_EQ(1, update_count_);
 
-  fake_position.latitude = 1;
-  provider_->SetPositionForTesting(fake_position);
+  fake_position->latitude = 1;
+  provider_->SetPositionForTesting(fake_position->Clone());
   EXPECT_EQ(2, update_count_);
 }
 
@@ -202,12 +198,12 @@ TEST_F(GeoClueLocationProviderTest, GetsLocation) {
   WaitForUpdate();
   EXPECT_EQ(1, update_count_);
 
-  EXPECT_LE(provider_->GetPosition().latitude, 90);
-  EXPECT_GE(provider_->GetPosition().latitude, -90);
-  EXPECT_LE(provider_->GetPosition().longitude, 180);
-  EXPECT_GE(provider_->GetPosition().longitude, -180);
-  EXPECT_GE(provider_->GetPosition().accuracy, 0);
-  EXPECT_FALSE(provider_->GetPosition().timestamp.is_null());
+  EXPECT_LE(provider_->GetPosition()->get_position()->latitude, 90);
+  EXPECT_GE(provider_->GetPosition()->get_position()->latitude, -90);
+  EXPECT_LE(provider_->GetPosition()->get_position()->longitude, 180);
+  EXPECT_GE(provider_->GetPosition()->get_position()->longitude, -180);
+  EXPECT_GE(provider_->GetPosition()->get_position()->accuracy, 0);
+  EXPECT_FALSE(provider_->GetPosition()->get_position()->timestamp.is_null());
 }
 
 TEST_F(GeoClueLocationProviderTest,
