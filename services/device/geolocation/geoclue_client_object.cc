@@ -58,8 +58,6 @@ GeoClueClientObject::Properties::Properties(dbus::ObjectProxy* proxy)
 
 GeoClueClientObject::Properties::~Properties() = default;
 
-using GetClientCallback =
-    base::OnceCallback<void(std::unique_ptr<GeoClueClientObject>)>;
 // static
 void GeoClueClientObject::GetClient(scoped_refptr<dbus::Bus> bus,
                                     GetClientCallback callback) {
@@ -84,14 +82,14 @@ void GeoClueClientObject::GetClient(scoped_refptr<dbus::Bus> bus,
             }
 
             std::move(callback).Run(std::unique_ptr<GeoClueClientObject>(
-                new GeoClueClientObject(bus, client_path)));
+                new GeoClueClientObject(std::move(bus), client_path)));
           },
-          bus, std::move(callback)));
+          std::move(bus), std::move(callback)));
 }
 
 GeoClueClientObject::GeoClueClientObject(scoped_refptr<dbus::Bus> bus,
                                          const dbus::ObjectPath& object_path)
-    : bus_(bus) {
+    : bus_(std::move(bus)) {
   proxy_ = bus_->GetObjectProxy(kServiceName, object_path);
   properties_ = std::make_unique<Properties>(proxy_.get());
 }
@@ -110,8 +108,6 @@ void GeoClueClientObject::Stop(dbus::ObjectProxy::ResponseCallback callback) {
                      std::move(callback));
 }
 
-using LocationChangedCallback = base::RepeatingCallback<void(
-    std::unique_ptr<GeoClueClientObject::LocationProperties>)>;
 void GeoClueClientObject::ConnectToLocationUpdatedSignal(
     LocationChangedCallback callback,
     dbus::ObjectProxy::OnConnectedCallback on_connected) {

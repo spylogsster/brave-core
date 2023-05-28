@@ -32,7 +32,7 @@ namespace {
 
 constexpr char kBraveDesktopId[] = "com.brave.Browser";
 
-mojom::GeopositionResultPtr GetError() {
+mojom::GeopositionResultPtr GetGeoPositionError() {
   auto error = mojom::GeopositionError::New();
   error->error_code = mojom::GeopositionErrorCode::kPositionUnavailable;
   error->error_message = "Unable to create instance of Geolocation API";
@@ -87,7 +87,7 @@ GeoClueLocationProvider::GeoClueLocationProvider() {
 
 GeoClueLocationProvider::~GeoClueLocationProvider() {
   dbus_thread_linux::GetTaskRunner()->PostTask(
-      FROM_HERE, base::BindOnce(&dbus::Bus::ShutdownAndBlock, bus_));
+      FROM_HERE, base::BindOnce(&dbus::Bus::ShutdownAndBlock, std::move(bus_)));
 }
 
 void GeoClueLocationProvider::SetUpdateCallback(
@@ -164,7 +164,7 @@ void GeoClueLocationProvider::SetPosition(
 void GeoClueLocationProvider::OnGetClientCompleted(
     std::unique_ptr<GeoClueClientObject> client) {
   if (!client) {
-    SetPosition(GetError());
+    SetPosition(GetGeoPositionError());
     return;
   }
 
@@ -192,7 +192,7 @@ void GeoClueLocationProvider::OnSetClientProperties(std::vector<bool> success) {
   if (base::ranges::any_of(success, [](const auto& value) { return !value; })) {
     VLOG(1) << "Failed to set properties. GeoClue2 location provider will "
                "not work properly";
-    SetPosition(GetError());
+    SetPosition(GetGeoPositionError());
     return;
   }
 
@@ -217,7 +217,7 @@ void GeoClueLocationProvider::OnSignalConnected(
     VLOG(1) << "Failed to connect to LocationUpdated Signal. GeoClue2 "
                "location provider will "
                "not work properly";
-    SetPosition(GetError());
+    SetPosition(GetGeoPositionError());
     return;
   }
 
@@ -243,7 +243,7 @@ void GeoClueLocationProvider::OnClientStarted(dbus::Response* response) {
 void GeoClueLocationProvider::OnReadGeoClueLocation(
     std::unique_ptr<GeoClueClientObject::LocationProperties> properties) {
   if (!properties) {
-    SetPosition(GetError());
+    SetPosition(GetGeoPositionError());
     return;
   }
 

@@ -12,7 +12,7 @@
 #include "base/functional/bind.h"
 #include "base/run_loop.h"
 #include "base/test/scoped_feature_list.h"
-#include "content/public/test/browser_task_environment.h"
+#include "base/test/task_environment.h"
 #include "services/device/public/cpp/device_features.h"
 #include "services/device/public/mojom/geoposition.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -55,7 +55,7 @@ class GeoClueLocationProviderTest : public testing::Test {
   }
 
  protected:
-  content::BrowserTaskEnvironment task_environment_;
+  base::test::TaskEnvironment task_environment_;
   std::unique_ptr<base::RunLoop> loop_;
   int update_count_ = 0;
 

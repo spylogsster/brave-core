@@ -15,10 +15,6 @@
 #include "base/memory/weak_ptr.h"
 #include "brave/services/device/geolocation/geoclue_client_object.h"
 #include "dbus/bus.h"
-#include "dbus/message.h"
-#include "dbus/object_path.h"
-#include "dbus/object_proxy.h"
-#include "dbus/property.h"
 #include "services/device/public/cpp/geolocation/location_provider.h"
 #include "services/device/public/mojom/geoposition.mojom.h"
 
@@ -96,9 +92,6 @@ class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
   void MaybeStartClient();
   void OnClientStarted(dbus::Response* response);
 
-  // Functions for triggering the read of a new GeoClue2.Location, and a
-  // callback for when it has been read.
-  void ReadGeoClueLocation(const dbus::ObjectPath& path);
   void OnReadGeoClueLocation(
       std::unique_ptr<GeoClueClientObject::LocationProperties> properties);
 

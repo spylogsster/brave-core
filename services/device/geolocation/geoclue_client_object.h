@@ -66,9 +66,13 @@ class GeoClueClientObject {
     ~Properties() override;
   };
 
-  static void GetClient(
-      scoped_refptr<dbus::Bus> bus,
-      base::OnceCallback<void(std::unique_ptr<GeoClueClientObject>)> callback);
+  using LocationChangedCallback =
+      base::RepeatingCallback<void(std::unique_ptr<LocationProperties>)>;
+  using GetClientCallback =
+      base::OnceCallback<void(std::unique_ptr<GeoClueClientObject>)>;
+
+  static void GetClient(scoped_refptr<dbus::Bus> bus,
+                        GetClientCallback callback);
 
   GeoClueClientObject(const GeoClueClientObject&) = delete;
   GeoClueClientObject& operator=(const GeoClueClientObject&) = delete;
@@ -79,8 +83,7 @@ class GeoClueClientObject {
   void Stop(dbus::ObjectProxy::ResponseCallback callback = base::DoNothing());
 
   void ConnectToLocationUpdatedSignal(
-      base::RepeatingCallback<
-          void(std::unique_ptr<LocationProperties> location)> callback,
+      LocationChangedCallback callback,
       dbus::ObjectProxy::OnConnectedCallback on_connected);
 
   Properties* properties() { return properties_.get(); }
