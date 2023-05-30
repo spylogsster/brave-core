@@ -8,14 +8,17 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/functional/callback_forward.h"
-#include "base/functional/callback_helpers.h"
 #include "base/memory/scoped_refptr.h"
+#include "base/memory/weak_ptr.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
 #include "dbus/object_proxy.h"
 #include "dbus/property.h"
+
+namespace device {
 
 class GeoClueClientObject {
  public:
@@ -27,15 +30,6 @@ class GeoClueClientObject {
   static constexpr char kInterfaceName[] = "org.freedesktop.GeoClue2.Client";
   static constexpr char kLocationInterfaceName[] =
       "org.freedesktop.GeoClue2.Location";
-
-  enum AccuracyLevel : uint32_t {
-    kNone = 0,
-    kCountry = 1,
-    kCity = 4,
-    kNeighborhood = 5,
-    kStreet = 6,
-    kExact = 8,
-  };
 
   struct LocationProperties : public dbus::PropertySet {
     dbus::Property<double> latitude;
@@ -68,33 +62,74 @@ class GeoClueClientObject {
 
   using LocationChangedCallback =
       base::RepeatingCallback<void(std::unique_ptr<LocationProperties>)>;
-  using GetClientCallback =
-      base::OnceCallback<void(std::unique_ptr<GeoClueClientObject>)>;
+  using ErrorCallback = base::RepeatingCallback<void(const std::string&)>;
 
-  static void GetClient(scoped_refptr<dbus::Bus> bus,
-                        GetClientCallback callback);
+  struct CreateParams {
+    CreateParams();
+    ~CreateParams();
+    CreateParams(const CreateParams&);
+    CreateParams& operator=(const CreateParams&);
 
+    scoped_refptr<dbus::Bus> bus;
+    std::string desktop_id;
+    bool high_accuracy;
+    LocationChangedCallback on_location_changed;
+    ErrorCallback on_error;
+  };
+
+  explicit GeoClueClientObject(CreateParams create_params);
   GeoClueClientObject(const GeoClueClientObject&) = delete;
   GeoClueClientObject& operator=(const GeoClueClientObject&) = delete;
 
   ~GeoClueClientObject();
 
-  void Start(dbus::ObjectProxy::ResponseCallback callback = base::DoNothing());
-  void Stop(dbus::ObjectProxy::ResponseCallback callback = base::DoNothing());
-
-  void ConnectToLocationUpdatedSignal(
-      LocationChangedCallback callback,
-      dbus::ObjectProxy::OnConnectedCallback on_connected);
-
-  Properties* properties() { return properties_.get(); }
+  void Start();
 
  private:
-  GeoClueClientObject(scoped_refptr<dbus::Bus> bus,
-                      const dbus::ObjectPath& object_path);
+  friend class TestGeoClueLocationProvider;
 
-  scoped_refptr<dbus::Bus> bus_;
+  enum State { kInitializing, kInitialized, kStarting, kStarted, kError };
+
+  // First the error callback from |CreateParams|, sets the state of the
+  // GeoClueClientObject to |kError| and invalidates any weak pointers, stopping
+  // any initialization logic and preventing signals from firing.
+  void NotifyError(const std::string& error_message);
+
+  // Step 1: Get the client from the GeoClue2.Manager
+  void GetClient();
+  void OnGotClient(dbus::Response* response);
+
+  // Step 2: Set the DesktopId & Accuracy
+  void SetProperties();
+  void OnSetProperties(std::vector<bool> results);
+
+  // Step 3: Connect the LocationUpdate signal, so we're notified of Location
+  // changes.
+  void ConnectLocationUpdated();
+  void OnLocationUpdatedConnected(const std::string& service,
+                                  const std::string& interface,
+                                  bool success);
+
+  // Called every time the LocationUpdate signal is fired. Note: This signal is
+  // also fired when the client is started.
+  void OnLocationUpdated(dbus::Signal* signal);
+
+  // MaybeStartClient starts the GeoClue2 client when the Client has finished
+  // initializing **AND** GeoClueClientObject::Start has been called.
+  void MaybeStartClient();
+  void OnStartedClient(dbus::Response* response);
+
+  CreateParams creation_params_;
+
+  State state_ = kInitializing;
+  bool should_start_ = false;
+
   scoped_refptr<dbus::ObjectProxy> proxy_;
   std::unique_ptr<Properties> properties_;
+
+  base::WeakPtrFactory<GeoClueClientObject> weak_ptr_factory_{this};
 };
+
+}  // namespace device
 
 #endif  // BRAVE_SERVICES_DEVICE_GEOLOCATION_GEOCLUE_CLIENT_OBJECT_H_
