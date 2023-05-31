@@ -52,8 +52,7 @@ class COMPONENT_EXPORT(BRAVE_GEOLOCATION) GeoClueLocationProvider
   // 2. Start has been called.
   void MaybeStartClient();
 
-  void OnLocationUpdated(
-      std::unique_ptr<GeoClueClientObject::LocationProperties> properties);
+  void OnLocationUpdated(GeoClueClientObject::LocationProperties* properties);
 
   void OnError(const std::string& error);
 

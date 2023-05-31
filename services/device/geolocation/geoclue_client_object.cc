@@ -24,7 +24,7 @@
 namespace device {
 namespace {
 
-enum AccuracyLevel : uint32_t {
+enum class AccuracyLevel : uint32_t {
   kNone = 0,
   kCountry = 1,
   kCity = 4,
@@ -85,6 +85,12 @@ GeoClueClientObject::CreateParams::CreateParams(
 GeoClueClientObject::CreateParams& GeoClueClientObject::CreateParams::operator=(
     const GeoClueClientObject::CreateParams&) = default;
 
+GeoClueClientObject::CreateParams::CreateParams(
+    GeoClueClientObject::CreateParams&&) noexcept = default;
+
+GeoClueClientObject::CreateParams& GeoClueClientObject::CreateParams::operator=(
+    GeoClueClientObject::CreateParams&&) noexcept = default;
+
 GeoClueClientObject::GeoClueClientObject(CreateParams params)
     : creation_params_(params) {
   GetClient();
@@ -106,12 +112,16 @@ GeoClueClientObject::~GeoClueClientObject() {
 void GeoClueClientObject::NotifyError(const std::string& error_message) {
   weak_ptr_factory_.InvalidateWeakPtrs();
 
-  state_ = kError;
+  state_ = State::kError;
   creation_params_.on_error.Run(error_message);
 }
 
+void GeoClueClientObject::NotifyLocationChanged() {
+  creation_params_.on_location_changed.Run(location_.get());
+}
+
 void GeoClueClientObject::GetClient() {
-  CHECK_EQ(state_, kInitializing);
+  CHECK_EQ(state_, State::kInitializing);
 
   auto* manager_proxy = creation_params_.bus->GetObjectProxy(
       kServiceName, dbus::ObjectPath(kManagerObjectPath));
@@ -148,10 +158,11 @@ void GeoClueClientObject::SetProperties() {
       2, base::BindOnce(&GeoClueClientObject::OnSetProperties,
                         weak_ptr_factory_.GetWeakPtr()));
 
-  properties_->requested_accuracy_level.Set(creation_params_.high_accuracy
-                                                ? AccuracyLevel::kExact
-                                                : AccuracyLevel::kCity,
-                                            callback);
+  properties_->requested_accuracy_level.Set(
+      static_cast<uint32_t>(creation_params_.high_accuracy
+                                ? AccuracyLevel::kExact
+                                : AccuracyLevel::kCity),
+      callback);
   properties_->desktop_id.Set(creation_params_.desktop_id, callback);
 }
 
@@ -186,7 +197,7 @@ void GeoClueClientObject::OnLocationUpdatedConnected(
     return;
   }
 
-  state_ = kInitialized;
+  state_ = State::kInitialized;
   MaybeStartClient();
 }
 
@@ -196,21 +207,23 @@ void GeoClueClientObject::OnLocationUpdated(dbus::Signal* signal) {
   dbus::ObjectPath new_location;
   if (!reader.PopObjectPath(&old_location) ||
       !reader.PopObjectPath(&new_location)) {
-    NotifyError("Failed to read location update");
+    location_.reset();
+    NotifyLocationChanged();
     return;
   }
-  auto properties = std::make_unique<LocationProperties>(
+
+  location_ = std::make_unique<LocationProperties>(
       creation_params_.bus->GetObjectProxy(kServiceName, new_location));
-  properties->GetAll(base::BindOnce(creation_params_.on_location_changed,
-                                    std::move(properties)));
+  location_->GetAll(base::BindOnce(&GeoClueClientObject::NotifyLocationChanged,
+                                   weak_ptr_factory_.GetWeakPtr()));
 }
 
 void GeoClueClientObject::MaybeStartClient() {
-  if (!should_start_ || state_ != kInitialized) {
+  if (!should_start_ || state_ != State::kInitialized) {
     return;
   }
 
-  state_ = kStarting;
+  state_ = State::kStarting;
 
   dbus::MethodCall method(kInterfaceName, "Start");
   proxy_->CallMethod(&method, dbus::ObjectProxy::TIMEOUT_USE_DEFAULT,
@@ -224,7 +237,7 @@ void GeoClueClientObject::OnStartedClient(dbus::Response* response) {
     return;
   }
 
-  state_ = kStarted;
+  state_ = State::kStarted;
 }
 
 void GeoClueClientObject::Start() {

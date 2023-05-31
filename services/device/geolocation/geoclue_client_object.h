@@ -61,7 +61,7 @@ class GeoClueClientObject {
   };
 
   using LocationChangedCallback =
-      base::RepeatingCallback<void(std::unique_ptr<LocationProperties>)>;
+      base::RepeatingCallback<void(LocationProperties*)>;
   using ErrorCallback = base::RepeatingCallback<void(const std::string&)>;
 
   struct CreateParams {
@@ -69,6 +69,8 @@ class GeoClueClientObject {
     ~CreateParams();
     CreateParams(const CreateParams&);
     CreateParams& operator=(const CreateParams&);
+    CreateParams(CreateParams&&) noexcept;
+    CreateParams& operator=(CreateParams&& other) noexcept;
 
     scoped_refptr<dbus::Bus> bus;
     std::string desktop_id;
@@ -88,12 +90,15 @@ class GeoClueClientObject {
  private:
   friend class TestGeoClueLocationProvider;
 
-  enum State { kInitializing, kInitialized, kStarting, kStarted, kError };
+  enum class State { kInitializing, kInitialized, kStarting, kStarted, kError };
 
   // First the error callback from |CreateParams|, sets the state of the
   // GeoClueClientObject to |kError| and invalidates any weak pointers, stopping
   // any initialization logic and preventing signals from firing.
   void NotifyError(const std::string& error_message);
+
+  // Fires the |on_location_changed| event from the CreateParams
+  void NotifyLocationChanged();
 
   // Step 1: Get the client from the GeoClue2.Manager
   void GetClient();
@@ -121,11 +126,12 @@ class GeoClueClientObject {
 
   CreateParams creation_params_;
 
-  State state_ = kInitializing;
+  State state_ = State::kInitializing;
   bool should_start_ = false;
 
   scoped_refptr<dbus::ObjectProxy> proxy_;
   std::unique_ptr<Properties> properties_;
+  std::unique_ptr<LocationProperties> location_;
 
   base::WeakPtrFactory<GeoClueClientObject> weak_ptr_factory_{this};
 };

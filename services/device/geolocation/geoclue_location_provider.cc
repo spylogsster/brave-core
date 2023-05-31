@@ -138,7 +138,7 @@ void GeoClueLocationProvider::MaybeStartClient() {
 }
 
 void GeoClueLocationProvider::OnLocationUpdated(
-    std::unique_ptr<GeoClueClientObject::LocationProperties> properties) {
+    GeoClueClientObject::LocationProperties* properties) {
   if (!properties) {
     OnError("Failed to read updated location");
     return;
