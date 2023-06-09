@@ -1,10 +1,10 @@
 diff --git a/components/content_settings/core/common/content_settings_types.h b/components/content_settings/core/common/content_settings_types.h
-index e238be9d538dd257f74101c413cbb69cf04f39f5..fdede737f382949a667b56301edaf618af09f2db 100644
+index b12bac6f3bc42eb227898b4044218517e6e6c509..9556fc9da71861caa3c096486353c853ff666bd3 100644
 --- a/components/content_settings/core/common/content_settings_types.h
 +++ b/components/content_settings/core/common/content_settings_types.h
-@@ -331,6 +331,22 @@ enum class ContentSettingsType : int32_t {
-   // https://github.com/screen-share/capture-all-screens
-   ALL_SCREEN_CAPTURE,
+@@ -340,6 +340,22 @@ enum class ContentSettingsType : int32_t {
+   // Stores per origin metadata for cookie controls.
+   COOKIE_CONTROLS_METADATA,
  
 +  BRAVE_START,
 +  BRAVE_ADS = BRAVE_START,
