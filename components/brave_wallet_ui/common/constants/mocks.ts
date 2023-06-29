@@ -13,10 +13,18 @@ import {
 } from '../../constants/types'
 import { NftsPinningStatusType } from '../../page/constants/action_types'
 
-// mocks
-import { mockBasicAttentionToken } from '../../stories/mock-data/mock-asset-options'
+// utils
 import { getAssetIdKey } from '../../utils/asset-utils'
 import { getPriceIdForToken } from '../../utils/api-utils'
+
+// mocks
+import {
+  mockBasicAttentionToken,
+  mockEthToken,
+  mockMoonCatNFT
+} from '../../stories/mock-data/mock-asset-options'
+import { mockNFTMetadata } from '../../stories/mock-data/mock-nft-metadata'
+import { mockEthMainnet } from '../../stories/mock-data/mock-networks'
 
 
 type EIP1559SerializableTransactionInfo = SerializableTransactionInfo & {
@@ -191,7 +199,7 @@ export const mockAccount: WalletAccountType = {
   name: 'mockAccountName',
   address: 'mockAddress',
   nativeBalanceRegistry: {
-    '0x1': '123456'
+    0x1: '123456'
   },
   accountId: {
     coin: BraveWallet.CoinType.ETH,
@@ -349,50 +357,50 @@ export const mockAppsList: AppsListType[] = [
 ]
 
 export const mockSolDappSignTransactionRequest: BraveWallet.SignTransactionRequest = {
-  'originInfo': {
-    'origin': {
-      'scheme': 'https',
-      'host': 'f40y4d.csb.app',
-      'port': 443,
-      'nonceIfOpaque': undefined
+  originInfo: {
+    origin: {
+      scheme: 'https',
+      host: 'f40y4d.csb.app',
+      port: 443,
+      nonceIfOpaque: undefined
     },
-    'originSpec': 'https://f40y4d.csb.app',
-    'eTldPlusOne': 'csb.app'
+    originSpec: 'https://f40y4d.csb.app',
+    eTldPlusOne: 'csb.app'
   },
-  'id': 0,
-  'fromAddress': mockSolanaAccount.address,
-  'txData': {
-    'ethTxData': undefined,
-    'ethTxData1559': undefined,
-    'filTxData': undefined,
-    'solanaTxData': {
-      'recentBlockhash': 'B7Kg79jDm48LMdB4JB2hu82Yfsuz5xYm2cQDBYmKdDSn',
-      'lastValidBlockHeight': 0 as unknown as bigint,
-      'feePayer': mockSolanaAccount.address,
-      'toWalletAddress': '',
-      'splTokenMintAddress': '',
-      'lamports': 0 as unknown as bigint,
-      'amount': 0 as unknown as bigint,
-      'txType': 12,
-      'instructions': [
+  id: 0,
+  fromAddress: mockSolanaAccount.address,
+  txData: {
+    ethTxData: undefined,
+    ethTxData1559: undefined,
+    filTxData: undefined,
+    solanaTxData: {
+      recentBlockhash: 'B7Kg79jDm48LMdB4JB2hu82Yfsuz5xYm2cQDBYmKdDSn',
+      lastValidBlockHeight: 0 as unknown as bigint,
+      feePayer: mockSolanaAccount.address,
+      toWalletAddress: '',
+      splTokenMintAddress: '',
+      lamports: 0 as unknown as bigint,
+      amount: 0 as unknown as bigint,
+      txType: 12,
+      instructions: [
         {
-          'programId': '11111111111111111111111111111111',
-          'accountMetas': [
+          programId: '11111111111111111111111111111111',
+          accountMetas: [
             {
-              'pubkey': mockSolanaAccount.address,
+              pubkey: mockSolanaAccount.address,
               addrTableLookupIndex: undefined,
-              'isSigner': true,
-              'isWritable': true
+              isSigner: true,
+              isWritable: true
             },
             {
-              'pubkey': mockSolanaAccount.address,
+              pubkey: mockSolanaAccount.address,
               addrTableLookupIndex: undefined,
-              'isSigner': true,
-              'isWritable': true
+              isSigner: true,
+              isWritable: true
             }
           ],
-          'data': [2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0],
-          'decodedData': undefined
+          data: [2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0],
+          decodedData: undefined
         }
       ],
       version: BraveWallet.SolanaMessageVersion.kLegacy,
@@ -406,13 +414,13 @@ export const mockSolDappSignTransactionRequest: BraveWallet.SignTransactionReque
         '11111111111111111111111111111111'
       ],
       addressTableLookups: [],
-      'sendOptions': undefined,
-      'signTransactionParam': undefined
+      sendOptions: undefined,
+      signTransactionParam: undefined
     }
   },
-  'rawMessage': { bytes: [1], str: undefined },
-  'coin': BraveWallet.CoinType.SOL,
-  'chainId': BraveWallet.SOLANA_MAINNET
+  rawMessage: { bytes: [1], str: undefined },
+  coin: BraveWallet.CoinType.SOL,
+  chainId: BraveWallet.SOLANA_MAINNET
 }
 
 // BraveWallet.TransactionInfo (selectedPendingTransaction)
@@ -512,50 +520,50 @@ export const mockSolDappSignAndSendTransactionRequest: SerializableTransactionIn
 }
 
 export const mockSolDappSignAllTransactionsRequest: BraveWallet.SignAllTransactionsRequest = {
-  'originInfo': {
-    'origin': {
-      'scheme': 'https',
-      'host': 'f40y4d.csb.app',
-      'port': 443,
-      'nonceIfOpaque': undefined
+  originInfo: {
+    origin: {
+      scheme: 'https',
+      host: 'f40y4d.csb.app',
+      port: 443,
+      nonceIfOpaque: undefined
     },
-    'originSpec': 'https://f40y4d.csb.app',
-    'eTldPlusOne': 'csb.app'
+    originSpec: 'https://f40y4d.csb.app',
+    eTldPlusOne: 'csb.app'
   },
-  'id': 3,
-  'fromAddress': mockSolanaAccount.address,
-  'txDatas': [
+  id: 3,
+  fromAddress: mockSolanaAccount.address,
+  txDatas: [
     {
-      'ethTxData': undefined,
-      'ethTxData1559': undefined,
-      'filTxData': undefined,
-      'solanaTxData': {
-        'recentBlockhash': '8Yq6DGZBh9oEJsCVhUjTqN9kPiLoeYJ7J4n9TnpPYjqW',
-        'lastValidBlockHeight': 0 as unknown as bigint,
-        'feePayer': mockSolanaAccount.address,
-        'toWalletAddress': '',
-        'splTokenMintAddress': '',
-        'lamports': 0 as unknown as bigint,
-        'amount': 0 as unknown as bigint,
-        'txType': 12,
-        'instructions': [{
-          'programId': '11111111111111111111111111111111',
-          'accountMetas': [
+      ethTxData: undefined,
+      ethTxData1559: undefined,
+      filTxData: undefined,
+      solanaTxData: {
+        recentBlockhash: '8Yq6DGZBh9oEJsCVhUjTqN9kPiLoeYJ7J4n9TnpPYjqW',
+        lastValidBlockHeight: 0 as unknown as bigint,
+        feePayer: mockSolanaAccount.address,
+        toWalletAddress: '',
+        splTokenMintAddress: '',
+        lamports: 0 as unknown as bigint,
+        amount: 0 as unknown as bigint,
+        txType: 12,
+        instructions: [{
+          programId: '11111111111111111111111111111111',
+          accountMetas: [
             {
-              'pubkey': mockSolanaAccount.address,
+              pubkey: mockSolanaAccount.address,
               addrTableLookupIndex: undefined,
-              'isSigner': true,
-              'isWritable': true
+              isSigner: true,
+              isWritable: true
             },
             {
-              'pubkey': mockSolanaAccount.address,
+              pubkey: mockSolanaAccount.address,
               addrTableLookupIndex: undefined,
-              'isSigner': true,
-              'isWritable': true
+              isSigner: true,
+              isWritable: true
             }
           ],
-          'data': [2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0],
-          'decodedData': undefined
+          data: [2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0],
+          decodedData: undefined
         }],
         version: BraveWallet.SolanaMessageVersion.kLegacy,
         messageHeader: {
@@ -568,42 +576,42 @@ export const mockSolDappSignAllTransactionsRequest: BraveWallet.SignAllTransacti
           '11111111111111111111111111111111'
         ],
         addressTableLookups: [],
-        'sendOptions': undefined,
-        'signTransactionParam': undefined
+        sendOptions: undefined,
+        signTransactionParam: undefined
       }
     },
     {
-      'ethTxData': undefined,
-      'ethTxData1559': undefined,
-      'filTxData': undefined,
-      'solanaTxData': {
-        'recentBlockhash': '8Yq6DGZBh9oEJsCVhUjTqN9kPiLoeYJ7J4n9TnpPYjqW',
-        'lastValidBlockHeight': 0 as unknown as bigint,
-        'feePayer': mockSolanaAccount.address,
-        'toWalletAddress': '',
-        'splTokenMintAddress': '',
-        'lamports': 0 as unknown as bigint,
-        'amount': 0 as unknown as bigint,
-        'txType': 12,
-        'instructions': [
+      ethTxData: undefined,
+      ethTxData1559: undefined,
+      filTxData: undefined,
+      solanaTxData: {
+        recentBlockhash: '8Yq6DGZBh9oEJsCVhUjTqN9kPiLoeYJ7J4n9TnpPYjqW',
+        lastValidBlockHeight: 0 as unknown as bigint,
+        feePayer: mockSolanaAccount.address,
+        toWalletAddress: '',
+        splTokenMintAddress: '',
+        lamports: 0 as unknown as bigint,
+        amount: 0 as unknown as bigint,
+        txType: 12,
+        instructions: [
           {
-            'programId': '11111111111111111111111111111111',
-            'accountMetas': [
+            programId: '11111111111111111111111111111111',
+            accountMetas: [
               {
-                'pubkey': mockSolanaAccount.address,
+                pubkey: mockSolanaAccount.address,
                 addrTableLookupIndex: undefined,
-                'isSigner': true,
-                'isWritable': true
+                isSigner: true,
+                isWritable: true
               },
               {
-                'pubkey': mockSolanaAccount.address,
+                pubkey: mockSolanaAccount.address,
                 addrTableLookupIndex: undefined,
-                'isSigner': true,
-                'isWritable': true
+                isSigner: true,
+                isWritable: true
               }
             ],
-            'data': [2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0],
-            'decodedData': undefined
+            data: [2, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0],
+            decodedData: undefined
           }
         ],
         version: BraveWallet.SolanaMessageVersion.kLegacy,
@@ -617,12 +625,724 @@ export const mockSolDappSignAllTransactionsRequest: BraveWallet.SignAllTransacti
           '11111111111111111111111111111111'
         ],
         addressTableLookups: [],
-        'sendOptions': undefined,
-        'signTransactionParam': undefined
+        sendOptions: undefined,
+        signTransactionParam: undefined
       }
     }
   ],
-  'rawMessages': [{ bytes: [1], str: undefined }],
-  'coin': BraveWallet.CoinType.SOL,
-  'chainId': BraveWallet.SOLANA_MAINNET
+  rawMessages: [{ bytes: [1], str: undefined }],
+  coin: BraveWallet.CoinType.SOL,
+  chainId: BraveWallet.SOLANA_MAINNET
+}
+
+const emptyEvmStateChangeRawInfoData = {
+  erc20TransferData: undefined,
+  erc1155ApprovalForAllData: undefined,
+  erc1155TransferData: undefined,
+  erc20ApprovalData: undefined,
+  erc721ApprovalData: undefined,
+  erc721ApprovalForAllData: undefined,
+  erc721TransferData: undefined,
+  nativeAssetTransferData: undefined
+}
+
+const mockSimulatedGoerliLink = {
+  address: '0x326c977e6efc84e512bb9c30f76e30c160ed06fb',
+  symbol: 'LINK',
+  name: 'ChainLink Token',
+  decimals: 18,
+  verified: false,
+  lists: [],
+  imageUrl: undefined,
+  price: undefined
+}
+const goerliLinkTransferData = {
+  contract: {
+    // Goerli LINK
+    address: '0x326c977e6efc84e512bb9c30f76e30c160ed06fb',
+    kind: 'ACCOUNT'
+  },
+  amount: {
+    before: '28907865866843658798',
+    after: '14453965866843658798'
+  },
+  asset: mockSimulatedGoerliLink
+}
+
+/**
+ * - Send 14.4539 LINK
+ * - Receive 14.4539 LINK
+ * - Approve 10 LINK
+ * - Approve 1 NFT
+ * - Send 1 NFT
+ * - Send 1 ETH
+ */
+export const mockEvmSimulatedResponse: BraveWallet.EVMSimulationResponse = {
+  action: 'NONE',
+  simulationResults: {
+    error: undefined,
+    expectedStateChanges: [
+      {
+        humanReadableDiff: 'Send 14.4539 LINK',
+        rawInfo: {
+          kind: 'ERC20_TRANSFER',
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc20TransferData: goerliLinkTransferData
+          }
+        }
+      },
+      {
+        humanReadableDiff: 'Receive 14.4539 LINK',
+        rawInfo: {
+          kind: 'ERC20_TRANSFER',
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc20TransferData: {
+              ...goerliLinkTransferData,
+              amount: {
+                after: goerliLinkTransferData.amount.before,
+                before: goerliLinkTransferData.amount.after
+              }
+            }
+          }
+        }
+      },
+      {
+        humanReadableDiff: 'Approve 10 LINK',
+        rawInfo: {
+          kind: '', // TODO
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc20ApprovalData: {
+              amount: {
+                after: '10000000000000000000',
+                before: '1'
+              },
+              asset: mockSimulatedGoerliLink,
+              contract: {
+                address: mockSimulatedGoerliLink.address,
+                kind: '' // todo
+              },
+              owner: {
+                address: mockAccount.address,
+                kind: '' // TODO
+              },
+              spender: {
+                address: mockAccount.address,
+                kind: '' // TODO
+              }
+            }
+          }
+        }
+      },
+      {
+        humanReadableDiff: `Send ${
+          mockErc721Token.name //
+        } #${mockErc721Token.tokenId}`,
+        rawInfo: {
+          kind: 'ERC721_TRANSFER',
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc721TransferData: {
+              amount: {
+                after: '0',
+                before: '1'
+              },
+              assetPrice: {
+                dollarValuePerToken: '100', // $100
+                lastUpdatedAt: new Date().toUTCString(),
+                source: 'mocked'
+              },
+              contract: {
+                address: mockErc721Token.contractAddress,
+                kind: '' // TODO
+              },
+              metadata: {
+                rawImageUrl: mockNFTMetadata[0].imageURL || ''
+              },
+              name: mockErc721Token.name,
+              symbol: mockErc721Token.symbol,
+              tokenId: mockErc721Token.tokenId
+            }
+          }
+        }
+      },
+      {
+        humanReadableDiff: `Send ${
+          mockErc721Token.symbol //
+        } #${mockErc721Token.tokenId}`,
+        rawInfo: {
+          kind: '', // TODO
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc1155TransferData: {
+              amount: {
+                after: '0',
+                before: '1'
+              },
+              assetPrice: {
+                dollarValuePerToken: '100', // $100
+                lastUpdatedAt: new Date().toUTCString(),
+                source: 'mocked'
+              },
+              contract: {
+                address: mockErc721Token.contractAddress,
+                kind: '' // TODO
+              },
+              metadata: {
+                rawImageUrl: mockNFTMetadata[0].imageURL || ''
+              },
+              tokenId: mockErc721Token.tokenId
+            }
+          }
+        }
+      },
+      {
+        humanReadableDiff: `Send 1 ETH`,
+        rawInfo: {
+          kind: '', // TODO
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            nativeAssetTransferData: {
+              amount: {
+                after: '0',
+                before: '1000000000000000000'
+              },
+              asset: {
+                address: '',
+                decimals: mockEthMainnet.decimals,
+                imageUrl: mockEthToken.logo,
+                lists: [],
+                name: mockEthToken.name,
+                price: {
+                  dollarValuePerToken: '1600',
+                  lastUpdatedAt: new Date().toISOString(),
+                  source: 'mocked'
+                },
+                symbol: mockEthToken.symbol,
+                verified: true
+              },
+              contract: {
+                address: '',
+                kind: '' // TODO
+              }
+            }
+          }
+        }
+      },
+      {
+        humanReadableDiff: `Approve ${
+          mockMoonCatNFT.name //
+        } #${mockMoonCatNFT.tokenId}`,
+        rawInfo: {
+          kind: '', // TODO
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc721ApprovalData: {
+              amount: {
+                after: '0',
+                before: '1'
+              },
+              assetPrice: {
+                dollarValuePerToken: '100',
+                lastUpdatedAt: new Date().toISOString(),
+                source: 'mocked'
+              },
+              metadata: {
+                rawImageUrl: mockMoonCatNFT.logo
+              },
+              contract: {
+                address: '',
+                kind: '' // TODO
+              },
+              name: mockMoonCatNFT.name,
+              owner: { kind: 'ACCOUNT', address: mockAccount.address },
+              spender: {
+                address: mockAccount.address,
+                kind: 'ACCOUNT'
+              },
+              symbol: mockMoonCatNFT.symbol,
+              tokenId: mockMoonCatNFT.tokenId
+            }
+          }
+        }
+      }
+    ]
+  },
+  warnings: []
+}
+
+/**
+ * ERC20 Swap ETH For DAI
+ * - Send 1 ETH
+ * - Receive 1530.81307 DAI
+ */
+export const mockSimulatedSwapETHForDAI: BraveWallet.EVMSimulationResponse = {
+  action: 'NONE',
+  warnings: [],
+  simulationResults: {
+    error: undefined,
+    expectedStateChanges: [
+      {
+        humanReadableDiff: 'Receive 1530.81307 DAI',
+        rawInfo: {
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc20TransferData: {
+              amount: {
+                after: '557039306766411381864245',
+                before: '555508493698012633714742'
+              },
+              contract: {
+                address: '0x6b175474e89094c44da98b954eedeac495271d0f',
+                kind: 'ACCOUNT'
+              },
+              asset: {
+                address: '0x6b175474e89094c44da98b954eedeac495271d0f',
+                symbol: 'DAI',
+                name: 'Dai Stablecoin',
+                decimals: 18,
+                verified: true,
+                lists: [
+                  'COINGECKO',
+                  'ZERION',
+                  'ONE_INCH',
+                  'UNISWAP',
+                  'MY_CRYPTO_API',
+                  'KLEROS_TOKENS'
+                ],
+                imageUrl:
+                  'https://d1ts37qlq4uz4s.cloudfront.net/evm__evm%3A%3Aethereum__evm%3A%3Aethereum%3A%3Amainnet__0x6b175474e89094c44da98b954eedeac495271d0f.png',
+                price: {
+                  source: 'Coingecko',
+                  lastUpdatedAt: '1679331222',
+                  dollarValuePerToken: '0.99'
+                }
+              }
+            }
+          },
+          kind: 'ERC20_TRANSFER'
+        }
+      },
+      {
+        humanReadableDiff: 'Send 1 ETH',
+        rawInfo: {
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc20TransferData: {
+              amount: {
+                after: '1182957389356504134754',
+                before: '1183957389356504134754'
+              },
+              contract: {
+                address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                kind: 'ACCOUNT'
+              },
+              asset: {
+                address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+                symbol: 'ETH',
+                name: 'Ether',
+                decimals: 18,
+                verified: true,
+                imageUrl:
+                  'https://d1ts37qlq4uz4s.cloudfront.net/evm__evm%3A%3Aethereum__evm%3A%3Aethereum%3A%3Amainnet__0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png',
+                price: {
+                  source: 'Coingecko',
+                  lastUpdatedAt: '1681958792',
+                  dollarValuePerToken: '1945.92'
+                },
+                lists: []
+              }
+            }
+          },
+          kind: 'NATIVE_ASSET_TRANSFER'
+        }
+      }
+    ]
+  }
+}
+
+/**
+ * ERC20 Approval
+ * - Approve to transfer up to 1000 USDT
+ */
+export const mockEvmSimulatedERC20Approval: BraveWallet.EVMSimulationResponse =
+  {
+    action: 'NONE',
+    warnings: [],
+    simulationResults: {
+      error: undefined,
+      expectedStateChanges: [
+        {
+          humanReadableDiff: 'Approve to transfer up to 1000 USDT',
+          rawInfo: {
+            data: {
+              ...emptyEvmStateChangeRawInfoData,
+              erc20ApprovalData: {
+                amount: {
+                  after: '1000000000',
+                  before: '0'
+                },
+                asset: {
+                  address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+                  name: 'Tether USD',
+                  decimals: 6,
+                  lists: [
+                    'COINGECKO',
+                    'ZERION',
+                    'ONE_INCH',
+                    'UNISWAP',
+                    'MY_CRYPTO_API',
+                    'KLEROS_TOKENS'
+                  ],
+                  symbol: 'USDT',
+                  verified: true,
+                  imageUrl:
+                    'https://d1ts37qlq4uz4s.cloudfront.net/evm__evm%3A%3Aethereum__evm%3A%3Aethereum%3A%3Amainnet__0xdac17f958d2ee523a2206206994597c13d831ec7.png',
+                  price: {
+                    source: 'Coingecko',
+                    lastUpdatedAt: '1679331222',
+                    dollarValuePerToken: '0.99'
+                  }
+                },
+                contract: {
+                  address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+                  kind: 'ACCOUNT'
+                },
+                owner: {
+                  address: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+                  kind: 'ACCOUNT'
+                },
+                spender: {
+                  address: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
+                  kind: 'ACCOUNT'
+                }
+              }
+            },
+            kind: 'ERC20_APPROVAL'
+          }
+        }
+      ]
+    }
+  }
+
+/**
+ * Buy An ERC721 NFT With ETH (Simulated)
+ * - Receive PudgyPenguins #7238
+ * - Send 3.181 ETH
+ */
+export const mockSimulatedBuyNFTWithETH: BraveWallet.EVMSimulationResponse = {
+  action: 'NONE',
+  warnings: [],
+  simulationResults: {
+    error: undefined,
+    expectedStateChanges: [
+      {
+        humanReadableDiff: 'Receive PudgyPenguins #7238',
+        rawInfo: {
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc721TransferData: {
+              amount: {
+                after: '1',
+                before: '0'
+              },
+              contract: {
+                address: '0xbd3531da5cf5857e7cfaa92426877b022e612cf8',
+                kind: 'ACCOUNT'
+              },
+              metadata: {
+                rawImageUrl: 'https://cdn.simplehash.com/assets/97e1c9e3e9eb21a1114351f9c5c14fe611c94916f360c4eb3aa9263afd8b837b.png'
+              },
+              name: 'PudgyPenguins',
+              symbol: 'PPG',
+              tokenId: '7238',
+              assetPrice: {
+                source: 'Simplehash',
+                lastUpdatedAt: '1679331222',
+                dollarValuePerToken: '594.99'
+              }
+            }
+          },
+          kind: 'ERC721_TRANSFER'
+        }
+      },
+      {
+        humanReadableDiff: 'Send 3.181 ETH',
+        rawInfo: {
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            nativeAssetTransferData: {
+              amount: {
+                after: '998426264937289938488',
+                before: '1001607264937289938488'
+              },
+              contract: {
+                address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                kind: "ACCOUNT"
+              },
+              asset: {
+                lists: [],
+                address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                symbol: "ETH",
+                name: "Ether",
+                decimals: 18,
+                verified: true,
+                imageUrl: "https://d1ts37qlq4uz4s.cloudfront.net/evm__evm%3A%3Aethereum__evm%3A%3Aethereum%3A%3Amainnet__0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png",
+                price: {
+                  source: "Coingecko",
+                  lastUpdatedAt: '1681958792',
+                  dollarValuePerToken: '1945.92'
+                }
+              }
+            }
+          },
+          kind: 'NATIVE_ASSET_TRANSFER'
+        }
+      }
+    ]
+  }
+}
+
+/**
+ * Simulated ERC721 Approve For All
+ * - Approve to transfer all your BoredApeYachtClub
+ */
+export const mockERC721ApproveForAllSim: BraveWallet.EVMSimulationResponse = {
+  action: 'WARN',
+  warnings: [
+    {
+      kind: 'UNLIMITED_ALLOWANCE_TO_NFTS',
+      message:
+        'You are allowing this website ' +
+        'to withdraw funds from your account in the future',
+      severity: 'WARNING'
+    }
+  ],
+  simulationResults: {
+    error: undefined,
+    expectedStateChanges: [
+      {
+        humanReadableDiff: 'Approve to transfer all your BoredApeYachtClub',
+        rawInfo: {
+          kind: 'ERC721_APPROVAL_FOR_ALL',
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc721ApprovalForAllData: {
+              amount: {
+                after:
+                  '1157920892373161954235709850086879078532699846656405640394',
+                before: '0'
+              },
+              contract: {
+                address: '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
+                kind: 'ACCOUNT'
+              },
+              name: 'BoredApeYachtClub',
+              owner: {
+                address: '0x38191ca1307ebf67ca1a7caf5346dbd91d882ca6',
+                kind: 'ACCOUNT'
+              },
+              spender: {
+                address: '0x1e0049783f008a0085193e00003d00cd54003c71',
+                kind: 'ACCOUNT'
+              },
+              symbol: 'BAYC',
+              assetPrice: {
+                source: 'Simplehash',
+                lastUpdatedAt: '1679331222',
+                dollarValuePerToken: '7865.43'
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+/**
+ * ERC721 Approve (Simulated)
+ * Approve to transfer BoredApeYachtClub
+ */
+export const mockSimulatedERC721Approve: BraveWallet.EVMSimulationResponse = {
+  action: 'NONE',
+  warnings: [],
+  simulationResults: {
+    error: undefined,
+    expectedStateChanges: [
+      {
+        humanReadableDiff: 'Approve to transfer BoredApeYachtClub',
+        rawInfo: {
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc721ApprovalData: {
+              amount: {
+                after: '1',
+                before: '0'
+              },
+              contract: {
+                address: '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
+                kind: 'ACCOUNT'
+              },
+              metadata: {
+                rawImageUrl:
+                  'https://cdn.simplehash.com/assets/beca5f0f88c267276318edd8a6019b6b47327f42efd0ba22a3835e77f27732e5.png'
+              },
+              name: 'BoredApeYachtClub',
+              owner: {
+                address: '0xed2ab4948ba6a909a7751dec4f34f303eb8c7236',
+                kind: 'ACCOUNT'
+              },
+              spender: {
+                address: '0x1e0049783f008a0085193e00003d00cd54003c71',
+                kind: 'ACCOUNT'
+              },
+              symbol: 'BAYC',
+              tokenId: '6603',
+              assetPrice: {
+                source: 'Simplehash',
+                lastUpdatedAt: '1679331222',
+                dollarValuePerToken: '7865.43'
+              }
+            }
+          },
+          kind: 'ERC721_APPROVAL'
+        }
+      }
+    ]
+  }
+}
+
+/**
+ * Buy An ERC1155 Token With ETH
+ * - Send 0.033 ETH
+ * - Receive Corgi
+ */
+export const mockSimulatedBuyERC1155Token: BraveWallet.EVMSimulationResponse =
+  {
+    action: 'NONE',
+    warnings: [],
+    simulationResults: {
+      error: undefined,
+      expectedStateChanges: [
+        {
+          humanReadableDiff: 'Send 0.033 ETH',
+          rawInfo: {
+            data: {
+              ...emptyEvmStateChangeRawInfoData,
+              nativeAssetTransferData: {
+                amount: {
+                  after: "71057321770366572",
+                  before: "104057321770366572"
+                },
+                contract: {
+                  address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                  kind: "ACCOUNT"
+                },
+                asset: {
+                  address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                  symbol: "ETH",
+                  "name": "Ether",
+                  "decimals": 18,
+                  "verified": true,
+                  "imageUrl": "https://d1ts37qlq4uz4s.cloudfront.net/evm__evm%3A%3Aethereum__evm%3A%3Aethereum%3A%3Amainnet__0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png",
+                  "price": {
+                    "source": "Coingecko",
+                    "lastUpdatedAt": '1681958792',
+                    "dollarValuePerToken": '1945.92'
+                  },
+                  lists: []
+                }
+              }
+            },
+            kind: 'NATIVE_ASSET_TRANSFER'
+          }
+        },
+        {
+          humanReadableDiff: 'Receive Corgi',
+          rawInfo: {
+            data: {
+              ...emptyEvmStateChangeRawInfoData,
+              erc1155TransferData: {
+                "amount": {
+                  "after": "1",
+                  "before": "0"
+                },
+                "contract": {
+                  "address": "0x51e613727fdd2e0b91b51c3e5427e9440a7957e4",
+                  "kind": "ACCOUNT"
+                },
+                "metadata": {
+                  "rawImageUrl": "https://cdn.simplehash.com/assets/4bedd702e7ea8c4a9d04d83302138fa5b63d0cca0f06df9b87bdb09cff253b88.png"
+                },
+                "tokenId": "13014975",
+                "assetPrice": {
+                  "source": "Simplehash",
+                  "lastUpdatedAt": '1679331222',
+                  "dollarValuePerToken": '232.43'
+                }
+              }
+            },
+            kind: 'ERC1155_TRANSFER'
+          }
+        }
+      ]
+    }
+  }
+
+/**
+ * ERC1155 Approve For All (Simulated)
+ * - Approve to transfer all your Sandbox's ASSETs
+ */
+export const mockEvmERC1155ApproveForAll: BraveWallet.EVMSimulationResponse = {
+  action: 'NONE',
+  warnings: [
+    {
+      kind: 'UNLIMITED_ALLOWANCE_TO_NFTS',
+      message:
+        'You are allowing this website to withdraw funds ' +
+        'from your account in the future',
+      severity: 'WARNING'
+    }
+  ],
+  simulationResults: {
+    error: undefined,
+    expectedStateChanges: [
+      {
+        humanReadableDiff: `Approve to transfer all your Sandbox's ASSETs`,
+        rawInfo: {
+          kind: 'ERC1155_APPROVAL_FOR_ALL',
+          data: {
+            ...emptyEvmStateChangeRawInfoData,
+            erc1155ApprovalForAllData: {
+              amount: {
+                after:
+                  '1157920892373161954235709850086879078532699846656405640394',
+                before: '0'
+              },
+              contract: {
+                address: '0xa342f5d851e866e18ff98f351f2c6637f4478db5',
+                kind: 'ACCOUNT'
+              },
+              owner: {
+                address: '0xed2ab4948ba6a909a7751dec4f34f303eb8c7236',
+                kind: 'ACCOUNT'
+              },
+              spender: {
+                address: '0x00000000006c3852cbef3e08e8df289169ede581',
+                kind: 'ACCOUNT'
+              },
+              assetPrice: {
+                source: 'Simplehash',
+                lastUpdatedAt: '1679331222',
+                dollarValuePerToken: '232.43'
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
 }

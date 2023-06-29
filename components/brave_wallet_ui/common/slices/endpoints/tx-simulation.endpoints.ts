@@ -14,15 +14,21 @@ import { WalletApiEndpointBuilderParams } from '../api-base.slice'
 // utils
 import { toMojoUnion } from '../../../utils/mojo-utils'
 
+type TxSimulationOptInStatus = 'allowed' | 'denied' | 'unset'
+
 /**
  * disabled until we have an opt-in screen
+ *
+ * will be `undefined` until a preference is set
  */
-let isTxSimulationEnabled = false
+let txSimulationOptInStatus: TxSimulationOptInStatus = 'unset'
 
-export const getIsTxSimulationEnabled = () => isTxSimulationEnabled
+export const getIsTxSimulationOptInStatus = () => txSimulationOptInStatus
 
-export const setIsTxSimulationEnabled = (enabled: boolean) => {
-  isTxSimulationEnabled = enabled
+export const setTxSimulationOptInStatus = (
+  enabled: TxSimulationOptInStatus
+) => {
+  txSimulationOptInStatus = enabled
 }
 
 export const transactionSimulationEndpoints = ({
@@ -30,20 +36,23 @@ export const transactionSimulationEndpoints = ({
   query
 }: WalletApiEndpointBuilderParams) => {
   return {
-    getIsTxSimulationEnabled: query<boolean, void>({
+    getIsTxSimulationOptInStatus: query<TxSimulationOptInStatus, void>({
       queryFn: async (arg, api, extraOptions, baseQuery) => {
         return {
-          data: getIsTxSimulationEnabled()
+          data: getIsTxSimulationOptInStatus()
         }
       },
       providesTags: ['TransactionSimulationsEnabled']
     }),
 
-    setIsTxSimulationEnabled: mutation<boolean, boolean>({
-      queryFn: async (enabled, api, extraOptions, baseQuery) => {
-        setIsTxSimulationEnabled(enabled)
+    setIsTxSimulationOptInStatus: mutation<
+      TxSimulationOptInStatus,
+      TxSimulationOptInStatus
+    >({
+      queryFn: async (status, api, extraOptions, baseQuery) => {
+        setTxSimulationOptInStatus(status)
         return {
-          data: enabled
+          data: status
         }
       },
       invalidatesTags: ['TransactionSimulationsEnabled']
@@ -57,10 +66,8 @@ export const transactionSimulationEndpoints = ({
     >({
       queryFn: async (txArg, { dispatch }, extraOptions, baseQuery) => {
         try {
-          if (!getIsTxSimulationEnabled()) {
-            return {
-              error: 'Transaction simulation is not enabled'
-            }
+          if (getIsTxSimulationOptInStatus() !== 'allowed') {
+            throw new Error('Transaction simulation is not enabled')
           }
 
           const api = baseQuery(undefined).data
@@ -147,10 +154,8 @@ export const transactionSimulationEndpoints = ({
     >({
       queryFn: async (arg, { dispatch }, extraOptions, baseQuery) => {
         try {
-          if (!getIsTxSimulationEnabled()) {
-            return {
-              error: 'Transaction simulation is not enabled'
-            }
+          if (getIsTxSimulationOptInStatus() !== 'allowed') {
+            throw new Error('Transaction simulation is not enabled')
           }
 
           const api = baseQuery(undefined).data
@@ -167,7 +172,7 @@ export const transactionSimulationEndpoints = ({
 
           switch (arg.mode) {
             case 'signAllTransactionsRequest': {
-              const { requests} = await getPendingSignAllTransactionsRequests()
+              const { requests } = await getPendingSignAllTransactionsRequests()
 
               params.signAllTransactionsRequest = requests.find(
                 (r) => r.id === arg?.id

@@ -21,6 +21,7 @@ import { mockWalletState } from '../../../stories/mock-data/mock-wallet-state'
 import { mockedMnemonic } from '../../../stories/mock-data/user-accounts'
 import {
   mockAccount,
+  mockErc721Token,
   mockEthAccountInfo,
   mockFilecoinAccountInfo,
   mockFilecoinMainnetNetwork,
@@ -88,6 +89,7 @@ export interface WalletApiDataOverrides {
   accountInfos?: BraveWallet.AccountInfo[]
   nativeBalanceRegistry?: NativeAssetBalanceRegistry
   tokenBalanceRegistry?: TokenBalanceRegistry
+  evmSimulationResponse?: BraveWallet.EVMSimulationResponse | null
 }
 
 export class MockedWalletApiProxy {
@@ -116,8 +118,14 @@ export class MockedWalletApiProxy {
 
   networks: BraveWallet.NetworkInfo[] = mockNetworks
 
-  blockchainTokens: BraveWallet.BlockchainToken[] = mockErc20TokensList
+  blockchainTokens: BraveWallet.BlockchainToken[] = [
+    ...mockErc20TokensList,
+    mockErc721Token
+  ]
+
   userAssets: BraveWallet.BlockchainToken[] = mockAccountAssetOptions
+
+  evmSimulationResponse: BraveWallet.EVMSimulationResponse | null
 
   /**
    * balance = [accountAddress][chainId]
@@ -188,11 +196,11 @@ export class MockedWalletApiProxy {
     deserializeTransaction(mockedErc20ApprovalTransaction)
   ]
 
-  constructor (overrides?: WalletApiDataOverrides | undefined) {
+  constructor(overrides?: WalletApiDataOverrides | undefined) {
     this.applyOverrides(overrides)
   }
 
-  applyOverrides (overrides?: WalletApiDataOverrides | undefined) {
+  applyOverrides(overrides?: WalletApiDataOverrides | undefined) {
     if (!overrides) {
       return
     }
@@ -212,6 +220,8 @@ export class MockedWalletApiProxy {
       overrides.nativeBalanceRegistry ?? this.nativeBalanceRegistry
     this.tokenBalanceRegistry =
       overrides.tokenBalanceRegistry ?? this.tokenBalanceRegistry
+    this.evmSimulationResponse =
+      overrides.evmSimulationResponse ?? this.evmSimulationResponse
   }
 
   blockchainRegistry: Partial<
@@ -261,7 +271,7 @@ export class MockedWalletApiProxy {
           eTldPlusOne: 'brave.com'
         }
       }
-    },
+    }
   }
 
   swapService: Partial<InstanceType<typeof BraveWallet.SwapServiceInterface>> =
@@ -308,7 +318,7 @@ export class MockedWalletApiProxy {
     getAllAccounts: async () => {
       return {
         allAccounts: {
-          accounts: this.accountInfos,
+          accounts: this.accountInfos
         }
       }
     },
@@ -414,7 +424,7 @@ export class MockedWalletApiProxy {
     // Native asset balances
     getBalance: async (address: string, coin: number, chainId: string) => {
       return {
-        balance: this.nativeBalanceRegistry[address][chainId],
+        balance: this.nativeBalanceRegistry?.[address]?.[chainId] || '0',
         error: 0,
         errorMessage: ''
       }
@@ -495,7 +505,7 @@ export class MockedWalletApiProxy {
       return {
         amount:
           this.nativeBalanceRegistry[walletAddress][
-          blockchainTokenEntityAdaptor.selectId({
+            blockchainTokenEntityAdaptor.selectId({
               coin: BraveWallet.CoinType.ETH,
               chainId,
               contractAddress: tokenMintAddress,
@@ -507,7 +517,7 @@ export class MockedWalletApiProxy {
         decimals: 9,
         uiAmountString: '',
         error: 0,
-        errorMessage: '',
+        errorMessage: ''
       }
     }
   }
@@ -547,30 +557,48 @@ export class MockedWalletApiProxy {
 
   txService: Partial<InstanceType<typeof BraveWallet.TxServiceInterface>> = {
     getAllTransactionInfo: async (coinType, chainId, from) => {
-      return {
-        transactionInfos: this.transactionInfos.filter((tx) => {
-          // return all txs if filters are null
-          if (coinType === null && chainId === null && from === null) {
-            return true
-          }
+      const filteredTxs = this.transactionInfos.filter((tx) => {
+        // return all txs if filters are null
+        if (coinType === null && chainId === null && from === null) {
+          return true
+        }
 
-          if (from && coinType !== null) {
-            const txCoinType = getCoinFromTxDataUnion(tx.txDataUnion)
-
-            return (
-              // match from address + cointype
-              txCoinType === coinType &&
-              tx.fromAddress === from &&
-              // match chain id (if set)
-              (chainId !== null ? tx.chainId === chainId : true)
-            )
-          }
+        if (from && coinType !== null) {
+          const txCoinType = getCoinFromTxDataUnion(tx.txDataUnion)
 
           return (
-            // match chain id
-            chainId !== null ? tx.chainId === chainId : true
+            // match from address + cointype
+            txCoinType === coinType &&
+            tx.fromAddress === from &&
+            // match chain id (if set)
+            (chainId !== null ? tx.chainId === chainId : true)
           )
-        })
+        }
+
+        return (
+          // match chain id
+          chainId !== null ? tx.chainId === chainId : true
+        )
+      })
+
+      return {
+        transactionInfos: filteredTxs
+      }
+    },
+
+    getTransactionInfo: async (
+      coinType: number,
+      chainId: string,
+      txMetaId: string
+    ) => {
+      const foundTx = this.transactionInfos.find(
+        (tx) =>
+          getCoinFromTxDataUnion(tx.txDataUnion) === coinType &&
+          tx.chainId === chainId &&
+          tx.id === txMetaId
+      )
+      return {
+        transactionInfo: foundTx || null
       }
     }
   }
@@ -579,35 +607,12 @@ export class MockedWalletApiProxy {
     InstanceType<typeof BraveWallet.SimulationServiceInterface>
   > = {
     hasMessageScanSupport: async (chainId, coin) => ({ result: false }),
+    hasTransactionScanSupport: async () => ({ result: true }),
     scanEVMTransaction: async (txInfo, language) => {
       return {
-        errorResponse: 'error',
-        errorString: 'not supported in test environments',
-        response: {
-          action: '',
-          warnings: [{ kind: '', message: 'warning', severity: 'bad' }],
-          simulationResults: {
-            error: { humanReadableError: 'error happened', kind: 'any' },
-            expectedStateChanges: [
-              {
-                humanReadableDiff: '',
-                rawInfo: {
-                  kind: '',
-                  data: {
-                    erc1155TransferData: undefined,
-                    erc1155ApprovalForAllData: undefined,
-                    erc20ApprovalData: undefined,
-                    erc20TransferData: undefined,
-                    erc721ApprovalData: undefined,
-                    erc721ApprovalForAllData: undefined,
-                    erc721TransferData: undefined,
-                    nativeAssetTransferData: undefined
-                  }
-                }
-              }
-            ]
-          }
-        }
+        errorResponse: '',
+        errorString: '',
+        response: this.evmSimulationResponse
       }
     },
     scanSolanaTransaction: async (request, language) => {
