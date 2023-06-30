@@ -1,0 +1,35 @@
+diff --git a/third_party/polymer/v3_0/BUILD.gn b/third_party/polymer/v3_0/BUILD.gn
+index 5d11077706efd09792b2cb30bafd676dc28c2879..46862f0291abca1b4783a8a60939580efc188640 100644
+--- a/third_party/polymer/v3_0/BUILD.gn
++++ b/third_party/polymer/v3_0/BUILD.gn
+@@ -47,6 +47,7 @@ js_files = [
+ ]
+ 
+ if (is_chromeos_ash) {
++}
+   js_files += [
+     "iron-dropdown/iron-dropdown.js",
+     "iron-dropdown/iron-dropdown-scroll-manager.js",
+@@ -63,6 +64,7 @@ if (is_chromeos_ash) {
+     "neon-animation/neon-animation-behavior.js",
+     "neon-animation/neon-animation-runner-behavior.js",
+   ]
++if (false) {
+ }
+ 
+ if (optimize_webui) {
+@@ -179,6 +181,7 @@ ts_library("library") {
+   ]
+ 
+   if (is_chromeos_ash) {
++  }
+     definitions += [
+       "components-chromium/iron-dropdown/iron-dropdown.d.ts",
+       "components-chromium/iron-dropdown/iron-dropdown-scroll-manager.d.ts",
+@@ -195,5 +198,6 @@ ts_library("library") {
+       "components-chromium/neon-animation/neon-animation-behavior.d.ts",
+       "components-chromium/neon-animation/neon-animation-runner-behavior.d.ts",
+     ]
++  if (false) {
+   }
+ }
