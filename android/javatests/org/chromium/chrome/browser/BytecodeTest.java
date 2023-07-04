@@ -788,7 +788,7 @@ public class BytecodeTest {
                 Supplier.class, Supplier.class, int.class, Supplier.class, Supplier.class,
                 AppMenuDelegate.class, StatusBarColorProvider.class, ObservableSupplierImpl.class,
                 IntentRequestTracker.class, int.class, Supplier.class, Function.class,
-                OneshotSupplier.class, boolean.class, BackPressManager.class, Supplier.class));
+                OneshotSupplier.class, boolean.class, BackPressManager.class, Bundle.class));
         Assert.assertTrue(constructorsMatch("org/chromium/chrome/browser/bookmarks/BookmarkToolbar",
                 "org/chromium/chrome/browser/bookmarks/BraveBookmarkToolbar", Context.class,
                 AttributeSet.class));
