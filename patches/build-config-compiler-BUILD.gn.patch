@@ -1,25 +1,10 @@
 diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
-index 23a8da453c3d29ab8efeacbb7da6e01e280afd55..d49010a937145e8b9830a3c34c782509606f453b 100644
+index ae742b0b85a506f550852e611471338bde0da390..bb72d65adcd5a063bba6c86420f6334a8538b7b6 100644
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
-@@ -772,8 +772,12 @@ config("compiler") {
-       cflags += [ "-fwhole-program-vtables" ]
- 
-       # whole-program-vtables implies -fsplit-lto-unit, and Rust needs to match
--      # behaviour.
--      rustflags += [ "-Zsplit-lto-unit" ]
-+      # behaviour. Rust needs to know the linker will be doing LTO in this case
-+      # or it rejects the Zsplit-lto-unit flag.
-+      rustflags += [
-+        "-Zsplit-lto-unit",
-+        "-Clinker-plugin-lto=yes",
-+      ]
- 
-       if (!is_win) {
-         ldflags += [ "-fwhole-program-vtables" ]
-@@ -1005,6 +1009,7 @@ config("compiler") {
-       "-Zpanic_abort_tests",
-     ]
+@@ -1019,6 +1019,7 @@ config("compiler") {
+   if (use_safe_libcxx) {
+     defines += [ "_LIBCPP_ENABLE_ASSERTIONS=1" ]
    }
 +  rustflags -= brave_remove_rustflags
  }
