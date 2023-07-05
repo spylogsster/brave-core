@@ -17,7 +17,6 @@ import org.chromium.chrome.browser.tab.Tab;
 import org.chromium.chrome.browser.ui.messages.infobar.BraveSimpleConfirmInfoBarBuilder;
 import org.chromium.chrome.browser.ui.messages.infobar.SimpleConfirmInfoBarBuilder;
 import org.chromium.components.browser_ui.settings.SettingsLauncher;
-import org.chromium.components.sync.SyncService;
 
 public class BraveSyncInformers {
     private static final String TAG = "BraveSyncInformers";
