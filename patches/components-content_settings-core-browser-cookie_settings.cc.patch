@@ -1,8 +1,8 @@
 diff --git a/components/content_settings/core/browser/cookie_settings.cc b/components/content_settings/core/browser/cookie_settings.cc
-index 5ae664478680d5f8537f1be4e71c89cb76791f7f..08978712fd1d4b070203e9d92b1e8c49b7497e19 100644
+index 3248fcb9f3d01c8388bdb82218cde5146e83ab8a..6119f3e000d4c11e692bb8aee5e334dea5b4090a 100644
 --- a/components/content_settings/core/browser/cookie_settings.cc
 +++ b/components/content_settings/core/browser/cookie_settings.cc
-@@ -229,6 +229,7 @@ ContentSetting CookieSettings::GetCookieSettingInternal(
+@@ -261,6 +261,7 @@ ContentSetting CookieSettings::GetCookieSettingInternal(
                       !first_party_url.SchemeIs(extension_scheme_);
  
    bool block = block_third && is_third_party_request;
