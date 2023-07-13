@@ -79,15 +79,9 @@ class ToggleButton : public BraveNewTabButton {
 
   constexpr static int GetIconWidth() { return tabs::kVerticalTabHeight; }
 
-  // views::Button:
+  // views::BraveNewTabButton:
   void OnThemeChanged() override {
-    Button::OnThemeChanged();
-
-    FrameColorsChanged();
-  }
-
-  void FrameColorsChanged() override {
-    NewTabButton::FrameColorsChanged();
+    BraveNewTabButton::OnThemeChanged();
 
     // Resets the ink drop highlight color
     views::InkDrop::Get(this)->GetInkDrop()->HostViewThemeChanged();
@@ -105,7 +99,7 @@ class ToggleButton : public BraveNewTabButton {
     icon_ = gfx::CreateVectorIcon(kVerticalTabStripToggleButtonIcon, color);
   }
 
-  void PaintIcon(gfx::Canvas* canvas) override {
+  void PaintButtonContents(gfx::Canvas* canvas) override {
     const gfx::Point origin =
         GetContentsBounds().CenterPoint() -
         gfx::Vector2d(icon_.width() / 2, icon_.height() / 2);
@@ -120,10 +114,6 @@ class ToggleButton : public BraveNewTabButton {
   int GetCornerRadius() const override {
     return ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
         views::Emphasis::kMaximum, GetPreferredSize());
-  }
-
-  void PaintFill(gfx::Canvas* canvas) const override {
-    // dont' fill
   }
 
   std::u16string GetTooltipText(const gfx::Point& p) const override {
@@ -216,23 +206,9 @@ class VerticalTabSearchButton : public BraveTabSearchButton {
   ~VerticalTabSearchButton() override = default;
 
   // BraveTabSearchButton:
-  SkPath GetBorderPath(const gfx::Point& origin,
-                       float scale,
-                       bool extend_to_top) const override {
-    // Return empty path in order not to fill the background.
-    return {};
-  }
-
   void OnThemeChanged() override {
     BraveTabSearchButton::OnThemeChanged();
-    FrameColorsChanged();
-  }
 
-  void FrameColorsChanged() override {
-    TabSearchButton::FrameColorsChanged();
-
-    // We should call SetImageModel() after FrameColorChanged() to override
-    // the icon.
     SetImageModel(views::Button::STATE_NORMAL,
                   ui::ImageModel::FromVectorIcon(
                       kLeoSearchIcon, kColorBraveVerticalTabHeaderButtonColor,
@@ -386,8 +362,8 @@ class VerticalTabNewTabButton : public BraveNewTabButton {
     canvas->DrawRect(gfx::RectF(separator_bounds), flags);
   }
 
-  void FrameColorsChanged() override {
-    BraveNewTabButton::FrameColorsChanged();
+  void OnThemeChanged() override {
+    BraveNewTabButton::OnThemeChanged();
 
     CHECK(text_ && shortcut_text_);
 
