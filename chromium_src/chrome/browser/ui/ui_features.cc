@@ -12,6 +12,7 @@ namespace features {
 
 OVERRIDE_FEATURE_DEFAULT_STATES({{
     {kTabHoverCardImages, base::FEATURE_DISABLED_BY_DEFAULT},
+    {kChromeWhatsNewUI, base::FEATURE_ENABLED_BY_DEFAULT},
 }});
 
 }  // namespace features
