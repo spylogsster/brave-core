@@ -7,6 +7,7 @@ import * as React from 'react'
 import { render } from 'react-dom'
 import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
+import { createGlobalStyle } from 'styled-components'
 
 import { setIconBasePath } from '@brave/leo/react/icon'
 import '@brave/leo/tokens/css/variables.css'
@@ -22,13 +23,26 @@ import startReceivingPlayerEvents from './playerEventSink'
 // Utils
 import store from './store'
 
+const GlobalStyle = createGlobalStyle`
+  #root { 
+    height: 100%; 
+  }
+  body {
+    margin: 0;
+    background-color: var(--leo-color-container-background);
+  }
+`
+
 function initialize () {
   render(
-    <BrowserRouter>
-      <Provider store={store}>
-        <App />
-      </Provider>
-    </BrowserRouter>,
+    <>
+      <GlobalStyle />
+      <BrowserRouter>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </BrowserRouter>
+    </>,
     document.getElementById('root')
   )
 }
