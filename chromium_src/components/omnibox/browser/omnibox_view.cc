@@ -20,6 +20,7 @@ class BraveOmniboxController : public OmniboxController {
   void StartAutocomplete(const AutocompleteInput& input) const override {
     auto* client = static_cast<BraveOmniboxClient*>(client_.get());
     if (!client->IsAutocompleteEnabled()) {
+      ClearPopupKeywordMode();
       return;
     }
 
