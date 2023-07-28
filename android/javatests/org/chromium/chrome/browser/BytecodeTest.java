@@ -172,6 +172,8 @@ public class BytecodeTest {
         Assert.assertTrue(
                 classExists("org/chromium/chrome/browser/sync/settings/ManageSyncSettings"));
         Assert.assertTrue(classExists(
+                "org/chromium/chrome/browser/password_manager/settings/PasswordAccessReauthenticationHelper")); // presubmit: ignore-long-line
+        Assert.assertTrue(classExists(
                 "org/chromium/chrome/browser/search_engines/settings/SearchEngineAdapter"));
         Assert.assertTrue(classExists(
                 "org/chromium/chrome/browser/search_engines/settings/SearchEngineSettings"));
@@ -871,6 +873,14 @@ public class BytecodeTest {
         Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/sync/settings/ManageSyncSettings",
                         "mSyncPaymentsIntegration"));
+        Assert.assertTrue(fieldExists(
+                "org/chromium/chrome/browser/sync/settings/ManageSyncSettings", "mSyncEverything"));
+        Assert.assertTrue(fieldExists(
+                "org/chromium/chrome/browser/password_manager/settings/PasswordAccessReauthenticationHelper", // presubmit: ignore-long-line
+                "mCallback"));
+        Assert.assertTrue(fieldExists(
+                "org/chromium/chrome/browser/password_manager/settings/PasswordAccessReauthenticationHelper", // presubmit: ignore-long-line
+                "mFragmentManager"));
         Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/toolbar/bottom/BottomControlsCoordinator",
                         "mMediator"));
@@ -1176,8 +1186,9 @@ public class BytecodeTest {
             if (f.getName().equals(fieldName)) {
                 if (checkTypes) {
                     if (fieldType != null && f.getType().equals(fieldType)) return true;
-                } else
+                } else {
                     return true;
+                }
             }
         }
         return false;
