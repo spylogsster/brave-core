@@ -49,4 +49,3 @@ static_assert(static_cast<int>(ContentSettingsType::NUM_TYPES) <
 #include "src/components/content_settings/core/browser/content_settings_uma_util.cc"
 
 #undef BRAVE_HISTOGRAM_VALUE_LIST
-
