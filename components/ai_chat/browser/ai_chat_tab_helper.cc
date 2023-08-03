@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/types/optional.h"
 #include "base/containers/contains.h"
 #include "base/containers/fixed_flat_set.h"
 #include "base/functional/bind.h"
@@ -219,8 +220,8 @@ void AIChatTabHelper::OnTabContentRetrieved(int64_t for_navigation_id,
   // Now that we have content, we can provide a summary on-demand. Add that to
   // suggested questions.
   // TODO(petemill): translation for this question
-  suggested_questions_.emplace_back(is_video_ ? "Summarize this video"
-                                              : "Summarize this page");
+  suggested_questions_.emplace_back(is_video_ ? "Summarize this video."
+                                              : "Summarize this page.");
   OnSuggestedQuestionsChanged();
   MaybeGenerateQuestions();
 }
@@ -450,11 +451,13 @@ std::string AIChatTabHelper::BuildLlama2Prompt(std::string user_message) {
     first_user_message = raw_first_user_message;
   }
 
+  std::string assistant_response_seed = "<assistant>{'response':";
+
   // If there's no conversation history, then we just send a (partial)
   // first sequence.
   if (conversation_history.size() == 0) {
     return BuildLlama2FirstSequence(system_message, first_user_message,
-                                    absl::nullopt, absl::nullopt);
+                                    absl::nullopt, assistant_response_seed);
   }
 
   // Use the first two messages to build the first sequence,
@@ -473,7 +476,8 @@ std::string AIChatTabHelper::BuildLlama2Prompt(std::string user_message) {
   }
 
   // Build the final subsequent exchange using the current turn.
-  prompt += BuildLlama2SubsequentSequence(user_message, absl::nullopt);
+  prompt +=
+      BuildLlama2SubsequentSequence(user_message, assistant_response_seed);
 
   // Trimming recommended by Meta
   // https://huggingface.co/meta-llama/Llama-2-13b-chat#intended-use
@@ -643,7 +647,7 @@ void AIChatTabHelper::MakeAPIRequestWithConversationHistoryUpdate(
                      weak_ptr_factory_.GetWeakPtr(), current_navigation_id_);
 
   is_request_in_progress_ = true;
-  ai_chat_api_->QueryPrompt(std::move(prompt), {"</response>"},
+  ai_chat_api_->QueryPrompt(std::move(prompt), {"</assistant>"},
                             std::move(data_completed_callback),
                             std::move(data_received_callback));
 }
