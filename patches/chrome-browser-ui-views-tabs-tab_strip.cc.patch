@@ -2,7 +2,7 @@ diff --git a/chrome/browser/ui/views/tabs/tab_strip.cc b/chrome/browser/ui/views
 index 0f249fd410247bc80abee4f5dc9ecdcd9bc9396f..b18a50ec27009a64a8debb9354ff5977b1510baf 100644
 --- a/chrome/browser/ui/views/tabs/tab_strip.cc
 +++ b/chrome/browser/ui/views/tabs/tab_strip.cc
-@@ -495,6 +495,7 @@ class TabStrip::TabDragContextImpl : public TabDragContext,
+@@ -496,6 +496,7 @@ class TabStrip::TabDragContextImpl : public TabDragContext,
  
    std::vector<gfx::Rect> CalculateBoundsForDraggedViews(
        const std::vector<TabSlotView*>& views) override {

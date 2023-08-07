@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/platform/BUILD.gn b/third_party/blink/renderer/platform/BUILD.gn
-index ef3439d07ad4202ee91c2fdb919d8324b5e5a4ba..7102ef32d8854a2d9b3d3c6c333ab346d74d83c0 100644
+index 489ce688e19151f5a0869b77b3a13d66a69abfc2..523d4163b09a81a871e915fc31639c3383ce2292 100644
 --- a/third_party/blink/renderer/platform/BUILD.gn
 +++ b/third_party/blink/renderer/platform/BUILD.gn
-@@ -1851,6 +1851,7 @@ component("platform") {
+@@ -1842,6 +1842,7 @@ component("platform") {
  
    configs -= [ "//build/config/compiler:default_symbols" ]
    configs += blink_symbols_config

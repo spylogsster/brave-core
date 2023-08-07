@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/themes/theme_service_factory.cc b/chrome/browser/themes/theme_service_factory.cc
-index ebf39789109595eb74c7b1f10f2e9d01f4c0b01a..f97aa7deeacf9bbaa2bd84306d9686b532fe57b5 100644
+index f4d6b0df004b61e783942a89d55010ce28d5dced..eac5455cf2a7fa74c205f6ac79bccc600091ca45 100644
 --- a/chrome/browser/themes/theme_service_factory.cc
 +++ b/chrome/browser/themes/theme_service_factory.cc
-@@ -102,6 +102,7 @@ ThemeServiceFactory::~ThemeServiceFactory() = default;
+@@ -103,6 +103,7 @@ ThemeServiceFactory::~ThemeServiceFactory() = default;
  
  KeyedService* ThemeServiceFactory::BuildServiceInstanceFor(
      content::BrowserContext* profile) const {

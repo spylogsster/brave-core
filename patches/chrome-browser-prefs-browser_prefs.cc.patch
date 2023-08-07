@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/prefs/browser_prefs.cc b/chrome/browser/prefs/browser_prefs.cc
-index 2fc5abfb9e9f0782b5ac03095c03a836d37c0376..ea935c7a76413daf835fd6642b7c8c877488b848 100644
+index 54f774cae56c1fbe14ee65d87a0bdc5d6bcb4805..3cc61245904df5c8a0b30839fd0443f269864caf 100644
 --- a/chrome/browser/prefs/browser_prefs.cc
 +++ b/chrome/browser/prefs/browser_prefs.cc
-@@ -1612,6 +1612,8 @@ void RegisterLocalState(PrefRegistrySimple* registry) {
+@@ -1621,6 +1621,8 @@ void RegisterLocalState(PrefRegistrySimple* registry) {
    DeviceOAuth2TokenStoreDesktop::RegisterPrefs(registry);
  #endif
  
@@ -11,7 +11,7 @@ index 2fc5abfb9e9f0782b5ac03095c03a836d37c0376..ea935c7a76413daf835fd6642b7c8c87
  #if BUILDFLAG(ENABLE_SCREEN_AI_SERVICE)
    screen_ai::RegisterLocalStatePrefs(registry);
  #endif  // BUILDFLAG(ENABLE_SCREEN_AI_SERVICE)
-@@ -2021,6 +2023,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
+@@ -2029,6 +2031,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
  #if BUILDFLAG(IS_CHROMEOS_ASH)
    registry->RegisterBooleanPref(kClearUserDataDir1Pref, false);
  #endif

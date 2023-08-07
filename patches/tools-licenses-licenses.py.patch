@@ -28,7 +28,7 @@ index 81dd367a1a3f0b59832406e97e3eb0b869741a34..9fdceb5333fd70890e76341349de4a4e
        # Add all subdirectories that are not marked for skipping.
        for dir in dirs:
          dirpath = os.path.join(path, dir)
-@@ -927,7 +930,8 @@ def GenerateCredits(file_template_file,
+@@ -941,7 +944,8 @@ def GenerateCredits(file_template_file,
        metadata = ParseDir(path,
                            _REPOSITORY_ROOT,
                            enable_warnings=enable_warnings)
