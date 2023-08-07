@@ -727,6 +727,7 @@ public abstract class BraveActivity extends ChromeActivity
                     new Intent(BraveActivity.this, BraveVpnProfileActivity.class);
             braveVpnProfileIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             braveVpnProfileIntent.putExtra(BraveVpnUtils.VERIFY_CREDENTIALS_FAILED, true);
+            braveVpnProfileIntent.setAction(Intent.ACTION_VIEW);
             startActivity(braveVpnProfileIntent);
         }
     }
@@ -1233,6 +1234,7 @@ public abstract class BraveActivity extends ChromeActivity
         Intent playlistActivityIntent = new Intent(context, PlaylistHostActivity.class);
         playlistActivityIntent.putExtra(ConstantUtils.PLAYLIST_ID, playlistId);
         playlistActivityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        playlistActivityIntent.setAction(Intent.ACTION_VIEW);
         context.startActivity(playlistActivityIntent);
     }
 
@@ -1331,6 +1333,7 @@ public abstract class BraveActivity extends ChromeActivity
         braveWalletIntent.putExtra(Utils.RESTART_WALLET_ACTIVITY_SETUP, setupAction);
         braveWalletIntent.putExtra(Utils.RESTART_WALLET_ACTIVITY_RESTORE, restoreAction);
         braveWalletIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        braveWalletIntent.setAction(Intent.ACTION_VIEW);
         startActivity(braveWalletIntent);
     }
 
@@ -1343,6 +1346,7 @@ public abstract class BraveActivity extends ChromeActivity
         Intent braveWalletIntent = new Intent(this, BraveWalletDAppsActivity.class);
         braveWalletIntent.putExtra("activityType", activityType.getValue());
         braveWalletIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        braveWalletIntent.setAction(Intent.ACTION_VIEW);
         startActivity(braveWalletIntent);
     }
 
