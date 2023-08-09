@@ -803,3 +803,14 @@
 -keep class org.chromium.chrome.browser.externalnav.BraveExternalNavigationHandler {
     public <init>(...);
 }
+
+-keep class org.chromium.chrome.browser.tasks.tab_groups.TabGroupModelFilter {
+    *** mIsResetting;
+    *** getRootId(...);
+    public <init>(...);
+}
+
+-keep class org.chromium.chrome.browser.tasks.tab_groups.BraveTabGroupModelFilter {
+    *** getRootId(...);
+    public <init>(...);
+}

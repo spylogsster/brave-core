@@ -354,6 +354,10 @@ public class BytecodeTest {
                 classExists("org/chromium/chrome/browser/contextmenu/ChromeContextMenuPopulator"));
         Assert.assertTrue(classExists(
                 "org/chromium/chrome/browser/contextmenu/BraveChromeContextMenuPopulator"));
+        Assert.assertTrue(
+                classExists("org/chromium/chrome/browser/tasks/tab_groups/TabGroupModelFilter"));
+        Assert.assertTrue(classExists(
+                "org/chromium/chrome/browser/tasks/tab_groups/BraveTabGroupModelFilter"));
     }
 
     @Test
@@ -518,6 +522,9 @@ public class BytecodeTest {
         Assert.assertTrue(
                 methodExists("org/chromium/chrome/browser/contextmenu/ChromeContextMenuPopulator",
                         "onItemSelected", true, boolean.class, int.class));
+        Assert.assertTrue(
+                methodExists("org/chromium/chrome/browser/tasks/tab_groups/TabGroupModelFilter",
+                        "getRootId", true, int.class, Tab.class));
     }
 
     @Test
@@ -577,6 +584,9 @@ public class BytecodeTest {
                         "isEnabled", true, boolean.class));
         Assert.assertTrue(methodExists("org/chromium/chrome/browser/tab/TabHelpers",
                 "initTabHelpers", true, void.class, Tab.class, Tab.class));
+        Assert.assertTrue(
+                methodExists("org/chromium/chrome/browser/tasks/tab_groups/TabGroupModelFilter",
+                        "getParentId", true, int.class, Tab.class));
         // NOTE: Add new checks above. For each new check in this method add proguard exception in
         // `brave/android/java/proguard.flags` file under `Add methods for invocation below`
         // section. Both test and regular apks should have the same exceptions.
@@ -1052,6 +1062,9 @@ public class BytecodeTest {
                 "mBookmarkManagerCoordinator"));
         Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/flags/CachedFlag", "mDefaultValue"));
+        Assert.assertFalse(
+                fieldExists("org/chromium/chrome/browser/tasks/tab_groups/TabGroupModelFilter",
+                        "mIsResetting"));
     }
 
     @Test
@@ -1137,6 +1150,9 @@ public class BytecodeTest {
                 "org/chromium/chrome/browser/incognito/reauth/BravePrivateTabReauthCoordinatorBase"));
         Assert.assertTrue(checkSuperName("org/chromium/chrome/browser/bookmarks/BookmarkModel",
                 "org/chromium/chrome/browser/bookmarks/BraveBookmarkBridge"));
+        Assert.assertTrue(
+                checkSuperName("org/chromium/chrome/browser/tasks/tab_groups/TabGroupModelFilter",
+                        "org/chromium/chrome/browser/tasks/tab_groups/BraveTabGroupModelFilter"));
     }
 
     private boolean classExists(String className) {
