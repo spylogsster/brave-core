@@ -24,6 +24,29 @@
 
 namespace brave_favicon {
 
+namespace {
+
+bool IsSquareImage(const gfx::Image& image) {
+  return !image.IsEmpty() && image.Width() == image.Height();
+}
+
+// Returns true if |image_a| is better than |image_b|. A value of false means
+// |image_a| is not better than |image_b|. Either image may be empty, if both
+// are empty false is returned.
+bool IsImageBetterThan(const gfx::Image& image_a, const gfx::Image& image_b) {
+  // Any image is better than an empty image.
+  if (!image_a.IsEmpty() && image_b.IsEmpty())
+    return true;
+
+  // Prefer square favicons as they will scale much better.
+  if (IsSquareImage(image_a) && !IsSquareImage(image_b))
+    return true;
+
+  return image_a.Width() > image_b.Width();
+}
+
+}  // namespace
+
 void BraveIOSWebFaviconDriver::SetMaximumFaviconImageSize(
     std::size_t max_image_width,
     std::size_t max_image_height) {
@@ -75,6 +98,10 @@ void BraveIOSWebFaviconDriver::OnFaviconUpdated(
     const GURL& icon_url,
     bool icon_url_changed,
     const gfx::Image& image) {
+  if (!IsImageBetterThan(image, GetFavicon())) {
+    return;
+  }
+  
   web::FaviconStatus favicon_status;
   favicon_status.valid = true;
   favicon_status.image = image;
