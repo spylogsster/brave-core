@@ -10,6 +10,7 @@
 #include "brave/browser/profiles/profile_util.h"
 #include "brave/browser/themes/brave_dark_mode_utils.h"
 #include "brave/browser/ui/color/brave_color_id.h"
+#include "brave/browser/ui/tabs/brave_tab_layout_constants.h"
 #include "brave/browser/ui/tabs/brave_tab_prefs.h"
 #include "brave/browser/ui/tabs/features.h"
 #include "brave/browser/ui/tabs/shared_pinned_tab_service.h"
@@ -37,10 +38,13 @@
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/base/metadata/metadata_impl_macros.h"
 #include "ui/compositor/layer.h"
+#include "ui/gfx/canvas.h"
 #include "ui/views/layout/flex_layout.h"
 
 BraveTabStrip::BraveTabStrip(std::unique_ptr<TabStripController> controller)
-    : TabStrip(std::move(controller)) {}
+    : TabStrip(std::move(controller)) {
+  SetPaintToLayer();
+}
 
 BraveTabStrip::~BraveTabStrip() = default;
 
@@ -74,43 +78,14 @@ bool BraveTabStrip::IsVerticalTabsFloating() const {
 }
 
 bool BraveTabStrip::ShouldDrawStrokes() const {
-  if (ShouldShowVerticalTabs()) {
-    // Prevent root view from drawing lines. For vertical tabs stroke , we
-    // ignore this method and always draw strokes in GetStrokeThickness().
-    return false;
-  }
-
-  if (!TabStrip::ShouldDrawStrokes()) {
-    return false;
-  }
-
-  // Use a little bit lower minimum contrast ratio as our ratio is 1.27979
-  // between default tab background and frame color of light theme.
-  // With upstream's 1.3f minimum ratio, strokes are drawn and it causes weird
-  // border lines in the tab group.
-  // Set 1.2797f as a minimum ratio to prevent drawing stroke.
-  // We don't need the stroke for our default light theme.
-  // NOTE: We don't need to check features::kTabOutlinesInLowContrastThemes
-  // enabled state. Although TabStrip::ShouldDrawStrokes() has related code,
-  // that feature is already expired since cr82. See
-  // chrome/browser/flag-metadata.json.
-  const SkColor background_color = TabStyle::Get()->GetTabBackgroundColor(
-      TabStyle::TabSelectionState::kActive, /*hovered=*/false,
-      /*frame_active*/ true, *GetColorProvider());
-  const SkColor frame_color =
-      controller_->GetFrameColor(BrowserFrameActiveState::kActive);
-  const float contrast_ratio =
-      color_utils::GetContrastRatio(background_color, frame_color);
-  return contrast_ratio < kBraveMinimumContrastRatioForOutlines;
+  // We never automatically draw strokes around tabs. For pinned tabs, we draw
+  // the stroke when generating the tab drawing path.
+  return false;
 }
 
 int BraveTabStrip::GetStrokeThickness() const {
-  if (ShouldShowVerticalTabs()) {
-    // Bypass checking ShouldDrawStrokes().
-    return 1;
-  }
-
-  return TabStrip::GetStrokeThickness();
+  // Stroke thickness for pinned tabs is always 1DIP.
+  return 1;
 }
 
 void BraveTabStrip::UpdateHoverCard(Tab* tab, HoverCardUpdateType update_type) {
@@ -163,6 +138,8 @@ void BraveTabStrip::MaybeStartDrag(
 void BraveTabStrip::AddedToWidget() {
   TabStrip::AddedToWidget();
 
+  UpdateTabStripMargins();
+
   if (BrowserView::GetBrowserViewForBrowser(GetBrowser())) {
     UpdateTabContainer();
   } else {
@@ -197,6 +174,8 @@ SkColor BraveTabStrip::GetTabSeparatorColor() const {
 
   bool dark_mode = dark_mode::GetActiveBraveDarkModeType() ==
                    dark_mode::BraveDarkModeType::BRAVE_DARK_MODE_TYPE_DARK;
+  // TODO(zenparsing): Do we need to update these values? In Figma for light
+  // mode, it's #A1ABBA66.
   return dark_mode ? SkColorSetRGB(0x39, 0x38, 0x38)
                    : SkColorSetRGB(0xBE, 0xBF, 0xBF);
 }
@@ -375,6 +354,25 @@ void BraveTabStrip::UpdateTabContainer() {
   }
 }
 
+void BraveTabStrip::UpdateTabStripMargins() {
+  gfx::Insets margins;
+
+  if (!ShouldShowVerticalTabs()) {
+    // There should be a medium size gap between the left edge of the tabstrip
+    // and the visual left edge of the first tab. Set a left margin that takes
+    // into account the visual tab inset.
+    margins.set_left(brave_tabs::kHorizontalTabStripLeftMargin -
+                     brave_tabs::kHorizontalTabInset);
+    DCHECK_GE(margins.left(), 0);
+
+    // Set a top margin to match the space under tabs (where the group underline
+    // is rendered), so that everything remains centered.
+    margins.set_top(brave_tabs::kHorizontalTabStripVerticalSpacing);
+  }
+
+  SetProperty(views::kMarginsKey, margins);
+}
+
 bool BraveTabStrip::ShouldShowVerticalTabs() const {
   return tabs::utils::ShouldShowVerticalTabs(GetBrowser());
 }
@@ -395,6 +393,15 @@ void BraveTabStrip::Layout() {
   }
 
   TabStrip::Layout();
+}
+
+void BraveTabStrip::OnPaintBackground(gfx::Canvas* canvas) {
+  ui::ColorId color_id = ShouldShowVerticalTabs() ? kColorToolbar
+                         : GetWidget()->ShouldPaintAsActive()
+                             ? kColorTabBackgroundInactiveFrameActive
+                             : kColorTabBackgroundInactiveFrameInactive;
+
+  canvas->DrawColor(GetColorProvider()->GetColor(color_id));
 }
 
 BEGIN_METADATA(BraveTabStrip, TabStrip)

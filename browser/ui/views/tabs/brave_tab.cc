@@ -155,12 +155,8 @@ void BraveTab::ActiveStateChanged() {
 }
 
 absl::optional<SkColor> BraveTab::GetGroupColor() const {
-  // Hide tab border with group color as it doesn't go well with vertical tabs.
-  if (tabs::utils::ShouldShowVerticalTabs(controller()->GetBrowser())) {
-    return {};
-  }
-
-  return Tab::GetGroupColor();
+  // Unlike upstream, tabs that are within a group are not given a border color.
+  return {};
 }
 
 void BraveTab::UpdateIconVisibility() {
@@ -288,8 +284,7 @@ bool BraveTab::IsAtMinWidthForVerticalTabStrip() const {
 }
 
 void BraveTab::UpdateShadowForActiveTab() {
-  if (IsActive() &&
-      tabs::utils::ShouldShowVerticalTabs(controller()->GetBrowser())) {
+  if (IsActive()) {
     shadow_layer_ = CreateShadowLayer();
     AddLayerToBelowThis();
     LayoutShadowLayer();

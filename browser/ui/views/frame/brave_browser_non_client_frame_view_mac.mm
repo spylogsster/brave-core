@@ -66,7 +66,9 @@ int BraveBrowserNonClientFrameViewMac::GetTopInset(bool restored) const {
     return 30;
   }
 
-  return BrowserNonClientFrameViewMac::GetTopInset(restored);
+  // The tab strip will maintain the necessary padding between the top of the
+  // frame and the top of tabs.
+  return 2;
 }
 
 bool BraveBrowserNonClientFrameViewMac::ShouldShowWindowTitleForVerticalTabs()

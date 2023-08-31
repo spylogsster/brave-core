@@ -10,15 +10,18 @@
 #include <utility>
 
 #include "brave/browser/ui/color/brave_color_id.h"
+#include "brave/components/vector_icons/vector_icons.h"
 #include "chrome/app/chrome_command_ids.h"
 #include "chrome/browser/ui/layout_constants.h"
 #include "chrome/browser/ui/views/tabs/new_tab_button.h"
 #include "chrome/browser/ui/views/tabs/tab_strip.h"
 #include "ui/gfx/geometry/skia_conversions.h"
+#include "ui/gfx/paint_vector_icon.h"
 #include "ui/gfx/scoped_canvas.h"
+#include "ui/views/view_class_properties.h"
 
 // static
-const gfx::Size BraveNewTabButton::kButtonSize{24, 24};
+const gfx::Size BraveNewTabButton::kButtonSize{28, 28};
 
 // static
 SkPath BraveNewTabButton::GetBorderPath(const gfx::Point& origin,
@@ -59,27 +62,20 @@ SkPath BraveNewTabButton::GetBorderPath(const gfx::Point& origin,
 
 BraveNewTabButton::BraveNewTabButton(TabStrip* tab_strip,
                                      PressedCallback callback)
-    : NewTabButton(tab_strip, std::move(callback)) {}
+    : NewTabButton(tab_strip, std::move(callback)) {
+  // Ensure that the new tab button is vertically centered within its flex
+  // layout container.
+  SetProperty(views::kCrossAxisAlignmentKey, views::LayoutAlignment::kCenter);
+}
 
 BraveNewTabButton::~BraveNewTabButton() = default;
 
 void BraveNewTabButton::PaintIcon(gfx::Canvas* canvas) {
-  gfx::ScopedCanvas scoped_canvas(canvas);
-  // Shim base implementation's painting
-  // Overriden to fix chromium assumption that border radius
-  // will be 50% of width.
-
-  // Incorrect offset that base class will use
-  const int chromium_offset = GetCornerRadius();
-
-  // Offset that we want to use
-  const int correct_h_offset = (GetContentsBounds().width() / 2);
-
-  // Difference
-  const int h_offset = correct_h_offset - chromium_offset;
-  canvas->Translate(gfx::Vector2d(h_offset, h_offset));
-
-  NewTabButton::PaintIcon(canvas);
+  // Instead of letting `NewTabButton` draw a "plus", paint a vector icon to the
+  // canvas in the center of the view.
+  gfx::Rect bounds = GetContentsBounds();
+  canvas->DrawImageInt(icon_, (bounds.width() - icon_.width()) / 2,
+                       (bounds.height() - icon_.height()) / 2);
 }
 
 void BraveNewTabButton::PaintFill(gfx::Canvas* canvas) const {
@@ -95,4 +91,16 @@ gfx::Insets BraveNewTabButton::GetInsets() const {
   // TabStripRegionView::UpdateNewTabButtonBorder() gives this button's inset.
   // So, adding more insets here is easy solution.
   return NewTabButton::GetInsets() + gfx::Insets::TLBR(0, 6, 0, 0);
+}
+
+void BraveNewTabButton::OnThemeChanged() {
+  NewTabButton::OnThemeChanged();
+
+  auto* color_provider = GetColorProvider();
+  CHECK(color_provider);
+
+  constexpr int kIconSize = 16;
+  icon_ = gfx::CreateVectorIcon(
+      kLeoPlusAddIcon, kIconSize,
+      color_provider->GetColor(kColorBraveVerticalTabHeaderButtonColor));
 }

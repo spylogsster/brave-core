@@ -10,6 +10,7 @@
 #include "third_party/skia/include/core/SkPath.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/gfx/image/image_skia.h"
 
 class TabStrip;
 namespace views {
@@ -51,6 +52,10 @@ class BraveNewTabButton : public NewTabButton {
                        float scale,
                        bool extend_to_top) const override;
   gfx::Insets GetInsets() const override;
+  void OnThemeChanged() override;
+
+ private:
+  gfx::ImageSkia icon_;
 };
 
 #endif  // BRAVE_BROWSER_UI_VIEWS_TABS_BRAVE_NEW_TAB_BUTTON_H_

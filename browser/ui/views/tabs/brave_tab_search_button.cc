@@ -8,8 +8,11 @@
 #include <algorithm>
 #include <memory>
 
+#include "brave/browser/ui/color/brave_color_id.h"
 #include "brave/browser/ui/views/brave_tab_search_bubble_host.h"
 #include "brave/browser/ui/views/tabs/brave_new_tab_button.h"
+#include "brave/browser/ui/views/tabs/vertical_tab_utils.h"
+#include "brave/components/vector_icons/vector_icons.h"
 #include "chrome/browser/ui/views/chrome_layout_provider.h"
 #include "chrome/browser/ui/views/tabs/new_tab_button.h"
 #include "chrome/browser/ui/views/tabs/tab_strip_controller.h"
@@ -29,12 +32,32 @@ BraveTabSearchButton::BraveTabSearchButton(TabStrip* tab_strip)
 BraveTabSearchButton::~BraveTabSearchButton() = default;
 
 gfx::Size BraveTabSearchButton::CalculatePreferredSize() const {
-  return BraveNewTabButton::kButtonSize;
+  auto size = BraveNewTabButton::kButtonSize;
+  auto insets = GetInsets();
+  size.Enlarge(insets.width(), insets.height());
+  return size;
 }
 
 void BraveTabSearchButton::SetBubbleArrow(views::BubbleBorder::Arrow arrow) {
   static_cast<BraveTabSearchBubbleHost*>(tab_search_bubble_host_.get())
       ->SetBubbleArrow(arrow);
+}
+
+void BraveTabSearchButton::UpdateColors() {
+  TabSearchButton::UpdateColors();
+
+  // Use a custom icon for tab search.
+  constexpr int kIconSize = 16;
+  SetImageModel(
+      views::Button::STATE_NORMAL,
+      ui::ImageModel::FromVectorIcon(
+          kLeoSearchIcon, kColorBraveVerticalTabHeaderButtonColor, kIconSize));
+  SetImageModel(views::Button::STATE_HOVERED, ui::ImageModel());
+  SetImageModel(views::Button::STATE_PRESSED, ui::ImageModel());
+
+  // Unset any backgrounds or borders.
+  SetBorder(nullptr);
+  SetBackground(nullptr);
 }
 
 int BraveTabSearchButton::GetCornerRadius() const {
