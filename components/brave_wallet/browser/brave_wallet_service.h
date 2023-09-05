@@ -252,6 +252,9 @@ class BraveWalletService : public KeyedService,
       const std::vector<std::string>& fevm_addresses,
       ConvertFEVMToFVMAddressCallback callback) override;
 
+  void GetAnkrSupportedChainIds(
+      GetAnkrSupportedChainIdsCallback callback) override;
+
   // BraveWalletServiceDelegate::Observer:
   void OnActiveOriginChanged(const mojom::OriginInfoPtr& origin_info) override;
 
