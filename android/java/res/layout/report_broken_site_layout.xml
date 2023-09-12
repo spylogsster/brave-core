@@ -30,7 +30,7 @@
         android:layout_marginBottom="14dp"
         android:text="@string/report_broken_site_text_1"/>
 
-    <TextView
+    <org.chromium.chrome.browser.custom_layout.ExpandableTextView
         android:id="@+id/report_site_url"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
