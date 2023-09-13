@@ -103,9 +103,7 @@ FilterListCatalogEntry::FilterListCatalogEntry(
     bool first_party_protections,
     uint8_t permission_mask,
     const std::string& component_id,
-    const std::string& base64_public_key,
-    const std::string& ios_component_id,
-    const std::string& ios_base64_public_key)
+    const std::string& base64_public_key)
     : uuid(uuid),
       url(url),
       title(title),
@@ -117,9 +115,7 @@ FilterListCatalogEntry::FilterListCatalogEntry(
       first_party_protections(first_party_protections),
       permission_mask(permission_mask),
       component_id(component_id),
-      base64_public_key(base64_public_key),
-      ios_component_id(ios_component_id),
-      ios_base64_public_key(ios_base64_public_key) {}
+      base64_public_key(base64_public_key) {}
 
 FilterListCatalogEntry::FilterListCatalogEntry(
     const FilterListCatalogEntry& other) = default;
@@ -150,10 +146,6 @@ void FilterListCatalogEntry::RegisterJSONConverter(
   converter->RegisterCustomValueField(
       "list_text_component", &FilterListCatalogEntry::base64_public_key,
       &GetBase64PublicKey);
-  converter->RegisterStringField("component_id",
-                                 &FilterListCatalogEntry::ios_component_id);
-  converter->RegisterStringField(
-      "base64_public_key", &FilterListCatalogEntry::ios_base64_public_key);
 }
 
 std::vector<FilterListCatalogEntry>::const_iterator FindAdBlockFilterListByUUID(

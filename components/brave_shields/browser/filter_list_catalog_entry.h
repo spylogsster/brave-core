@@ -36,9 +36,7 @@ class FilterListCatalogEntry {
                          bool first_party_protections,
                          uint8_t permission_mask,
                          const std::string& component_id,
-                         const std::string& base64_public_key,
-                         const std::string& ios_component_id,
-                         const std::string& ios_base64_public_key);
+                         const std::string& base64_public_key);
   explicit FilterListCatalogEntry(const FilterListCatalogEntry& other);
   ~FilterListCatalogEntry();
 
@@ -57,8 +55,6 @@ class FilterListCatalogEntry {
 
   std::string component_id;
   std::string base64_public_key;
-  std::string ios_component_id;
-  std::string ios_base64_public_key;
 
   static void RegisterJSONConverter(
       base::JSONValueConverter<FilterListCatalogEntry>*);

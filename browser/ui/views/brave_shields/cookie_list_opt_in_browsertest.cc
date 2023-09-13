@@ -129,7 +129,7 @@ class CookieListOptInBrowserTest : public InProcessBrowserTest {
         "Easylist-Cookie List - Filter Obtrusive Cookie Notices", {},
         "https://forums.lanik.us/", "Removes obtrusive cookie law notices",
         false, false, false, 0, kRegionalAdBlockComponentTestId,
-        kRegionalAdBlockComponentTest64PublicKey, "", "")};
+        kRegionalAdBlockComponentTest64PublicKey)};
     GetComponentServiceManager()->SetFilterListCatalog(filter_list_catalog);
   }
 

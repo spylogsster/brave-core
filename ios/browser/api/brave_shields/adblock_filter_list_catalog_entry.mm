@@ -22,8 +22,6 @@
 @property(nonatomic) uint8_t permissionMask;
 @property(nonatomic, copy) NSString* componentId;
 @property(nonatomic, copy) NSString* base64PublicKey;
-@property(nonatomic, copy) NSString* iosComponentId;
-@property(nonatomic, copy) NSString* iosBase64PublicKey;
 @end
 
 @implementation AdblockFilterListCatalogEntry
@@ -43,25 +41,8 @@
     self.permissionMask = entry.permission_mask;
     self.componentId = base::SysUTF8ToNSString(entry.component_id);
     self.base64PublicKey = base::SysUTF8ToNSString(entry.base64_public_key);
-    self.iosComponentId = base::SysUTF8ToNSString(entry.ios_component_id);
-    self.iosBase64PublicKey =
-        base::SysUTF8ToNSString(entry.ios_base64_public_key);
   }
   return self;
-}
-
-- (brave_shields::FilterListCatalogEntry)entry {
-  return brave_shields::FilterListCatalogEntry(
-      base::SysNSStringToUTF8(self.uuid), base::SysNSStringToUTF8(self.url),
-      base::SysNSStringToUTF8(self.title),
-      brave::ns_to_vector<std::string>(self.languages),
-      base::SysNSStringToUTF8(self.supportURL),
-      base::SysNSStringToUTF8(self.desc), self.hidden, self.defaultEnabled,
-      self.firstPartyProtections, self.permissionMask,
-      base::SysNSStringToUTF8(self.componentId),
-      base::SysNSStringToUTF8(self.base64PublicKey),
-      base::SysNSStringToUTF8(self.iosComponentId),
-      base::SysNSStringToUTF8(self.iosBase64PublicKey));
 }
 
 @end

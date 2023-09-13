@@ -11,15 +11,15 @@ TEST(AdBlockComponentServiceTest, UserModelLanguages) {
   catalog.push_back(brave_shields::FilterListCatalogEntry(
       "uuid", "https://brave.com", "Testing Filter List #1", {"fr"},
       "https://support.brave.com", "Filter list for testing purposes", false,
-      false, false, 0, "componentid", "base64publickey", "", ""));
+      false, false, 0, "componentid", "base64publickey"));
   catalog.push_back(brave_shields::FilterListCatalogEntry(
       "uuid", "https://brave.com", "Testing Filter List #2", {"en"},
       "https://support.brave.com", "Filter list for testing purposes", false,
-      false, false, 0, "componentid", "base64publickey", "", ""));
+      false, false, 0, "componentid", "base64publickey"));
   catalog.push_back(brave_shields::FilterListCatalogEntry(
       "uuid", "https://brave.com", "Testing Filter List #2", {"fr"},
       "https://support.brave.com", "Filter list for testing purposes", false,
-      false, false, 0, "componentid", "base64publickey", "", ""));
+      false, false, 0, "componentid", "base64publickey"));
 
   std::vector<std::string> languages({"fr", "fR", "fr-FR", "fr-ca"});
   std::for_each(
