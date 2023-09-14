@@ -4044,12 +4044,6 @@ If you don't accept this request, VPN will not reconnect and your internet conne
     <message name="IDS_MENU_BRAVE_LEO" desc="Brave AI menu item text">
       Brave Leo
     </message>
-    <message name="IDS_MORE_TEXT" desc="Generic more button text">
-      more
-    </message>
-    <message name="IDS_LESS_TEXT" desc="Generic less button text">
-      less
-    </message>
     <message name="IDS_ELLIP_TEXT" desc="Generic ellip text" translateable="false">
       ...
     </message>
