@@ -883,6 +883,8 @@ public class BytecodeTest {
         Assert.assertTrue(fieldExists(
                 "org/chromium/chrome/browser/ntp/NewTabPage", "mBrowserControlsStateProvider"));
         Assert.assertTrue(
+                fieldExists("org/chromium/chrome/browser/ChromeTabbedActivity", "mLayoutManager"));
+        Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/ntp/NewTabPage", "mNewTabPageLayout"));
         Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/ntp/NewTabPage", "mFeedSurfaceProvider"));
@@ -1023,6 +1025,9 @@ public class BytecodeTest {
         Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/omnibox/suggestions/AutocompleteMediator",
                         "mDropdownViewInfoListManager"));
+        Assert.assertTrue(
+                fieldExists("org/chromium/chrome/browser/omnibox/suggestions/AutocompleteMediator",
+                        "mDataProvider"));
         Assert.assertTrue(
                 fieldExists("org/chromium/chrome/browser/omnibox/suggestions/AutocompleteMediator",
                         "mContext"));
