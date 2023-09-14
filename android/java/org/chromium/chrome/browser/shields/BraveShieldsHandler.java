@@ -16,6 +16,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.text.SpannableString;
+import android.text.method.ScrollingMovementMethod;
 import android.text.style.StyleSpan;
 import android.util.Pair;
 import android.view.ContextThemeWrapper;
@@ -49,7 +50,6 @@ import org.chromium.chrome.browser.BraveRewardsHelper;
 import org.chromium.chrome.browser.BraveRewardsNativeWorker;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.brave_stats.BraveStatsUtil;
-import org.chromium.chrome.browser.custom_layout.ExpandableTextView;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.night_mode.GlobalNightModeStateProviderHolder;
 import org.chromium.chrome.browser.ntp_background_images.NTPBackgroundImagesBridge;
@@ -803,13 +803,9 @@ public class BraveShieldsHandler implements BraveRewardsHelper.LargeIconReadyCal
     }
 
     private void setUpReportBrokenSiteLayout() {
-        ExpandableTextView mReportSiteUrlText =
-                mReportBrokenSiteLayout.findViewById(R.id.report_site_url);
-        mReportSiteUrlText.post(
-                ()
-                        -> mReportSiteUrlText.makeExpandable(
-                                "There are many idiosyncratic typing styles in between novice–style hunt and peck and touch typing. For example, many hunt and peck typists have the keyboard layout memorized and are able to type while focusing their gaze on the screen. Some use just two fingers, while others use 3-6 fingers. Some use their fingers very consistently, with the same finger being used to type the same character every time, while others vary the way they use their fingers.",
-                                URL_SPEC_MAX_LINES));
+        TextView mReportSiteUrlText = mReportBrokenSiteLayout.findViewById(R.id.report_site_url);
+        mReportSiteUrlText.setText(mUrlSpec);
+        mReportSiteUrlText.setMovementMethod(new ScrollingMovementMethod());
 
         Button mCancelButton = mReportBrokenSiteLayout.findViewById(R.id.btn_cancel);
         mCancelButton.setOnClickListener(new View.OnClickListener() {
