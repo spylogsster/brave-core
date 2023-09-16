@@ -53,7 +53,10 @@ export function createWalletApiBase () {
       'CoingeckoId',
       'AutoPinEnabled',
       'SimpleHashSpamNFTs',
-      'LocalIPFSNodeStatus'
+      'LocalIPFSNodeStatus',
+      'EnsOffchainLookupEnabled',
+      'EnsAddress',
+      'SnsAddress',
     ],
     endpoints: ({ mutation, query }) => ({})
   })

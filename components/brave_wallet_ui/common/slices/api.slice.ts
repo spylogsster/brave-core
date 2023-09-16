@@ -110,6 +110,7 @@ import { coingeckoEndpoints } from './endpoints/coingecko-endpoints'
 import {
   tokenSuggestionsEndpoints //
 } from './endpoints/token_suggestions.endpoints'
+import { addressEndpoints } from './endpoints/address.endpoints';
 
 type GetAccountTokenCurrentBalanceArg = {
   accountId: BraveWallet.AccountId
@@ -2996,6 +2997,8 @@ export function createWalletApi () {
     .injectEndpoints({ endpoints: tokenSuggestionsEndpoints })
     // QR Code generator endpoints
     .injectEndpoints({ endpoints: qrCodeEndpoints })
+    // ENS, SNS, UD Address endpoints
+    .injectEndpoints({ endpoints: addressEndpoints })
 }
 
 export type WalletApi = ReturnType<typeof createWalletApi>
@@ -3119,7 +3122,14 @@ export const {
   useUpdateUnapprovedTransactionNonceMutation,
   useUpdateUnapprovedTransactionSpendAllowanceMutation,
   useUpdateUserAssetVisibleMutation,
-  useUpdateUserTokenMutation
+  useUpdateUserTokenMutation,
+  useEnableEnsOffchainLookupMutation,
+  useGetEnsAddressQuery,
+  useLazyGetEnsAddressQuery,
+  useGetSnsAddressQuery,
+  useGetIsBase58EncodedSolPubkeyQuery,
+  useGetUDAddressQuery,
+  useGetEthAddressChecksumQuery
 } = walletApi
 
 // Derived Data Queries
