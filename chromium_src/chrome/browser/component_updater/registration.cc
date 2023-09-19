@@ -24,6 +24,7 @@
 
 #include "brave/browser/brave_shields/https_everywhere_component_installer.h"
 #include "brave/components/brave_wallet/browser/wallet_data_files_installer.h"
+#include "brave/components/psst/psst_component_installer.h"
 #include "chrome/browser/browser_process.h"
 
 namespace component_updater {
@@ -33,6 +34,7 @@ void RegisterComponentsForUpdate() {
   ComponentUpdateService* cus = g_browser_process->component_updater();
   brave_wallet::RegisterWalletDataFilesComponent(cus);
   brave_shields::RegisterHTTPSEverywhereComponent(cus);
+  psst::RegisterPsstComponent(cus);
 }
 
 }  // namespace component_updater
