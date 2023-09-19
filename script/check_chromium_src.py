@@ -35,23 +35,53 @@ NORMAL_DEFINITIONS_REGEXP = r'#define[\s\\]+([a-zA-Z0-9_]+[^\s\(]*)(?:[ \t]+\\\s
 FUNCTION_LIKE_DEFINITIONS_REGEXP = r'#define[\s\\]+([a-zA-Z0-9_]+)[\s\\]*\(.*?\)(?:[ \t]+\\\s*|[ \t])([a-zA-Z0-9_]*[\s\\]*\(.*?\))'
 # pylint: enable=line-too-long
 
-EXCLUDES = [
-    '.*/BUILD.gn',
+RE_EXCLUDES = [
+    '.*\.cfg',
+    '.*\.clangd',
+    '.*\.gn',
+    '.*\.gni',
+    '.*\.info',
+    '.*\.xml',
     '.*/DEPS',
-    '.*/sources.gni',
-    'CPPLINT.cfg',
-    '_(unit|browser)test(_mac)?.(cc|mm)',
-    'base/feature_override.h',
-    'chrome/installer/linux/common/brave-browser/chromium-browser.appdata.xml',
-    'chrome/installer/linux/common/brave-browser/chromium-browser.info',
-    'chrome/installer/setup/brave_behaviors.cc',
-    'content/browser/tld_ephemeral_lifetime.cc',
-    'content/public/browser/tld_ephemeral_lifetime.h',
-    'third_party/blink/renderer/modules/storage/brave_dom_window_storage.h',
 ]
 
+# Please, keep in alphabetical case-insensitive order
+# pylint: disable=line-too-long
+PATH_EXCLUDES = [
+    'base/feature_override.h',
+    'chrome/browser/devtools/url_constants_unittest.cc',
+    'chrome/browser/history/history_utils_unittest.cc',
+    'chrome/browser/notifications/notification_handler_impl.h',
+    'chrome/browser/safe_browsing/download_protection/check_client_download_request_base_browsertest.cc',
+    'chrome/browser/shell_integration_unittest_mac.cc',
+    'chrome/browser/signin/account_consistency_disabled_unittest.cc',
+    'chrome/browser/ssl/https_only_mode_browsertest.cc',
+    'chrome/browser/ui/autofill/payments/brave_save_card_bubble_controller_impl_browsertest.cc',
+    'chrome/browser/ui/views/tabs/tab_hover_card_bubble_view_browsertest.cc',
+    'chrome/common/chrome_constants_unittest_mac.cc',
+    'chrome/installer/mini_installer/brave_mini_installer_unittest.cc',
+    'chrome/installer/setup/brave_behaviors.cc',
+    'chrome/install_static/brave_install_details_unittest.cc',
+    'chrome/install_static/brave_install_modes_unittest.cc',
+    'chrome/install_static/brave_install_util_unittest.cc',
+    'chrome/install_static/brave_product_install_details_unittest.cc',
+    'chrome/install_static/brave_user_data_dir_win_unittest.cc',
+    'components/history/core/browser/sync/brave_typed_url_sync_bridge_unittest.cc',
+    'components/history/core/browser/sync/chromium_typed_url_sync_bridge_unittest.cc',
+    'components/privacy_sandbox/privacy_sandbox_settings_unittest.cc',
+    'components/search_engines/brave_template_url_prepopulate_data_unittest.cc',
+    'components/search_engines/brave_template_url_service_util_unittest.cc',
+    'components/variations/service/field_trial_unittest.cc',
+    'net/base/brave_proxy_string_util_unittest.cc',
+    'net/cookies/brave_canonical_cookie_unittest.cc',
+    'third_party/blink/renderer/modules/storage/brave_dom_window_storage.h',
+    'v8/include/DO NOT PUT FILES HERE',
+]
+# pylint: enable=line-too-long
+
 GRIT_EXCLUDES = [
-    '.*/DEPS'
+    '.*/DEPS',
+    '.*\.py',
 ]
 
 GRIT_INCLUDES = []
@@ -256,6 +286,29 @@ def filter_chromium_src_filepaths(include_regexp=None, exclude_regexp=None):
     return result
 
 
+def validate_exclusions(paths):
+    """
+    Validate the each path listed in exclusions paths is still a valid path.
+    Otherwise the developer who removed the excluded file should also remove
+    it from the exclusions list.
+    """
+    result = True
+    print("--------------------------------------------------")
+    print("Validating exclusions...")
+    print("--------------------------------------------------")
+    for path in paths:
+        full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
+        if not os.path.exists(full_path):
+            print("ERROR: Path listed in exclusions cannot be found: " +
+                  f"chromium_src/{path}")
+            print("       If the file was removed then also remove it from" +
+                  " the exclusions list of this script.")
+            print("-------------------------")
+            result = False
+    if result: print("OK.")
+    return result
+
+
 def main(args):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('build',
@@ -280,12 +333,15 @@ def main(args):
             print(f"ERROR: {directory} is not a valid directory.")
             return 1
 
+    # Check non-RE exclusions
+    ok = validate_exclusions(PATH_EXCLUDES)
+
     # Change into the chromium_src directory for convenience.
     os.chdir(BRAVE_CHROMIUM_SRC)
 
     # Check non-GRIT overrides.
     src_overrides = filter_chromium_src_filepaths(
-        exclude_regexp='|'.join(EXCLUDES + GRIT_INCLUDES +
+        exclude_regexp='|'.join(RE_EXCLUDES + PATH_EXCLUDES + GRIT_INCLUDES +
                                 ['python_modules|.*grit.*']))
     do_check_overrides(src_overrides, CHROMIUM_SRC, True, gen_buildir)
 
@@ -294,7 +350,7 @@ def main(args):
         include_regexp='|'.join(GRIT_INCLUDES + ['.*grit.*']),
         exclude_regexp='|'.join(GRIT_EXCLUDES))
     do_check_overrides(grit_overrides, gen_buildir, False)
-    return 0
+    return 0 if ok else 1
 
 
 if __name__ == '__main__':
