@@ -104,7 +104,7 @@ impl<O: OutputSink> SpeedReaderReadability<O> {
                 theme: None,
                 font_family: None,
                 font_size: None,
-                content_style: None,                
+                content_style: None,
                 parser: Some(parser),
                 url,
                 output_sink,
