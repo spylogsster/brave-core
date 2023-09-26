@@ -84,6 +84,60 @@ GRIT_EXCLUDES = [
 
 GRIT_INCLUDES = []
 
+# pylint: disable=line-too-long
+SYMBOL_EXCLUDES = {
+    'base/trace_event/builtin_categories.h': [
+        'BRAVE_INTERNAL_TRACE_LIST_BUILTIN_CATEGORIES'
+    ],
+    'build/buildflag.h': [
+        'IF_BUILDFLAG',
+        'IF_BUILDFLAG_IMPL',
+        'IF_BUILDFLAG_IMPL_0',
+        'IF_BUILDFLAG_IMPL_1',
+        'IF_BUILDFLAG_IMPL_CAT',
+    ],
+    'chrome/browser/bookmarks/android/bookmark_bridge.cc': [
+        'BraveBookmarkBridge'
+    ],
+    'chrome/browser/browsing_data/chrome_browsing_data_remover_delegate.cc': [
+        'CHROME_BROWSER_WEB_APPLICATIONS_COMMANDS_CLEAR_BROWSING_DATA_COMMAND_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_UTILS_H_'
+    ],
+    'chrome/browser/chrome_content_browser_client.cc': [
+        'CHROME_BROWSER_WEB_APPLICATIONS_POLICY_WEB_APP_POLICY_MANAGER_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_SYSTEM_WEB_APPS_SYSTEM_WEB_APP_MANAGER_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_REGISTRAR_H_'
+    ],
+    'chrome/browser/prefs/browser_prefs.cc': [
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_'
+    ],
+    'chrome/browser/sync/chrome_sync_client.cc': [
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_SYNC_BRIDGE_H_'
+    ],
+    'chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc': [
+        'CHROME_BROWSER_WEB_APPLICATIONS_SYSTEM_WEB_APPS_SYSTEM_WEB_APP_MANAGER_H_',
+        'CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_'
+    ],
+    'chrome/browser/ui/webui/favicon_source.cc': [
+        'BRAVE_CHROMIUM_SRC_EXTENSIONS_COMMON_CONSTANTS_H_',
+        'CHROME_BROWSER_SEARCH_INSTANT_SERVICE_H_',
+        'EXTENSIONS_BROWSER_EXTENSION_REGISTRY_H_',
+        'EXTENSIONS_COMMON_CONSTANTS_H_',
+        'EXTENSIONS_COMMON_MANIFEST_H_'
+    ],
+    'chrome/installer/mini_installer/appid.h': [
+        'CHROME_INSTALLER_MINI_INSTALLER_APPID_H_'
+    ],
+    'sandbox/win/src/interceptors_64.h': [
+        'TargetGetModuleFileNameExA64',
+        'TargetGetModuleFileNameExW64'
+    ],
+    'v8/src/builtins/builtins-utils.h': ['BUILTIN'],
+}
+# pylint: enable=line-too-long
 
 def do_check_includes(override_filepath):
     """
@@ -233,11 +287,17 @@ def do_check_defines(override_filepath, original_filepath):
         for match in matches:
             target = match['value'][0]
 
-            # Skip header guard defines
+            # Skip header guard defines.
             if (override_filepath.endswith(".h") and
                  is_header_guard_define(override_filepath, target)):
                 continue
 
+            # Skip excluded defines.
+            if (override_filepath in SYMBOL_EXCLUDES and
+                target in SYMBOL_EXCLUDES[override_filepath]):
+                continue
+
+            # Check if the symbol is used internally in the override.
             err_count, used_internally = validate_define(
                 override_filepath, content, target)
             error_count += err_count
@@ -354,7 +414,40 @@ def filter_chromium_src_filepaths(include_regexp=None, exclude_regexp=None):
     return result
 
 
-def validate_exclusions(paths):
+def validate_exclusion_path(path):
+    """
+    Validates that the exclusion file path exists.
+    """
+    full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
+    if not os.path.exists(full_path):
+        print("ERROR: Path listed in exclusions cannot be found: " +
+              f"chromium_src/{path}")
+        print("       If the file was removed then also remove it from" +
+              " the exclusions list of this script.")
+        print("-------------------------")
+        return False
+    return True
+
+
+def validate_exclusion_symbol(path, symbol):
+    """
+    Validates that a symbol specified in exclusions exists in the file.
+    """
+    full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
+    with open(path, mode='r', encoding='utf-8') as file:
+        pattern = rf'^(.*\b{symbol}\b.*)$'
+        content = strip_comments(file.read())
+        if re.search(pattern, content, re.MULTILINE) is None:
+            print(f"ERROR: Symbol {symbol} listed in exclusions for override " +
+                  f"chromium_src/{path} cannot be found.")
+            print("       If the symbol was removed then also remove it from" +
+                  " the exclusions list of this script.")
+            print("-------------------------")
+            return False
+    return True
+
+
+def validate_exclusions(path_excludes, symbols_excludes):
     """
     Validate the each path listed in exclusions paths is still a valid path.
     Otherwise the developer who removed the excluded file should also remove
@@ -364,15 +457,17 @@ def validate_exclusions(paths):
     print("--------------------------------------------------")
     print("Validating exclusions...")
     print("--------------------------------------------------")
-    for path in paths:
-        full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
-        if not os.path.exists(full_path):
-            print("ERROR: Path listed in exclusions cannot be found: " +
-                  f"chromium_src/{path}")
-            print("       If the file was removed then also remove it from" +
-                  " the exclusions list of this script.")
-            print("-------------------------")
+    for path in path_excludes:
+        if not validate_exclusion_path(path):
             error_count += 1
+
+    for path, symbols in symbols_excludes.items():
+        if not validate_exclusion_path(path):
+            error_count += 1
+            for symbol in symbols:
+                if not validate_exclusion_symbol(path, symbol):
+                    error_count += 1
+
     if not error_count:
         print("OK.")
     return error_count
@@ -403,7 +498,7 @@ def main(args):
             return 1
 
     # Check non-RE exclusions
-    error_count = validate_exclusions(PATH_EXCLUDES)
+    error_count = validate_exclusions(PATH_EXCLUDES, SYMBOL_EXCLUDES)
 
     # Change into the chromium_src directory for convenience.
     os.chdir(BRAVE_CHROMIUM_SRC)
