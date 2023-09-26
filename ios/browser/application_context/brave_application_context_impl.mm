@@ -12,6 +12,7 @@
 #include "brave/components/brave_component_updater/browser/brave_component.h"
 #include "brave/components/brave_component_updater/browser/brave_component_updater_delegate.h"
 #include "brave/components/brave_component_updater/browser/local_data_files_service.h"
+#include "brave/components/debounce/browser/core/debounce_component_installer.h"
 #include "brave/components/url_sanitizer/browser/url_sanitizer_component_installer.h"
 #include "ios/chrome/browser/shared/model/application_context/application_context.h"
 
@@ -57,6 +58,16 @@ BraveApplicationContextImpl::url_sanitizer_component_installer() {
             local_data_files_service());
   }
   return url_sanitizer_component_installer_.get();
+}
+
+debounce::DebounceComponentInstaller*
+BraveApplicationContextImpl::debounce_component_installer() {
+  if (!debounce_component_installer_) {
+    debounce_component_installer_ =
+        std::make_unique<debounce::DebounceComponentInstaller>(
+            local_data_files_service());
+  }
+  return debounce_component_installer_.get();
 }
 
 void BraveApplicationContextImpl::StartBraveServices() {
