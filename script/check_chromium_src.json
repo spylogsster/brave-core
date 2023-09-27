@@ -44,10 +44,6 @@
             "v8/include/DO NOT PUT FILES HERE"
         ]
     },
-    "GRIT_INCLUDES": {
-        "_comment_": "These are grit files that do not reside under /grit/ paths",
-        "values": []
-    },
     "SYMBOL_EXCLUDES": {
         "_comment_": "These symbols found in associated paths will be ignored.",
         "values": {

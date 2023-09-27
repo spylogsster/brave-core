@@ -8,7 +8,7 @@
 # This script looks for problems in chromium_src.
 #
 # 1. Look for files in chromium_src that don't have a corresponding
-#    file under src tree (or grit).
+#    file under src tree (or gen).
 #
 # 2. Look for #defines that redefine symbols that aren't present in
 #    the overridden file.
@@ -36,110 +36,15 @@ NORMAL_DEFINITIONS_REGEXP = r'^#define[\s\\]+([a-zA-Z0-9_]+[^\s\(]*)(?:[ \t]+\\\
 FUNCTION_LIKE_DEFINITIONS_REGEXP = r'^#define[\s\\]+([a-zA-Z0-9_]+)[\s\\]*\(.*?\)(?:[ \t]+\\\s*|[ \t])?([a-zA-Z0-9_]*[\s\\]*\(.*?\))?'
 # pylint: enable=line-too-long
 
-def do_check_includes(override_filepath):
-    """
-    Errors if |override_filepath| uses relative includes and also checks
-    src/ and ../gen-prefixed includes for naming consistency between the
-    original and the override.
-    """
-    error_count = 0
-    with open(override_filepath, mode='r', encoding='utf-8') as override_file:
-        normalized_override_filepath = override_filepath.replace('\\', '/')
-        override_filename = os.path.basename(override_filepath)
-
-        for line in override_file:
-            # Check src/-prefixed includes
-            regexp = r'^#include "src/(.*)"'
-            line_match = re.search(regexp, line)
-            if line_match:
-                if line_match.group(1) != normalized_override_filepath:
-                    # Check for v8 overrides, they can have includes starting
-                    # with src.
-                    if normalized_override_filepath.startswith("v8/src"):
-                        continue
-                    print(f"ERROR: {override_filepath} uses a src/-prefixed" +
-                          " include that doesn't point to the expected file:")
-                    print(f"       Include: {line}" +
-                          "       Expected include target: src/" +
-                          f"{normalized_override_filepath}")
-                    print("-------------------------")
-                    error_count += 1
-                continue
-            gen_regexp = r'^#include "../gen/(.*)"'
-            line_match = re.search(gen_regexp, line)
-            if line_match:
-                if line_match.group(1) != normalized_override_filepath:
-                    print(f"ERROR: {override_filepath} uses a ../gen/" +
-                          "-prefixed include that doesn't point to the " +
-                          "expected file:")
-                    print(f"       Include: {line}" +
-                          "       Expected include target: ../gen/" +
-                          f"{normalized_override_filepath}")
-                    print("-------------------------")
-                    error_count += 1
-                continue
-
-            # Check for relative includes.
-            regexp = rf'^#include "(\.\./.*{override_filename})"'
-            line_match = re.search(regexp, line)
-            if not line_match:
-                continue
-
-            print(f"ERROR: {override_filepath} uses a relative include:\n" +
-                  f"       {line}" +
-                  "       Switch to using a src/-prefixed include instead.")
-            print("-------------------------")
-            error_count += 1
-    return error_count
-
 
 def strip_comments(content):
     """
     Strips comments from c++ file content
     """
-    MULTILINE_COMMENT_REGEX=r'(/\*([\s\S]*?)\*/)'
-    ONE_LINE_COMMENT_REGEX=r'(\s*//.*$)'
+    MULTILINE_COMMENT_REGEX = r'(/\*([\s\S]*?)\*/)'
+    ONE_LINE_COMMENT_REGEX = r'(\s*//.*$)'
     stripped = re.sub(MULTILINE_COMMENT_REGEX, '', content, flags=re.MULTILINE)
     return re.sub(ONE_LINE_COMMENT_REGEX, '', stripped, flags=re.MULTILINE)
-
-
-def validate_define(override_filepath, content, target):
-    """
-    Validates that defined symbol has a corresponding #undef and checks if the
-    symbol is used internally in the override file.
-    """
-    found = {'def_position': -1, 'undef_position': False, 'other': False}
-    pattern = rf'^(.*\b{target}\b.*)$'
-    matches = re.finditer(pattern, content, re.MULTILINE)
-    for match in matches:
-        line = match.group()
-        if re.match(rf'^#define[\s\\]+{target}', line):
-            # Found #define of the target
-            found['def_position'] = match.start()
-        elif (re.match(rf'^#undef[\s\\]+{target}', line) and
-               found['def_position'] >= 0 and
-                 match.start() > found['def_position']):
-            # Found #undef of the target
-            found['undef_position'] = True
-        else:
-            # Found internal use of the target
-            found['other'] = True
-
-    error_count = 0
-    if found['def_position'] == -1:
-        print(f"SCRIPT ERROR: Expected to find #define {target} in " +
-              f"{override_filepath}.")
-        print("-------------------------")
-        error_count = 1
-    if not found['undef_position']:
-        print(
-            f"ERROR: Expected to find #undef {target} in {override_filepath}.")
-        if override_filepath.endswith('.h'):
-            print("       If this symbol is intended to propagate beyond this" +
-                  " header then add it to exceptions in this script.")
-        print("-------------------------")
-        error_count += 1
-    return (error_count, found['other'])
 
 
 def is_header_guard_define(override_filepath, target):
@@ -147,124 +52,10 @@ def is_header_guard_define(override_filepath, target):
     Checks if the target define is the header guard for the override file path
     """
     guard_string = ("BRAVE_CHROMIUM_SRC_" +
-                    override_filepath.
-                    replace('\\', '/').
-                    replace('/', '_').
-                    replace('-', '_').
-                    replace('.', '_').
-                    upper() + "_")
+                    override_filepath.replace('\\', '/').replace(
+                        '/', '_').replace('-', '_').replace('.', '_').upper() +
+                    "_")
     return target == guard_string
-
-
-def do_check_defines(override_filepath, original_filepath, symbol_excludes):
-    """
-    Finds `#define TARGET REPLACEMENT` statements in |override_filepath| and
-    attempts to find the <TARGET> in the |original_filepath|.
-    """
-    error_count = 0
-    with open(override_filepath, mode='r', encoding='utf-8') as override_file:
-        content = strip_comments(override_file.read())
-        matches = []
-
-        # Search for all matches for normal definitions
-        # e.g. #define FooBar FooBar_ChromiumImpl
-        normal_matches = re.findall(NORMAL_DEFINITIONS_REGEXP, content,
-                                    flags=re.MULTILINE)
-        matches += [{'value': m, 'is_func': False} for m in normal_matches]
-
-        # Search for all matches for function-like definitions
-        # e.g. #define FooBar(P1, P2) FooBar_ChromiumImpl(P1, P2, p3)
-        function_matches = re.findall(FUNCTION_LIKE_DEFINITIONS_REGEXP,
-                                      content, flags=re.MULTILINE)
-        matches += [{'value': m, 'is_func': True} for m in function_matches]
-
-        if not matches:
-            return error_count
-
-        for match in matches:
-            target = match['value'][0]
-
-            # Skip header guard defines.
-            if (override_filepath.endswith(".h") and
-                 is_header_guard_define(override_filepath, target)):
-                continue
-
-            # Skip excluded defines.
-            if (override_filepath in symbol_excludes and
-                target in symbol_excludes[override_filepath]):
-                continue
-
-            # Check if the symbol is used internally in the override.
-            err_count, used_internally = validate_define(
-                override_filepath, content, target)
-            error_count += err_count
-
-            # Adjust target name for BUILDFLAG_INTERNAL_*() cases for
-            # function-like matches.
-            if match['is_func'] and target.startswith('BUILDFLAG_INTERNAL_'):
-                buildflag_match = re.search(
-                    r'BUILDFLAG_INTERNAL_(\S*)', target)
-                target = buildflag_match.group(1)
-
-            # Report ERROR if target can't be found in the original file.
-            with open(original_filepath, mode='r', encoding='utf-8') as \
-                original_file:
-                if target not in strip_comments(original_file.read()):
-                    if not used_internally:
-                        print(f"ERROR: Unable to find symbol {target}" +
-                              f" in {original_filepath}")
-                        print("-------------------------")
-                        error_count += 1
-                    else:
-                        print(f"INFO: Ignoring symbol {target}:")
-                        print("      Symbol is used internally in " +
-                              "chromium_src/" +
-                              override_filepath.replace('\\', '/'))
-                        print(f"      Symbol is NOT found in " +
-                              f"{original_filepath}.")
-                        print("-------------------------")
-    return error_count
-
-
-def do_check_overrides(overrides_list,
-                       search_dir,
-                       symbol_excludes,
-                       gen_dir=None):
-    """
-    Checks that each path in the passed in list |overrides_list| exists in
-    the passed in directory (|search_dir|), optionally checking includes too.
-    """
-    error_count = 0
-    print("--------------------------------------------------")
-    print(f"Checking overrides in {search_dir} ...")
-    print("--------------------------------------------------")
-    for override_filepath in overrides_list:
-        original_filepath_found = False
-        original_filepath = os.path.join(search_dir, override_filepath)
-        if not os.path.isfile(original_filepath):
-            if gen_dir is not None:
-                gen_filepath = os.path.join(gen_dir, override_filepath)
-                if os.path.isfile(gen_filepath):
-                    original_filepath = gen_filepath
-                    original_filepath_found = True
-        else:
-            original_filepath_found = True
-        if not original_filepath_found:
-            print(f"ERROR: No source for override {override_filepath}")
-            print("       If this is not a true override, then add the path" +
-                  " to the PATH_EXCLUDES in check_chromium_src.json.")
-            print("       Otherwise, the upstream file is gone and a fix is" +
-                  " required.")
-            print("-------------------------")
-            error_count += 1
-            continue
-
-        error_count += do_check_defines(override_filepath, original_filepath,
-                                        symbol_excludes)
-        error_count += do_check_includes(override_filepath)
-    if not error_count:
-        print("OK.")
-    return error_count
 
 
 def get_generated_builddir(build, target_os=None, target_arch=None):
@@ -277,12 +68,41 @@ def get_generated_builddir(build, target_os=None, target_arch=None):
     return os.path.join(CHROMIUM_SRC, 'out', build_dirname, 'gen')
 
 
-def filter_chromium_src_filepaths(include_regexp=None, exclude_regexp=None):
+def filter_single_chromium_src_filepath(normalized_path, exclude_regexp=None):
+    """
+    Checks if the path should be filtered out.
+    """
+    return (exclude_regexp is not None
+            and re.search(exclude_regexp, normalized_path) is not None)
+
+
+def filter_chromium_src_filepaths(affected_paths, exclude_regexp=None):
+    """
+    Filters affected_paths according to the exclude_regexp.
+    """
+    result = []
+    for path in affected_paths:
+        # Strip the BRAVE_CHROMIUM_SRC prefix to match against the
+        # list of relative paths to be included and/or excluded
+        relative_path = path.replace(BRAVE_CHROMIUM_SRC, '')[1:]
+
+        # Normalize back slashes to forward slashes just in case we're in
+        # Windows before trying to match them against a regular expression.
+        normalized_path = relative_path.replace('\\', '/')
+
+        should_filter = filter_single_chromium_src_filepath(
+            normalized_path, exclude_regexp)
+        if not should_filter:
+            # Append the OS-dependent relative path instead of the normalized
+            # one as that's what functions using this list of paths expect.
+            result.append(relative_path)
+    return result
+
+
+def filter_all_chromium_src_filepaths(exclude_regexp):
     """
     Return a list of paths pointing to the files in |BRAVE_CHROMIUM_SRC|
-    after filtering the results according to the |include_regexp| and the
-    |exclude_regexp| regexp rules, where |include_regexp| takes precedence
-    over |exclude_regexp|.
+    after filtering out the exclusions.
     """
     result = []
     for dir_path, _dirnames, filenames in os.walk(BRAVE_CHROMIUM_SRC):
@@ -296,127 +116,394 @@ def filter_chromium_src_filepaths(include_regexp=None, exclude_regexp=None):
             # Normalize back slashes to forward slashes just in case we're in
             # Windows before trying to match them against a regular expression.
             normalized_path = relative_path.replace('\\', '/')
-            if include_regexp and not re.search(
-                include_regexp, normalized_path):
-                continue
-            if exclude_regexp and re.search(exclude_regexp, normalized_path):
-                continue
 
-            # Append the OS-dependent relative path instead of the normalized
-            # one as that's what functions using this list of paths expect.
-            result.append(relative_path)
-
+            should_filter = filter_single_chromium_src_filepath(
+                normalized_path, exclude_regexp)
+            if not should_filter:
+                # Append the OS-dependent relative path instead of the
+                # normalized one as that's what functions using this list of
+                # paths expect.
+                result.append(relative_path)
     return result
 
 
-def validate_exclusion_path(path):
+def is_gen_override(override_filepath):
     """
-    Validates that the exclusion file path exists.
+    Checks if the override path overrides a generated original source based
+    on whether it uses a ../gen-prefixed include.
     """
-    full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
-    if not os.path.exists(full_path):
-        print("ERROR: Path listed in check_chromium_src.json cannot be " +
-              f"found: chromium_src/{path}")
-        print("       If the file was removed then also remove it from" +
-              " the list in check_chromium_src.json")
-        print("-------------------------")
-        return False
-    return True
+    with open(override_filepath, mode='r', encoding='utf-8') as \
+        override_file:
+        normalized_override_filepath = override_filepath.replace('\\', '/')
+        gen_regexp = r'^#include "\.\./gen/(.*)"'
+
+        for line in override_file:
+            line_match = re.search(gen_regexp, line)
+            if (line_match
+                    and line_match.group(1) == normalized_override_filepath):
+                return True
+    return False
 
 
-def validate_exclusion_symbol(path, symbol):
-    """
-    Validates that a symbol specified in exclusions exists in the file.
-    """
-    full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
-    with open(path, mode='r', encoding='utf-8') as file:
-        pattern = rf'^(.*\b{symbol}\b.*)$'
-        content = strip_comments(file.read())
-        if re.search(pattern, content, re.MULTILINE) is None:
-            print(f"ERROR: Symbol {symbol} listed in exclusions for override " +
-                  f"chromium_src/{path} cannot be found.")
-            print("       If the symbol was removed then also remove it from" +
-                  " the exclusions list in check_chromium_src.json.")
-            print("-------------------------")
+class ChromiumSrcOverridesChecker:
+    def __init__(self, gen_buildir):
+        self.gen_buildir = gen_buildir
+        self.messages = {'infos': [], 'warnings': [], 'errors': []}
+        self.overrides = []
+
+    def AddInfo(self, message):
+        self.messages['infos'].append("-------------------------\n" +
+                                      "[Info] chromium_src:\n" + message)
+
+    def AddWarning(self, message):
+        self.messages['warnings'].append("-------------------------\n" +
+                                         "[Warning] chromium_src:\n" + message)
+
+    def AddError(self, message):
+        self.messages['errors'].append("-------------------------\n" +
+                                       "[Error] chromium_src:\n" + message)
+
+    def do_check_includes(self, override_filepath, original_is_in_gen):
+        """
+        Checks if |override_filepath| uses relative includes and also checks
+        src/ and ../gen-prefixed includes for naming consistency between the
+        original and the override.
+        """
+        with open(override_filepath, mode='r', encoding='utf-8') as \
+            override_file:
+            normalized_override_filepath = override_filepath.replace('\\', '/')
+            override_filename = os.path.basename(override_filepath)
+            regexp = r'^#include "src/(.*)"'
+            gen_regexp = r'^#include "\.\./gen/(.*)"'
+            rel_regexp = rf'^#include "(\.\./.*{override_filename})"'
+
+            for line in override_file:
+                # Check src/-prefixed includes
+                line_match = re.search(regexp, line)
+                if line_match:
+                    if original_is_in_gen:
+                        self.AddError(
+                            f"  {override_filepath} overrides a generated " +
+                            "source file, but uses a src/-prefixed include." +
+                            "\n  A ../gen/-prefixed include should be used " +
+                            "instead.")
+                    elif line_match.group(1) != normalized_override_filepath:
+                        # Check for v8 overrides, they can have includes
+                        # starting with src.
+                        if normalized_override_filepath.startswith("v8/src"):
+                            continue
+                        self.AddError(
+                            f"  {override_filepath} uses a src/-prefixed" +
+                            " include that doesn't point to the expected" +
+                            " file:\n" + f"  Include: {line}\n" +
+                            "  Expected include target: src/" +
+                            f"{normalized_override_filepath}")
+                    continue
+
+                # Check ..gen/-prefixed includes
+                line_match = re.search(gen_regexp, line)
+                if line_match:
+                    if not original_is_in_gen:
+                        self.AddError(
+                            f"  {override_filepath} is not overriding a " +
+                            "generated source file, but uses a " +
+                            "../gen/-prefixed include.\n  A src/-prefixed " +
+                            "include should be used instead.")
+                    elif line_match.group(1) != normalized_override_filepath:
+                        self.AddError(
+                            f"  {override_filepath} uses a ../gen/-prefixed " +
+                            "include that doesn't point to the expected " +
+                            "file:\n" + f"  Include: {line}\n" +
+                            "  Expected include target: ../gen/" +
+                            f"{normalized_override_filepath}")
+                    continue
+
+                # Check for relative includes.
+                line_match = re.search(rel_regexp, line)
+                if not line_match:
+                    continue
+                self.AddError(
+                    f" {override_filepath} uses a relative include:\n" +
+                    f"  {line}\n" +
+                    "  Switch to using a src/-prefixed include instead.")
+
+    def validate_define(self, override_filepath, content, target):
+        """
+        Validates that defined symbol has a corresponding #undef and checks if
+        the symbol is used internally in the override file.
+        """
+        found = {'def_position': -1, 'undef': False, 'other': False}
+        pattern = rf'^(.*\b{target}\b.*)$'
+        matches = re.finditer(pattern, content, re.MULTILINE)
+        for match in matches:
+            line = match.group()
+            if re.match(rf'^#define[\s\\]+{target}', line):
+                # Found #define of the target
+                found['def_position'] = match.start()
+            elif re.match(rf'^#undef[\s\\]+{target}', line):
+                # Found #undef of the target
+                found['undef'] = (found['def_position'] >= 0
+                                  and match.start() > found['def_position'])
+            else:
+                # Found internal use of the target
+                found['other'] = True
+
+        if found['def_position'] == -1:
+            self.AddError(
+                f"  SCRIPT ERROR. Expected to find #define {target} " +
+                f"in {override_filepath}.")
+        if not found['undef']:
+            message = (
+                f"  Expected to find #undef {target} in {override_filepath}.")
+            if override_filepath.endswith('.h'):
+                message += ("\n  If this symbol is intended to " +
+                            "propagate beyond this header then add it to " +
+                            "exceptions in check_chromium_src.json.")
+            self.AddError(message)
+
+        return found['other']
+
+    def do_check_defines(self, override_filepath, original_filepath,
+                         symbol_excludes):
+        """
+        Finds `#define TARGET REPLACEMENT` statements in |override_filepath| and
+        attempts to find the <TARGET> in the |original_filepath|.
+        """
+        with open(override_filepath, mode='r', encoding='utf-8') as \
+            override_file:
+            content = strip_comments(override_file.read())
+            matches = []
+
+            # Search for all matches for normal definitions
+            # e.g. #define FooBar FooBar_ChromiumImpl
+            normal_matches = re.findall(NORMAL_DEFINITIONS_REGEXP,
+                                        content,
+                                        flags=re.MULTILINE)
+            matches += [{'value': m, 'is_func': False} for m in normal_matches]
+
+            # Search for all matches for function-like definitions
+            # e.g. #define FooBar(P1, P2) FooBar_ChromiumImpl(P1, P2, p3)
+            function_matches = re.findall(FUNCTION_LIKE_DEFINITIONS_REGEXP,
+                                          content,
+                                          flags=re.MULTILINE)
+            matches += [{'value': m, 'is_func': True} for m in function_matches]
+
+            if not matches:
+                return
+
+            for match in matches:
+                target = match['value'][0]
+
+                # Skip header guard defines.
+                if (override_filepath.endswith(".h")
+                        and is_header_guard_define(override_filepath, target)):
+                    continue
+
+                # Skip excluded defines.
+                if (override_filepath in symbol_excludes
+                        and target in symbol_excludes[override_filepath]):
+                    continue
+
+                # Check if the symbol is used internally in the override.
+                used_internally = self.validate_define(override_filepath,
+                                                       content, target)
+
+                # Adjust target name for BUILDFLAG_INTERNAL_*() cases for
+                # function-like matches.
+                if (match['is_func']
+                        and target.startswith('BUILDFLAG_INTERNAL_')):
+                    buildflag_match = re.search(r'BUILDFLAG_INTERNAL_(\S*)',
+                                                target)
+                    target = buildflag_match.group(1)
+
+                # Report ERROR if target can't be found in the original file.
+                with open(original_filepath, mode='r', encoding='utf-8') as \
+                    original_file:
+                    if target not in strip_comments(original_file.read()):
+                        if not used_internally:
+                            self.AddError(
+                                f"  Unable to find symbol {target}\n" +
+                                f"  in {original_filepath}")
+                        else:
+                            self.AddInfo(f"  Ignoring symbol {target}:\n" +
+                                         "  Symbol is used internally in " +
+                                         "chromium_src/" +
+                                         override_filepath.replace('\\', '/') +
+                                         "\n  Symbol is NOT found in " +
+                                         f"{original_filepath}.")
+
+    def do_check_overrides(self, symbol_excludes):
+        """
+        Checks that each path in the passed in list |overrides_list| exists in
+        the passed in directory (|search_dir|), also checks includes.
+        """
+        for override_filepath in self.overrides:
+            original_filepath_found = False
+            original_is_in_gen = False
+            original_filepath = os.path.join(CHROMIUM_SRC, override_filepath)
+            if not os.path.isfile(original_filepath):
+                if self.gen_buildir is None:
+                    # When invoked from presubmit there's no gen_dir, so we can
+                    # try to at least check that the include in the override is
+                    # consistent with overriding a generated file.
+                    if is_gen_override(override_filepath):
+                        self.AddWarning(
+                            f"  {override_filepath} overrides a generated " +
+                            "source file.\n  Existence of the original " +
+                            "source and redefined symbols cannot be " +
+                            f"verified.\n  Run {os.path.abspath(__file__)}\n" +
+                            "  script manually and pass output directory " +
+                            "(e.g. Debug) to verify this override.")
+                        continue
+                else:
+                    gen_filepath = os.path.join(self.gen_buildir,
+                                                override_filepath)
+                    if os.path.isfile(gen_filepath):
+                        original_filepath = gen_filepath
+                        original_filepath_found = True
+                        original_is_in_gen = True
+            else:
+                original_filepath_found = True
+            if not original_filepath_found:
+                self.AddError(
+                    f"  No source for override {override_filepath}.\n" +
+                    "  If this is not a true override, then add the " +
+                    "path to the PATH_EXCLUDES in check_chromium_src.json.\n" +
+                    "  Otherwise, the upstream file is gone and a fix " +
+                    "is required.")
+                continue
+
+            self.do_check_defines(override_filepath, original_filepath,
+                                  symbol_excludes)
+            self.do_check_includes(override_filepath, original_is_in_gen)
+
+    def validate_exclusion_symbol(self, path, symbol):
+        """
+        Validates that a symbol specified in exclusions exists in the file.
+        """
+        with open(path, mode='r', encoding='utf-8') as file:
+            pattern = rf'^(.*\b{symbol}\b.*)$'
+            content = strip_comments(file.read())
+            if re.search(pattern, content, re.MULTILINE) is None:
+                self.AddError(f"  Symbol {symbol} listed in exclusions for " +
+                              f"override chromium_src/{path} cannot be " +
+                              "found.\n  If the symbol was removed then " +
+                              "also remove it from the exclusions list in " +
+                              "check_chromium_src.json.")
+                return False
+        return True
+
+    def validate_exclusion_path(self, path):
+        """
+        Validates that the exclusion file path exists.
+        """
+        full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
+        if not os.path.isfile(full_path):
+            self.AddError(
+                "  Path listed in check_chromium_src.json cannot be " +
+                f"found: chromium_src/{path}.\n  If the file " +
+                "was removed then also remove it from the list in " +
+                "check_chromium_src.json")
             return False
-    return True
+        return True
 
+    def validate_exclusions(self, excludes):
+        """
+        Validate the each path listed in exclusions paths is still a valid path.
+        Otherwise the developer who removed the excluded file should also remove
+        it from the exclusions list.
+        """
+        result = True
+        for path in excludes['path_excludes']:
+            if not self.validate_exclusion_path(path):
+                result = False
 
-def validate_exclusions(excludes):
-    """
-    Validate the each path listed in exclusions paths is still a valid path.
-    Otherwise the developer who removed the excluded file should also remove
-    it from the exclusions list.
-    """
-    error_count = 0
-    print("--------------------------------------------------")
-    print("Validating exclusions...")
-    print("--------------------------------------------------")
-    for path in excludes['path_excludes']:
-        if not validate_exclusion_path(path):
-            error_count += 1
+        for path, symbols in excludes['symbol_excludes'].items():
+            if not self.validate_exclusion_path(path):
+                result = False
+                for symbol in symbols:
+                    if not self.validate_exclusion_symbol(path, symbol):
+                        result = False
 
-    for path in excludes['grit_includes']:
-        if not validate_exclusion_path(path):
-            error_count += 1
+        return result
 
-    for path, symbols in excludes['symbol_excludes'].items():
-        if not validate_exclusion_path(path):
-            error_count += 1
-            for symbol in symbols:
-                if not validate_exclusion_symbol(path, symbol):
-                    error_count += 1
+    def load_exclusions(self):
+        excludes = {
+            'result': True,
+            're_excludes': [],
+            'path_excludes': [],
+            'symbol_excludes': {}
+        }
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        exclusions_path = os.path.join(script_dir, 'check_chromium_src.json')
+        if not os.path.exists(exclusions_path):
+            self.AddError(
+                f"  Unable to load exclusions file {exclusions_path}.")
+            return excludes
 
-    if not error_count:
-        print("OK.")
-    return error_count
+        data = {}
+        with open(exclusions_path, "r", encoding='utf-8') as exclusions_file:
+            data = json.load(exclusions_file)
 
+        keys = ['RE_PATH_EXCLUDES', 'PATH_EXCLUDES', 'SYMBOL_EXCLUDES']
+        for key in keys:
+            if not key in data:
+                self.AddError(
+                    f"  Key '{key}' is missing from {exclusions_path}.")
+                excludes['result'] = False
+            else:
+                if not 'values' in data[key]:
+                    self.AddError(
+                        f"  Key 'values' is missing from '{key}' in " +
+                        f"{exclusions_path}.")
+                    excludes['result'] = False
 
-def load_exclusions():
-    excludes = {
-        'result': True,
-        're_excludes': [],
-        'path_excludes': [],
-        'grit_includes': [],
-        'symbol_excludes': {}
-     }
-    print("--------------------------------------------------")
-    print("Loading exclusions...")
-    print("--------------------------------------------------")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    exclusions_path = os.path.join(script_dir, 'check_chromium_src.json')
-    if not os.path.exists(exclusions_path):
-        print(f"ERROR: Unable to load exclusions file {exclusions_path}.")
-        print("-------------------------")
+        excludes['re_excludes'] = data['RE_PATH_EXCLUDES']['values']
+        excludes['path_excludes'] = data['PATH_EXCLUDES']['values']
+        excludes['symbol_excludes'] = data['SYMBOL_EXCLUDES']['values']
+
+        if not self.validate_exclusions(excludes):
+            excludes['result'] = False
+
         return excludes
 
-    data = {}
-    with open(exclusions_path, "r", encoding='utf-8') as exclusions_file:
-        data = json.load(exclusions_file)
+    def check_overrides(self, affected_paths=None):
+        # Load and check exclusions
+        excludes = self.load_exclusions()
+        if not excludes['result']:
+            return self.messages
 
-    keys = [
-        'RE_PATH_EXCLUDES', 'PATH_EXCLUDES', 'GRIT_INCLUDES', 'SYMBOL_EXCLUDES'
-    ]
-    for key in keys:
-        if not key in data:
-            print(f"ERROR: Key '{key}' is missing from {exclusions_path}.")
-            print("-------------------------")
-            excludes['result'] = False
+        # Change into the chromium_src directory for convenience.
+        os.chdir(BRAVE_CHROMIUM_SRC)
+
+        # Build filters
+        exclude_regexp = None
+        if (len(excludes['re_excludes']) > 0
+                or len(excludes['path_excludes']) > 0):
+            exclude_regexp = '|'.join(excludes['re_excludes'] +
+                                      excludes['path_excludes'])
+
+        # Build the list of files to check.
+        if affected_paths is None:
+            self.overrides = filter_all_chromium_src_filepaths(exclude_regexp)
         else:
-            if not 'values' in data[key]:
-                print(f"ERROR: Key 'values' is missing from '{key}' in " +
-                      f"{exclusions_path}.")
-                print("-------------------------")
-                excludes['result'] = False
+            self.overrides = filter_chromium_src_filepaths(
+                affected_paths, exclude_regexp)
 
-    excludes['re_excludes'] = data['RE_PATH_EXCLUDES']['values']
-    excludes['path_excludes'] = data['PATH_EXCLUDES']['values']
-    excludes['grit_includes'] = data['GRIT_INCLUDES']['values']
-    excludes['symbol_excludes'] = data['SYMBOL_EXCLUDES']['values']
-    return excludes
+        if len(self.overrides) == 0:
+            self.AddInfo("  Nothing to do.")
+            return self.messages
+
+        # Check overrides
+        self.do_check_overrides(excludes['symbol_excludes'])
+
+        return self.messages
 
 
 def main(args):
+    """
+    Parse command line args and check all overrides in chromium_src.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('build',
                         help='Build type (i.e. Component|Static|Debug|Release)',
@@ -440,35 +527,19 @@ def main(args):
             print(f"ERROR: {directory} is not a valid directory.")
             return 1
 
-    error_count = 0
+    messages = ChromiumSrcOverridesChecker(gen_buildir).check_overrides()
 
-    # Load and check exclusions
-    excludes = load_exclusions()
-    if not excludes['result']:
-        return 1
-    error_count += validate_exclusions(excludes)
+    for message in messages['infos']:
+        print(message)
+    for message in messages['warnings']:
+        print(message)
+    for message in messages['errors']:
+        print(message)
+    print(f"\n{len(messages['warnings'])} warning(s) found.")
+    num_errors = len(messages['errors'])
+    print(f"{num_errors} error(s) found.\n")
 
-    # Change into the chromium_src directory for convenience.
-    os.chdir(BRAVE_CHROMIUM_SRC)
-
-    # Check non-GRIT overrides.
-    src_overrides = filter_chromium_src_filepaths(
-        exclude_regexp='|'.join(
-            excludes['re_excludes'] + excludes['path_excludes'] + 
-            excludes['grit_includes'] + ['.*grit.*']))
-    error_count += do_check_overrides(src_overrides, CHROMIUM_SRC,
-                                      excludes['symbol_excludes'], gen_buildir)
-
-    # Check GRIT overrides.
-    grit_overrides = filter_chromium_src_filepaths(
-        include_regexp='|'.join(excludes['grit_includes'] + ['.*grit.*']),
-        exclude_regexp='|'.join(excludes['re_excludes']))
-    error_count += do_check_overrides(grit_overrides, gen_buildir,
-                                      excludes['symbol_excludes'])
-    if error_count:
-        print("--------------------------------------------------")
-        print(f"Found {error_count} error(s).")
-    return error_count
+    return num_errors
 
 
 if __name__ == '__main__':
