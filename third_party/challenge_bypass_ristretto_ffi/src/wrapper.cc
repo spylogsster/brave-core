@@ -5,35 +5,40 @@
 
 #include "brave/third_party/challenge_bypass_ristretto_ffi/src/wrapper.h"
 
-extern "C" {
-#include "brave/third_party/challenge_bypass_ristretto_ffi/src/lib.h"
-}
+#include <utility>
 
-// class TokenPreimage
 namespace challenge_bypass_ristretto {
-TokenPreimage::TokenPreimage(std::shared_ptr<C_TokenPreimage> raw) : raw(raw) {}
-TokenPreimage::TokenPreimage(const TokenPreimage& other) = default;
-TokenPreimage::~TokenPreimage() {}
 
+TokenPreimage::TokenPreimage(CxxTokenPreimageBox raw)
+    : raw_(base::MakeRefCounted<CxxTokenPreimageRefData>(std::move(raw))) {}
+
+TokenPreimage::TokenPreimage(const TokenPreimage&) = default;
+
+TokenPreimage& TokenPreimage::operator=(const TokenPreimage&) = default;
+
+TokenPreimage::TokenPreimage(TokenPreimage&&) noexcept = default;
+
+TokenPreimage& TokenPreimage::operator=(TokenPreimage&&) noexcept = default;
+
+TokenPreimage::~TokenPreimage() = default;
+
+// static
 base::expected<TokenPreimage, std::string> TokenPreimage::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_TokenPreimage> raw_preimage(
-      token_preimage_decode_base64((const uint8_t*)encoded.data(),
-                                   encoded.length()),
-      token_preimage_destroy);
-  if (raw_preimage == nullptr) {
-    return base::unexpected("Failed to decode token preimage");
+    const std::string& encoded) {
+  cbr_ffi::CxxTokenPreimageResult raw_preimage_result(
+      cbr_ffi::token_preimage_decode_base64(encoded));
+
+  if (!raw_preimage_result.result) {
+    return base::unexpected(
+        static_cast<std::string>(raw_preimage_result.error_message));
   }
-  return TokenPreimage(raw_preimage);
+
+  return TokenPreimage(
+      CxxTokenPreimageBox::from_raw(raw_preimage_result.result));
 }
 
 base::expected<std::string, std::string> TokenPreimage::encode_base64() const {
-  char* tmp = token_preimage_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode token preimage");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -45,83 +50,33 @@ bool TokenPreimage::operator!=(const TokenPreimage& rhs) const {
   return !(*this == rhs);
 }
 
-Token::Token(std::shared_ptr<C_Token> raw) : raw(raw) {}
-Token::Token(const Token& other) = default;
-Token::~Token() {}
+BlindedToken::BlindedToken(CxxBlindedTokenBox raw)
+    : raw_(base::MakeRefCounted<CxxBlindedTokenRefData>(std::move(raw))) {}
 
-base::expected<Token, std::string> Token::random() {
-  std::shared_ptr<C_Token> raw_token(token_random(), token_destroy);
-  if (raw_token == nullptr) {
-    return base::unexpected("Failed to generate random token");
-  }
-  return Token(raw_token);
-}
-
-base::expected<BlindedToken, std::string> Token::blind() {
-  std::shared_ptr<C_BlindedToken> raw_blinded(token_blind(raw.get()),
-                                              blinded_token_destroy);
-  if (raw_blinded == nullptr) {
-    return base::unexpected("Failed to blind");
-  }
-
-  return BlindedToken(raw_blinded);
-}
-
-base::expected<Token, std::string> Token::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_Token> raw_tok(
-      token_decode_base64((const uint8_t*)encoded.data(), encoded.length()),
-      token_destroy);
-  if (raw_tok == nullptr) {
-    return base::unexpected("Failed to decode token");
-  }
-  return Token(raw_tok);
-}
-
-base::expected<std::string, std::string> Token::encode_base64() const {
-  char* tmp = token_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode token");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
-  return base::ok(result);
-}
-
-bool Token::operator==(const Token& rhs) const {
-  return encode_base64() == rhs.encode_base64();
-}
-
-bool Token::operator!=(const Token& rhs) const {
-  return !(*this == rhs);
-}
-
-BlindedToken::BlindedToken(std::shared_ptr<C_BlindedToken> raw) : raw(raw) {}
-BlindedToken::BlindedToken(BlindedToken&& other) = default;
-BlindedToken& BlindedToken::operator=(BlindedToken&& other) = default;
 BlindedToken::BlindedToken(const BlindedToken& other) = default;
+
 BlindedToken& BlindedToken::operator=(const BlindedToken& other) = default;
-BlindedToken::~BlindedToken() {}
+
+BlindedToken::BlindedToken(BlindedToken&& other) noexcept = default;
+
+BlindedToken& BlindedToken::operator=(BlindedToken&& other) noexcept = default;
+
+BlindedToken::~BlindedToken() = default;
 
 base::expected<BlindedToken, std::string> BlindedToken::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_BlindedToken> raw_blinded(
-      blinded_token_decode_base64((const uint8_t*)encoded.data(),
-                                  encoded.length()),
-      blinded_token_destroy);
-  if (raw_blinded == nullptr) {
-    return base::unexpected("Failed to decode blinded token");
+    const std::string& encoded) {
+  cbr_ffi::CxxBlindedTokenResult raw_blinded_result(
+      cbr_ffi::blinded_token_decode_base64(encoded));
+
+  if (!raw_blinded_result.result) {
+    return base::unexpected(raw_blinded_result.error_message.c_str());
   }
-  return BlindedToken(raw_blinded);
+
+  return BlindedToken(CxxBlindedTokenBox::from_raw(raw_blinded_result.result));
 }
 
 base::expected<std::string, std::string> BlindedToken::encode_base64() const {
-  char* tmp = blinded_token_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode blinded token");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -133,29 +88,84 @@ bool BlindedToken::operator!=(const BlindedToken& rhs) const {
   return !(*this == rhs);
 }
 
-SignedToken::SignedToken(std::shared_ptr<C_SignedToken> raw) : raw(raw) {}
-SignedToken::SignedToken(const SignedToken& other) = default;
-SignedToken::~SignedToken() {}
+Token::Token(CxxTokenBox raw)
+    : raw_(base::MakeRefCounted<CxxTokenRefData>(std::move(raw))) {}
+
+Token::Token(const Token& other) = default;
+
+Token& Token::operator=(const Token& other) = default;
+
+Token::Token(Token&& other) noexcept = default;
+
+Token& Token::operator=(Token&& other) noexcept = default;
+
+Token::~Token() = default;
+
+// static
+base::expected<Token, std::string> Token::random() {
+  CxxTokenBox raw_token(cbr_ffi::token_random());
+  return Token(std::move(raw_token));
+}
+
+base::expected<BlindedToken, std::string> Token::blind() {
+  rust::Box<cbr_ffi::CxxBlindedToken> raw_blinded(raw()->token_blind());
+  return BlindedToken(std::move(raw_blinded));
+}
+
+// static
+base::expected<Token, std::string> Token::decode_base64(
+    const std::string& encoded) {
+  cbr_ffi::CxxTokenResult raw_token_result(
+      cbr_ffi::token_decode_base64(encoded));
+
+  if (!raw_token_result.result) {
+    return base::unexpected(raw_token_result.error_message.c_str());
+  }
+
+  return Token(CxxTokenBox::from_raw(raw_token_result.result));
+}
+
+base::expected<std::string, std::string> Token::encode_base64() const {
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
+  return base::ok(result);
+}
+
+bool Token::operator==(const Token& rhs) const {
+  return encode_base64() == rhs.encode_base64();
+}
+
+bool Token::operator!=(const Token& rhs) const {
+  return !(*this == rhs);
+}
+
+SignedToken::SignedToken(CxxSignedTokenBox raw)
+    : raw_(base::MakeRefCounted<CxxSignedTokenRefData>(std::move(raw))) {}
+
+SignedToken::SignedToken(const SignedToken&) = default;
+
+SignedToken& SignedToken::operator=(const SignedToken&) = default;
+
+SignedToken::SignedToken(SignedToken&&) noexcept = default;
+
+SignedToken& SignedToken::operator=(SignedToken&&) noexcept = default;
+
+SignedToken::~SignedToken() = default;
 
 base::expected<SignedToken, std::string> SignedToken::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_SignedToken> raw_signed(
-      signed_token_decode_base64((const uint8_t*)encoded.data(),
-                                 encoded.length()),
-      signed_token_destroy);
-  if (raw_signed == nullptr) {
-    return base::unexpected("Failed to decode signed token");
+    const std::string& encoded) {
+  cbr_ffi::CxxSignedTokenResult raw_signed_token_result(
+      cbr_ffi::signed_token_decode_base64(encoded));
+
+  if (!raw_signed_token_result.result) {
+    return base::unexpected(raw_signed_token_result.error_message.c_str());
   }
-  return SignedToken(raw_signed);
+
+  return SignedToken(
+      CxxSignedTokenBox::from_raw(raw_signed_token_result.result));
 }
 
 base::expected<std::string, std::string> SignedToken::encode_base64() const {
-  char* tmp = signed_token_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode signed token");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -167,71 +177,112 @@ bool SignedToken::operator!=(const SignedToken& rhs) const {
   return !(*this == rhs);
 }
 
-VerificationSignature::VerificationSignature(
-    std::shared_ptr<C_VerificationSignature> raw)
-    : raw(raw) {}
+VerificationSignature::VerificationSignature(CxxVerificationSignatureBox raw)
+    : raw_(base::MakeRefCounted<CxxVerificationSignatureRefData>(
+          std::move(raw))) {}
+
 VerificationSignature::VerificationSignature(
     const VerificationSignature& other) = default;
-VerificationSignature::~VerificationSignature() {}
 
+VerificationSignature& VerificationSignature::operator=(
+    const VerificationSignature& other) = default;
+
+VerificationSignature::VerificationSignature(
+    VerificationSignature&& other) noexcept = default;
+
+VerificationSignature& VerificationSignature::operator=(
+    VerificationSignature&& other) noexcept = default;
+
+VerificationSignature::~VerificationSignature() = default;
+
+// static
 base::expected<VerificationSignature, std::string>
-VerificationSignature::decode_base64(const std::string encoded) {
-  std::shared_ptr<C_VerificationSignature> raw_sig(
-      verification_signature_decode_base64((const uint8_t*)encoded.data(),
-                                           encoded.length()),
-      verification_signature_destroy);
-  if (raw_sig == nullptr) {
-    return base::unexpected("Failed to decode verification signature");
+VerificationSignature::decode_base64(const std::string& encoded) {
+  cbr_ffi::CxxVerificationSignatureResult raw_sig_result(
+      cbr_ffi::verification_signature_decode_base64(encoded));
+
+  if (!raw_sig_result.result) {
+    return base::unexpected(raw_sig_result.error_message.c_str());
   }
-  return VerificationSignature(raw_sig);
+
+  return VerificationSignature(
+      CxxVerificationSignatureBox::from_raw(raw_sig_result.result));
 }
 
 base::expected<std::string, std::string> VerificationSignature::encode_base64()
     const {
-  char* tmp = verification_signature_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode verification signature");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
-UnblindedToken::UnblindedToken(std::shared_ptr<C_UnblindedToken> raw)
-    : raw(raw) {}
+VerificationKey::VerificationKey(CxxVerificationKeyBox raw)
+    : raw_(base::MakeRefCounted<CxxVerificationKeyRefData>(std::move(raw))) {}
+
+VerificationKey::VerificationKey(const VerificationKey& other) = default;
+
+VerificationKey& VerificationKey::operator=(const VerificationKey& other) =
+    default;
+
+VerificationKey::VerificationKey(VerificationKey&& other) noexcept = default;
+
+VerificationKey& VerificationKey::operator=(VerificationKey&& other) noexcept =
+    default;
+
+VerificationKey::~VerificationKey() = default;
+
+base::expected<VerificationSignature, std::string> VerificationKey::sign(
+    const std::string& message) {
+  rust::Box<cbr_ffi::CxxVerificationSignature> raw_verification_signature(
+      raw()->verification_key_sign_sha512(message));
+  return VerificationSignature(std::move(raw_verification_signature));
+}
+
+base::expected<bool, std::string> VerificationKey::verify(
+    const VerificationSignature& sig,
+    const std::string& message) {
+  return raw()->verification_key_verify_sha512(*sig.raw(), message);
+}
+
+UnblindedToken::UnblindedToken(CxxUnblindedTokenBox raw)
+    : raw_(base::MakeRefCounted<CxxUnblindedTokenRefData>(std::move(raw))) {}
+
 UnblindedToken::UnblindedToken(const UnblindedToken& other) = default;
-UnblindedToken::~UnblindedToken() {}
+
+UnblindedToken& UnblindedToken::operator=(const UnblindedToken& other) =
+    default;
+
+UnblindedToken::UnblindedToken(UnblindedToken&& other) noexcept = default;
+
+UnblindedToken& UnblindedToken::operator=(UnblindedToken&& other) noexcept =
+    default;
+
+UnblindedToken::~UnblindedToken() = default;
 
 VerificationKey UnblindedToken::derive_verification_key() const {
-  return VerificationKey(std::shared_ptr<C_VerificationKey>(
-      unblinded_token_derive_verification_key_sha512(raw.get()),
-      verification_key_destroy));
+  return VerificationKey(rust::Box<cbr_ffi::CxxVerificationKey>(
+      raw()->unblinded_token_derive_verification_key_sha512()));
 }
 
 TokenPreimage UnblindedToken::preimage() const {
-  return TokenPreimage(std::shared_ptr<C_TokenPreimage>(
-      unblinded_token_preimage(raw.get()), token_preimage_destroy));
+  return TokenPreimage(raw()->unblinded_token_preimage());
 }
 
+// static
 base::expected<UnblindedToken, std::string> UnblindedToken::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_UnblindedToken> raw_unblinded(
-      unblinded_token_decode_base64((const uint8_t*)encoded.data(),
-                                    encoded.length()),
-      unblinded_token_destroy);
-  if (raw_unblinded == nullptr) {
-    return base::unexpected("Failed to decode unblinded token");
+    const std::string& encoded) {
+  cbr_ffi::CxxUnblindedTokenResult raw_unblinded_result(
+      cbr_ffi::unblinded_token_decode_base64(encoded));
+
+  if (!raw_unblinded_result.result) {
+    return base::unexpected(raw_unblinded_result.error_message.c_str());
   }
-  return UnblindedToken(raw_unblinded);
+
+  return UnblindedToken(
+      CxxUnblindedTokenBox::from_raw(raw_unblinded_result.result));
 }
 
 base::expected<std::string, std::string> UnblindedToken::encode_base64() const {
-  char* tmp = unblinded_token_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode unblinded token");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -243,123 +294,33 @@ bool UnblindedToken::operator!=(const UnblindedToken& rhs) const {
   return !(*this == rhs);
 }
 
-VerificationKey::VerificationKey(std::shared_ptr<C_VerificationKey> raw)
-    : raw(raw) {}
-VerificationKey::VerificationKey(const VerificationKey& other) = default;
-VerificationKey::~VerificationKey() {}
+PublicKey::PublicKey(CxxPublicKeyBox raw)
+    : raw_(base::MakeRefCounted<CxxPublicKeyRefData>(std::move(raw))) {}
 
-base::expected<VerificationSignature, std::string> VerificationKey::sign(
-    const std::string message) {
-  std::shared_ptr<C_VerificationSignature> raw_verification_signature(
-      verification_key_sign_sha512(raw.get(), (const uint8_t*)message.data(),
-                                   message.length()),
-      verification_signature_destroy);
-  if (raw_verification_signature == nullptr) {
-    base::unexpected("Failed to sign message");
-  }
-  return VerificationSignature(raw_verification_signature);
-}
-
-base::expected<bool, std::string> VerificationKey::verify(
-    VerificationSignature sig,
-    const std::string message) {
-  int result = verification_key_invalid_sha512(raw.get(), sig.raw.get(),
-                                               (const uint8_t*)message.data(),
-                                               message.length());
-  if (result < 0) {
-    base::unexpected("Failed to verify message signature");
-  }
-  return result == 0;
-}
-
-SigningKey::SigningKey(std::shared_ptr<C_SigningKey> raw) : raw(raw) {}
-SigningKey::SigningKey(const SigningKey& other) = default;
-SigningKey::~SigningKey() {}
-
-base::expected<SigningKey, std::string> SigningKey::random() {
-  std::shared_ptr<C_SigningKey> raw_key(signing_key_random(),
-                                        signing_key_destroy);
-  if (raw_key == nullptr) {
-    base::unexpected("Failed to generate random signing key");
-  }
-  return SigningKey(raw_key);
-}
-
-base::expected<SignedToken, std::string> SigningKey::sign(
-    BlindedToken tok) const {
-  std::shared_ptr<C_SignedToken> raw_signed(
-      signing_key_sign(raw.get(), tok.raw.get()), signed_token_destroy);
-  if (raw_signed == nullptr) {
-    base::unexpected("Failed to sign blinded token");
-  }
-
-  return SignedToken(raw_signed);
-}
-
-UnblindedToken SigningKey::rederive_unblinded_token(TokenPreimage t) {
-  return UnblindedToken(std::shared_ptr<C_UnblindedToken>(
-      signing_key_rederive_unblinded_token(raw.get(), t.raw.get()),
-      unblinded_token_destroy));
-}
-
-PublicKey SigningKey::public_key() {
-  return PublicKey(std::shared_ptr<C_PublicKey>(
-      signing_key_get_public_key(raw.get()), public_key_destroy));
-}
-
-base::expected<SigningKey, std::string> SigningKey::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_SigningKey> raw_key(
-      signing_key_decode_base64((const uint8_t*)encoded.data(),
-                                encoded.length()),
-      signing_key_destroy);
-  if (raw_key == nullptr) {
-    return base::unexpected("Failed to decode signing key");
-  }
-  return SigningKey(raw_key);
-}
-
-base::expected<std::string, std::string> SigningKey::encode_base64() const {
-  char* tmp = signing_key_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode signing key");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
-  return base::ok(result);
-}
-
-bool SigningKey::operator==(const SigningKey& rhs) const {
-  return encode_base64() == rhs.encode_base64();
-}
-
-bool SigningKey::operator!=(const SigningKey& rhs) const {
-  return !(*this == rhs);
-}
-
-PublicKey::PublicKey(std::shared_ptr<C_PublicKey> raw) : raw(raw) {}
 PublicKey::PublicKey(const PublicKey& other) = default;
-PublicKey::~PublicKey() {}
+
+PublicKey& PublicKey::operator=(const PublicKey& other) = default;
+
+PublicKey::PublicKey(PublicKey&& other) noexcept = default;
+
+PublicKey& PublicKey::operator=(PublicKey&& other) noexcept = default;
+
+PublicKey::~PublicKey() = default;
 
 base::expected<PublicKey, std::string> PublicKey::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_PublicKey> raw_key(
-      public_key_decode_base64((const uint8_t*)encoded.data(),
-                               encoded.length()),
-      public_key_destroy);
-  if (raw_key == nullptr) {
-    return base::unexpected("Failed to decode public key");
+    const std::string& encoded) {
+  cbr_ffi::CxxPublicKeyResult raw_key_result(
+      cbr_ffi::public_key_decode_base64(encoded));
+
+  if (!raw_key_result.result) {
+    return base::unexpected(raw_key_result.error_message.c_str());
   }
-  return PublicKey(raw_key);
+
+  return PublicKey(CxxPublicKeyBox::from_raw(raw_key_result.result));
 }
 
 base::expected<std::string, std::string> PublicKey::encode_base64() const {
-  char* tmp = public_key_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode public key");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -371,37 +332,107 @@ bool PublicKey::operator!=(const PublicKey& rhs) const {
   return !(*this == rhs);
 }
 
-DLEQProof::DLEQProof(std::shared_ptr<C_DLEQProof> raw) : raw(raw) {}
-DLEQProof::DLEQProof(const DLEQProof& other) = default;
-DLEQProof::~DLEQProof() {}
+SigningKey::SigningKey(CxxSigningKeyBox raw)
+    : raw_(base::MakeRefCounted<CxxSigningKeyRefData>(std::move(raw))) {}
 
-DLEQProof::DLEQProof(BlindedToken blinded_token,
-                     SignedToken signed_token,
-                     SigningKey key) {
-  raw = std::shared_ptr<C_DLEQProof>(
-      dleq_proof_new(blinded_token.raw.get(), signed_token.raw.get(),
-                     key.raw.get()),
-      dleq_proof_destroy);
+SigningKey::SigningKey(const SigningKey& other) = default;
+
+SigningKey& SigningKey::operator=(const SigningKey& other) = default;
+
+SigningKey::SigningKey(SigningKey&& other) noexcept = default;
+
+SigningKey& SigningKey::operator=(SigningKey&& other) noexcept = default;
+
+SigningKey::~SigningKey() = default;
+
+// static
+base::expected<SigningKey, std::string> SigningKey::random() {
+  rust::Box<cbr_ffi::CxxSigningKey> raw_key(cbr_ffi::signing_key_random());
+  return SigningKey(std::move(raw_key));
 }
+
+base::expected<SignedToken, std::string> SigningKey::sign(
+    const BlindedToken& tok) const {
+  cbr_ffi::CxxSignedTokenResult raw_signed_result(
+      raw()->signing_key_sign(*tok.raw()));
+
+  if (!raw_signed_result.result) {
+    return base::unexpected(raw_signed_result.error_message.c_str());
+  }
+
+  return SignedToken(
+      rust::Box<cbr_ffi::CxxSignedToken>::from_raw(raw_signed_result.result));
+}
+
+UnblindedToken SigningKey::rederive_unblinded_token(const TokenPreimage& t) {
+  return UnblindedToken(rust::Box<cbr_ffi::CxxUnblindedToken>(
+      raw()->signing_key_rederive_unblinded_token(*t.raw())));
+}
+
+PublicKey SigningKey::public_key() {
+  return PublicKey(
+      rust::Box<cbr_ffi::CxxPublicKey>(raw()->signing_key_get_public_key()));
+}
+
+base::expected<SigningKey, std::string> SigningKey::decode_base64(
+    const std::string& encoded) {
+  cbr_ffi::CxxSigningKeyResult raw_key_result(
+      cbr_ffi::signing_key_decode_base64(encoded));
+
+  if (!raw_key_result.result) {
+    return base::unexpected(raw_key_result.error_message.c_str());
+  }
+
+  return SigningKey(CxxSigningKeyBox::from_raw(raw_key_result.result));
+}
+
+base::expected<std::string, std::string> SigningKey::encode_base64() const {
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
+  return base::ok(result);
+}
+
+bool SigningKey::operator==(const SigningKey& rhs) const {
+  return encode_base64() == rhs.encode_base64();
+}
+
+bool SigningKey::operator!=(const SigningKey& rhs) const {
+  return !(*this == rhs);
+}
+
+DLEQProof::DLEQProof(CxxDLEQProofBox raw)
+    : raw_(base::MakeRefCounted<CxxDLEQProofRefData>(std::move(raw))) {}
+
+DLEQProof::DLEQProof(const DLEQProof& other) = default;
+
+DLEQProof& DLEQProof::operator=(const DLEQProof& other) = default;
+
+DLEQProof::DLEQProof(DLEQProof&& other) noexcept = default;
+
+DLEQProof& DLEQProof::operator=(DLEQProof&& other) noexcept = default;
+
+DLEQProof::~DLEQProof() = default;
 
 // static
 base::expected<DLEQProof, std::string> DLEQProof::Create(
-    BlindedToken blinded_token,
-    SignedToken signed_token,
-    SigningKey key) {
-  DLEQProof proof(blinded_token, signed_token, key);
-  if (proof.raw == nullptr) {
-    return base::unexpected("Failed to create new DLEQ proof");
+    const BlindedToken& blinded_token,
+    const SignedToken& signed_token,
+    const SigningKey& key) {
+  cbr_ffi::CxxDLEQProofResult raw_proof_result(cbr_ffi::dleq_proof_new(
+      *blinded_token.raw(), *signed_token.raw(), *key.raw()));
+
+  if (!raw_proof_result.result) {
+    return base::unexpected(raw_proof_result.error_message.c_str());
   }
 
-  return proof;
+  return DLEQProof(CxxDLEQProofBox::from_raw(raw_proof_result.result));
 }
 
-base::expected<bool, std::string> DLEQProof::verify(BlindedToken blinded_token,
-                                                    SignedToken signed_token,
-                                                    PublicKey key) {
-  int result = dleq_proof_invalid(raw.get(), blinded_token.raw.get(),
-                                  signed_token.raw.get(), key.raw.get());
+base::expected<bool, std::string> DLEQProof::verify(
+    const BlindedToken& blinded_token,
+    const SignedToken& signed_token,
+    const PublicKey& key) {
+  const int8_t result = raw()->dleq_proof_invalid(
+      *blinded_token.raw(), *signed_token.raw(), *key.raw());
   if (result < 0) {
     return base::unexpected("Failed to verify DLEQ proof");
   }
@@ -409,24 +440,19 @@ base::expected<bool, std::string> DLEQProof::verify(BlindedToken blinded_token,
 }
 
 base::expected<DLEQProof, std::string> DLEQProof::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_DLEQProof> raw_proof(
-      dleq_proof_decode_base64((const uint8_t*)encoded.data(),
-                               encoded.length()),
-      dleq_proof_destroy);
-  if (raw_proof == nullptr) {
-    return base::unexpected("Failed to decode DLEQ proof");
+    const std::string& encoded) {
+  cbr_ffi::CxxDLEQProofResult raw_proof_result(
+      cbr_ffi::dleq_proof_decode_base64(encoded));
+
+  if (!raw_proof_result.result) {
+    return base::unexpected(raw_proof_result.error_message.c_str());
   }
-  return DLEQProof(raw_proof);
+
+  return DLEQProof(CxxDLEQProofBox::from_raw(raw_proof_result.result));
 }
 
 base::expected<std::string, std::string> DLEQProof::encode_base64() const {
-  char* tmp = dleq_proof_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode DLEQ proof");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -438,63 +464,74 @@ bool DLEQProof::operator!=(const DLEQProof& rhs) const {
   return !(*this == rhs);
 }
 
-BatchDLEQProof::BatchDLEQProof(std::shared_ptr<C_BatchDLEQProof> raw)
-    : raw(raw) {}
+BatchDLEQProof::BatchDLEQProof(CxxBatchDLEQProofBox raw)
+    : raw_(base::MakeRefCounted<CxxBatchDLEQProofRefData>(std::move(raw))) {}
+
 BatchDLEQProof::BatchDLEQProof(const BatchDLEQProof& other) = default;
-BatchDLEQProof::~BatchDLEQProof() {}
 
-BatchDLEQProof::BatchDLEQProof(std::vector<BlindedToken> blinded_tokens,
-                               std::vector<SignedToken> signed_tokens,
-                               SigningKey key) {
-  std::vector<C_BlindedToken*> raw_blinded_tokens;
-  std::vector<C_SignedToken*> raw_signed_tokens;
+BatchDLEQProof& BatchDLEQProof::operator=(const BatchDLEQProof& other) =
+    default;
 
-  for (size_t i = 0; i < blinded_tokens.size(); i++) {
-    raw_blinded_tokens.push_back(blinded_tokens[i].raw.get());
-    raw_signed_tokens.push_back(signed_tokens[i].raw.get());
-  }
+BatchDLEQProof::BatchDLEQProof(BatchDLEQProof&& other) noexcept = default;
 
-  raw = std::shared_ptr<C_BatchDLEQProof>(
-      batch_dleq_proof_new(raw_blinded_tokens.data(), raw_signed_tokens.data(),
-                           blinded_tokens.size(), key.raw.get()),
-      batch_dleq_proof_destroy);
-}
+BatchDLEQProof& BatchDLEQProof::operator=(BatchDLEQProof&& other) noexcept =
+    default;
+
+BatchDLEQProof::~BatchDLEQProof() = default;
 
 // static
 base::expected<BatchDLEQProof, std::string> BatchDLEQProof::Create(
-    std::vector<BlindedToken> blinded_tokens,
-    std::vector<SignedToken> signed_tokens,
-    SigningKey key) {
+    const std::vector<BlindedToken>& blinded_tokens,
+    const std::vector<SignedToken>& signed_tokens,
+    const SigningKey& key) {
   if (blinded_tokens.size() != signed_tokens.size()) {
     return base::unexpected(
         "Blinded tokens and signed tokens must have the same length");
   }
-  BatchDLEQProof proof(blinded_tokens, signed_tokens, key);
-  if (proof.raw == nullptr) {
-    return base::unexpected("Failed to create new batch DLEQ proof");
+
+  rust::Vec<cbr_ffi::CxxBlindedTokenRef> raw_blinded_tokens;
+  rust::Vec<cbr_ffi::CxxSignedTokenRef> raw_signed_tokens;
+
+  for (size_t i = 0; i < blinded_tokens.size(); i++) {
+    raw_blinded_tokens.push_back(
+        cbr_ffi::CxxBlindedTokenRef{*blinded_tokens[i].raw()});
+    raw_signed_tokens.push_back(
+        cbr_ffi::CxxSignedTokenRef{*signed_tokens[i].raw()});
   }
-  return proof;
+
+  cbr_ffi::CxxBatchDLEQProofResult raw_proof_result(
+      cbr_ffi::batch_dleq_proof_new(raw_blinded_tokens, raw_signed_tokens,
+                                    *key.raw()));
+
+  if (!raw_proof_result.result) {
+    return base::unexpected(raw_proof_result.error_message.c_str());
+  }
+
+  return BatchDLEQProof(
+      CxxBatchDLEQProofBox::from_raw(raw_proof_result.result));
 }
 
 base::expected<bool, std::string> BatchDLEQProof::verify(
-    std::vector<BlindedToken> blinded_tokens,
-    std::vector<SignedToken> signed_tokens,
-    PublicKey key) {
+    const std::vector<BlindedToken>& blinded_tokens,
+    const std::vector<SignedToken>& signed_tokens,
+    const PublicKey& key) {
   if (blinded_tokens.size() != signed_tokens.size()) {
     return base::unexpected(
         "Blinded tokens and signed tokens must have the same length");
   }
-  std::vector<C_BlindedToken*> raw_blinded_tokens;
-  std::vector<C_SignedToken*> raw_signed_tokens;
+
+  rust::Vec<cbr_ffi::CxxBlindedTokenRef> raw_blinded_tokens;
+  rust::Vec<cbr_ffi::CxxSignedTokenRef> raw_signed_tokens;
 
   for (size_t i = 0; i < blinded_tokens.size(); i++) {
-    raw_blinded_tokens.push_back(blinded_tokens[i].raw.get());
-    raw_signed_tokens.push_back(signed_tokens[i].raw.get());
+    raw_blinded_tokens.push_back(
+        cbr_ffi::CxxBlindedTokenRef{*blinded_tokens[i].raw()});
+    raw_signed_tokens.push_back(
+        cbr_ffi::CxxSignedTokenRef{*signed_tokens[i].raw()});
   }
 
-  int result = batch_dleq_proof_invalid(raw.get(), raw_blinded_tokens.data(),
-                                        raw_signed_tokens.data(),
-                                        blinded_tokens.size(), key.raw.get());
+  int result = raw()->batch_dleq_proof_invalid(raw_blinded_tokens,
+                                               raw_signed_tokens, *key.raw());
   if (result < 0) {
     return base::unexpected("Could not verify DLEQ proof");
   }
@@ -502,92 +539,64 @@ base::expected<bool, std::string> BatchDLEQProof::verify(
 }
 
 base::expected<std::vector<UnblindedToken>, std::string>
-BatchDLEQProof::verify_and_unblind(std::vector<Token> tokens,
-                                   std::vector<BlindedToken> blinded_tokens,
-                                   std::vector<SignedToken> signed_tokens,
-                                   PublicKey public_key) {
-  std::vector<UnblindedToken> unblinded_tokens;
-
+BatchDLEQProof::verify_and_unblind(
+    const std::vector<Token>& tokens,
+    const std::vector<BlindedToken>& blinded_tokens,
+    const std::vector<SignedToken>& signed_tokens,
+    const PublicKey& public_key) {
   if (tokens.size() != blinded_tokens.size() ||
       tokens.size() != signed_tokens.size()) {
     return base::unexpected(
         "Tokens, blinded tokens and signed tokens must have the same length");
   }
 
-  std::vector<C_Token*> raw_tokens;
-  std::vector<C_BlindedToken*> raw_blinded_tokens;
-  std::vector<C_SignedToken*> raw_signed_tokens;
-  std::vector<C_UnblindedToken*> raw_unblinded_tokens(tokens.size());
+  rust::Vec<cbr_ffi::CxxTokenRef> raw_tokens;
+  rust::Vec<cbr_ffi::CxxBlindedTokenRef> raw_blinded_tokens;
+  rust::Vec<cbr_ffi::CxxSignedTokenRef> raw_signed_tokens;
 
-  for (size_t i = 0; i < tokens.size(); i++) {
-    if (tokens[i].raw.get()) {
-      raw_tokens.push_back(tokens[i].raw.get());
-    }
-
-    if (blinded_tokens[i].raw.get()) {
-      raw_blinded_tokens.push_back(blinded_tokens[i].raw.get());
-    }
-
-    if (signed_tokens[i].raw.get()) {
-      raw_signed_tokens.push_back(signed_tokens[i].raw.get());
-    }
+  for (size_t i = 0; i < blinded_tokens.size(); i++) {
+    raw_tokens.push_back(cbr_ffi::CxxTokenRef{*tokens[i].raw()});
+    raw_blinded_tokens.push_back(
+        cbr_ffi::CxxBlindedTokenRef{*blinded_tokens[i].raw()});
+    raw_signed_tokens.push_back(
+        cbr_ffi::CxxSignedTokenRef{*signed_tokens[i].raw()});
   }
 
-  if (raw_tokens.size() != raw_blinded_tokens.size() ||
-      raw_tokens.size() != raw_signed_tokens.size()) {
+  cbr_ffi::CxxUnblindedTokensResult raw_unblinded_tokens_result =
+      raw()->batch_dleq_proof_verify_and_unblind(
+          raw_tokens, raw_blinded_tokens, raw_signed_tokens, *public_key.raw());
+
+  if (!raw_unblinded_tokens_result.success) {
     return base::unexpected(
-        "Raw tokens, raw blinded tokens and raw signed tokens "
-        "must have the same length");
+        static_cast<std::string>(raw_unblinded_tokens_result.error_message));
   }
 
-  if (!public_key.raw.get()) {
-    return base::unexpected("Could not verify DLEQ proof");
-  }
-
-  int result = batch_dleq_proof_invalid_or_unblind(
-      raw.get(), raw_tokens.data(), raw_blinded_tokens.data(),
-      raw_signed_tokens.data(), raw_unblinded_tokens.data(), tokens.size(),
-      public_key.raw.get());
-  if (result != 0) {
-    if (result < 0) {
-      return base::unexpected("Could not verify DLEQ proof");
-    }
-    return unblinded_tokens;
-  }
-
-  for (size_t i = 0; i < tokens.size(); i++) {
-    std::shared_ptr<C_UnblindedToken> raw_unblinded(raw_unblinded_tokens.at(i),
-                                                    unblinded_token_destroy);
-
-    if (raw_unblinded == nullptr) {
-      return base::unexpected("Unexpected failure to unblind");
-    }
-
-    unblinded_tokens.push_back(UnblindedToken(raw_unblinded));
+  std::vector<UnblindedToken> unblinded_tokens;
+  for (auto& raw_unblinded_token : raw_unblinded_tokens_result.result) {
+    CHECK(raw_unblinded_token.value);
+    unblinded_tokens.emplace_back(
+        rust::Box<cbr_ffi::CxxUnblindedToken>::from_raw(
+            raw_unblinded_token.value));
   }
 
   return unblinded_tokens;
 }
 
 base::expected<BatchDLEQProof, std::string> BatchDLEQProof::decode_base64(
-    const std::string encoded) {
-  std::shared_ptr<C_BatchDLEQProof> raw_proof(
-      batch_dleq_proof_decode_base64((const uint8_t*)encoded.data(),
-                                     encoded.length()),
-      batch_dleq_proof_destroy);
-  if (raw_proof == nullptr) {
-    return base::unexpected("Failed to decode batch DLEQ proof");
+    const std::string& encoded) {
+  cbr_ffi::CxxBatchDLEQProofResult raw_proof_result(
+      cbr_ffi::batch_dleq_proof_decode_base64(encoded));
+
+  if (!raw_proof_result.result) {
+    return base::unexpected(raw_proof_result.error_message.c_str());
   }
-  return BatchDLEQProof(raw_proof);
+
+  return BatchDLEQProof(
+      rust::Box<cbr_ffi::CxxBatchDLEQProof>::from_raw(raw_proof_result.result));
 }
 
 base::expected<std::string, std::string> BatchDLEQProof::encode_base64() const {
-  char* tmp = batch_dleq_proof_encode_base64(raw.get());
-  if (tmp == nullptr) {
-    return base::unexpected("Failed to encode batch DLEQ proof");
-  }
-  std::string result = std::string(tmp);
-  c_char_destroy(tmp);
+  const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
@@ -598,4 +607,5 @@ bool BatchDLEQProof::operator==(const BatchDLEQProof& rhs) const {
 bool BatchDLEQProof::operator!=(const BatchDLEQProof& rhs) const {
   return !(*this == rhs);
 }
+
 }  // namespace challenge_bypass_ristretto

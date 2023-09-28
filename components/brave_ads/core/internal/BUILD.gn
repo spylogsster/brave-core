@@ -1306,7 +1306,7 @@ static_library("internal") {
     "//brave/components/l10n/common",
     "//brave/components/ntp_background_images/common",
     "//brave/components/version_info",
-    "//brave/third_party/challenge_bypass_ristretto_ffi:rust_lib",
+    "//brave/third_party/challenge_bypass_ristretto_ffi:wrapper",
     "//brave/third_party/rapidjson",
     "//brave/vendor/bat-native-tweetnacl:tweetnacl",
     "//brave/vendor/brave_base",

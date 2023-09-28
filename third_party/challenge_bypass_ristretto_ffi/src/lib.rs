@@ -1,21 +1,21 @@
-extern crate base64;
 extern crate challenge_bypass_ristretto;
-extern crate core;
 extern crate hmac;
 extern crate rand;
 extern crate sha2;
 
-use core::ptr;
-use std::cell::RefCell;
 use std::error::Error;
-use std::ffi::CString;
-use std::os::raw::{c_char, c_int};
-use std::{slice, str};
+use std::ptr::null_mut;
 
 use challenge_bypass_ristretto::errors::InternalError;
 use challenge_bypass_ristretto::voprf::{
     BatchDLEQProof, BlindedToken, DLEQProof, PublicKey, SignedToken, SigningKey, Token,
     TokenPreimage, UnblindedToken, VerificationKey, VerificationSignature,
+};
+use ffi::{
+    CxxBatchDLEQProofResult, CxxBlindedTokenRef, CxxBlindedTokenResult, CxxDLEQProofResult,
+    CxxPublicKeyResult, CxxSignedTokenRef, CxxSignedTokenResult, CxxSigningKeyResult,
+    CxxTokenPreimageResult, CxxTokenRef, CxxTokenResult, CxxUnblindedTokenPtr,
+    CxxUnblindedTokenResult, CxxUnblindedTokensResult, CxxVerificationSignatureResult,
 };
 use hmac::Hmac;
 use rand::rngs::OsRng;
@@ -23,440 +23,389 @@ use sha2::Sha512;
 
 type HmacSha512 = Hmac<Sha512>;
 
-#[cfg(not(feature = "cbindgen"))]
-thread_local! {
-    static LAST_ERROR: RefCell<Option<Box<dyn Error>>> = RefCell::new(None);
-}
-
-/// Update the last error that occured.
-#[cfg(not(feature = "cbindgen"))]
-fn update_last_error<T>(err: T)
-where
-    T: Into<Box<dyn Error>>,
-{
-    LAST_ERROR.with(|prev| {
-        *prev.borrow_mut() = Some(err.into());
-    });
-}
-
-/// Clear and return the message associated with the last error.
-#[no_mangle]
 #[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn last_error_message() -> *mut c_char {
-    LAST_ERROR.with(|prev| {
-        let mut ret = ptr::null_mut();
-        if let Some(ref err) = *prev.borrow_mut() {
-            if let Ok(s) = CString::new(err.to_string()) {
-                ret = s.into_raw();
-            }
-        }
-        *prev.borrow_mut() = None;
-        ret
-    })
-}
+#[cxx::bridge(namespace = cbr_ffi)]
+mod ffi {
+    extern "Rust" {
+        type CxxTokenPreimage;
+        fn encode_base64(self: &CxxTokenPreimage) -> String;
+        fn token_preimage_decode_base64(s: &str) -> CxxTokenPreimageResult;
 
-/// Destroy a `*c_char` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn c_char_destroy(s: *mut c_char) {
-    if !s.is_null() {
-        drop(CString::from_raw(s));
+        type CxxBlindedToken;
+        fn encode_base64(self: &CxxBlindedToken) -> String;
+        fn blinded_token_decode_base64(s: &str) -> CxxBlindedTokenResult;
+
+        type CxxToken;
+        fn token_random() -> Box<CxxToken>;
+        fn token_blind(self: &CxxToken) -> Box<CxxBlindedToken>;
+        fn encode_base64(self: &CxxToken) -> String;
+        fn token_decode_base64(s: &str) -> CxxTokenResult;
+
+        type CxxSignedToken;
+        fn encode_base64(self: &CxxSignedToken) -> String;
+        fn signed_token_decode_base64(s: &str) -> CxxSignedTokenResult;
+
+        type CxxVerificationSignature;
+        fn encode_base64(self: &CxxVerificationSignature) -> String;
+        fn verification_signature_decode_base64(s: &str) -> CxxVerificationSignatureResult;
+
+        type CxxVerificationKey;
+        fn verification_key_sign_sha512(
+            self: &CxxVerificationKey,
+            message: &str,
+        ) -> Box<CxxVerificationSignature>;
+        fn verification_key_verify_sha512(
+            self: &CxxVerificationKey,
+            sig: &CxxVerificationSignature,
+            message: &str,
+        ) -> bool;
+
+        type CxxUnblindedToken;
+        fn encode_base64(self: &CxxUnblindedToken) -> String;
+        fn unblinded_token_decode_base64(s: &str) -> CxxUnblindedTokenResult;
+        fn unblinded_token_derive_verification_key_sha512(
+            self: &CxxUnblindedToken,
+        ) -> Box<CxxVerificationKey>;
+        fn unblinded_token_preimage(self: &CxxUnblindedToken) -> Box<CxxTokenPreimage>;
+
+        type CxxPublicKey;
+        fn encode_base64(self: &CxxPublicKey) -> String;
+        fn public_key_decode_base64(s: &str) -> CxxPublicKeyResult;
+
+        type CxxSigningKey;
+        fn encode_base64(self: &CxxSigningKey) -> String;
+        fn signing_key_decode_base64(s: &str) -> CxxSigningKeyResult;
+        fn signing_key_random() -> Box<CxxSigningKey>;
+        fn signing_key_sign(self: &CxxSigningKey, token: &CxxBlindedToken) -> CxxSignedTokenResult;
+        fn signing_key_rederive_unblinded_token(
+            self: &CxxSigningKey,
+            t: &CxxTokenPreimage,
+        ) -> Box<CxxUnblindedToken>;
+        fn signing_key_get_public_key(self: &CxxSigningKey) -> Box<CxxPublicKey>;
+
+        type CxxDLEQProof;
+        fn encode_base64(self: &CxxDLEQProof) -> String;
+        fn dleq_proof_decode_base64(s: &str) -> CxxDLEQProofResult;
+        fn dleq_proof_new(
+            blinded_token: &CxxBlindedToken,
+            signed_token: &CxxSignedToken,
+            key: &CxxSigningKey,
+        ) -> CxxDLEQProofResult;
+        fn dleq_proof_invalid(
+            self: &CxxDLEQProof,
+            blinded_token: &CxxBlindedToken,
+            signed_token: &CxxSignedToken,
+            public_key: &CxxPublicKey,
+        ) -> i8;
+
+        type CxxBatchDLEQProof;
+        fn encode_base64(self: &CxxBatchDLEQProof) -> String;
+        fn batch_dleq_proof_decode_base64(s: &str) -> CxxBatchDLEQProofResult;
+        fn batch_dleq_proof_new(
+            blinded_tokens: &Vec<CxxBlindedTokenRef>,
+            signed_tokens: &Vec<CxxSignedTokenRef>,
+            key: &CxxSigningKey,
+        ) -> CxxBatchDLEQProofResult;
+        fn batch_dleq_proof_invalid(
+            self: &CxxBatchDLEQProof,
+            blinded_tokens: &Vec<CxxBlindedTokenRef>,
+            signed_tokens: &Vec<CxxSignedTokenRef>,
+            public_key: &CxxPublicKey,
+        ) -> i8;
+
+        fn batch_dleq_proof_verify_and_unblind(
+            self: &CxxBatchDLEQProof,
+            tokens: &Vec<CxxTokenRef>,
+            blinded_tokens: &Vec<CxxBlindedTokenRef>,
+            signed_tokens: &Vec<CxxSignedTokenRef>,
+            public_key: &CxxPublicKey,
+        ) -> CxxUnblindedTokensResult;
+    }
+
+    impl Box<CxxTokenPreimage> {}
+    struct CxxTokenPreimageResult {
+        result: *mut CxxTokenPreimage,
+        error_message: String,
+    }
+
+    impl Box<CxxBlindedToken> {}
+    struct CxxBlindedTokenResult {
+        result: *mut CxxBlindedToken,
+        error_message: String,
+    }
+
+    impl Box<CxxToken> {}
+    struct CxxTokenResult {
+        result: *mut CxxToken,
+        error_message: String,
+    }
+
+    impl Box<CxxSignedToken> {}
+    struct CxxSignedTokenResult {
+        result: *mut CxxSignedToken,
+        error_message: String,
+    }
+
+    impl Box<CxxVerificationSignature> {}
+    struct CxxVerificationSignatureResult {
+        result: *mut CxxVerificationSignature,
+        error_message: String,
+    }
+
+    impl Box<CxxUnblindedToken> {}
+    struct CxxUnblindedTokenResult {
+        result: *mut CxxUnblindedToken,
+        error_message: String,
+    }
+
+    impl Box<CxxPublicKey> {}
+    struct CxxPublicKeyResult {
+        result: *mut CxxPublicKey,
+        error_message: String,
+    }
+
+    impl Box<CxxSigningKey> {}
+    struct CxxSigningKeyResult {
+        result: *mut CxxSigningKey,
+        error_message: String,
+    }
+
+    impl Box<CxxDLEQProof> {}
+    struct CxxDLEQProofResult {
+        result: *mut CxxDLEQProof,
+        error_message: String,
+    }
+
+    impl Box<CxxBatchDLEQProof> {}
+    struct CxxBatchDLEQProofResult {
+        result: *mut CxxBatchDLEQProof,
+        error_message: String,
+    }
+
+    struct CxxBlindedTokenRef<'a> {
+        value: &'a CxxBlindedToken,
+    }
+
+    struct CxxSignedTokenRef<'a> {
+        value: &'a CxxSignedToken,
+    }
+
+    struct CxxTokenRef<'a> {
+        value: &'a CxxToken,
+    }
+
+    struct CxxUnblindedTokenPtr {
+        value: *mut CxxUnblindedToken,
+    }
+    #[derive(Default)]
+    struct CxxUnblindedTokensResult {
+        result: Vec<CxxUnblindedTokenPtr>,
+        success: bool,
+        error_message: String,
     }
 }
 
-macro_rules! impl_base64 {
-    ($t:ident, $en:ident, $de:ident) => {
-        /// Return base64 encoding as a C string.
-        #[no_mangle]
-        #[allow(unsafe_op_in_unsafe_fn)]
-        pub unsafe extern "C" fn $en(t: *const $t) -> *mut c_char {
-            if !t.is_null() {
-                let b64 = (&*t).encode_base64();
-                return CString::from_vec_unchecked(b64.into()).into_raw();
+pub struct CxxTokenPreimage(TokenPreimage);
+pub struct CxxBlindedToken(BlindedToken);
+pub struct CxxToken(Token);
+pub struct CxxSignedToken(SignedToken);
+pub struct CxxVerificationSignature(VerificationSignature);
+pub struct CxxVerificationKey(VerificationKey);
+pub struct CxxUnblindedToken(UnblindedToken);
+pub struct CxxPublicKey(PublicKey);
+pub struct CxxSigningKey(SigningKey);
+pub struct CxxDLEQProof(DLEQProof);
+pub struct CxxBatchDLEQProof(BatchDLEQProof);
+
+macro_rules! impl_encode_decode_base64 {
+    ($t:ident, $ct:ident, $ctr:ident, $de:ident) => {
+        /// Decode from base64 String.
+        pub fn $de(s: &str) -> $ctr {
+            match $t::decode_base64(s) {
+                Ok(t) => {
+                    $ctr { result: Box::into_raw(Box::new($ct(t))), error_message: "".to_string() }
+                }
+                Err(err) => $ctr { result: null_mut(), error_message: err.to_string() },
             }
-            update_last_error("Pointer to struct was null");
-            return ptr::null_mut();
         }
 
-        /// Decode from base64 C string.
-        ///
-        /// If something goes wrong, this will return a null pointer. Don't forget to
-        /// destroy the returned pointer once you are done with it!
-        #[no_mangle]
-        #[allow(unsafe_op_in_unsafe_fn)]
-        pub unsafe extern "C" fn $de(s: *const u8, s_length: usize) -> *mut $t {
-            if !s.is_null() {
-                let slice = slice::from_raw_parts(s, s_length);
-
-                match str::from_utf8(slice) {
-                    Ok(s_as_str) => match $t::decode_base64(s_as_str) {
-                        Ok(t) => return Box::into_raw(Box::new(t)),
-                        Err(err) => update_last_error(err),
-                    },
-                    Err(err) => update_last_error(err),
-                }
-            } else {
-                update_last_error("Supplied string was null");
+        impl $ct {
+            fn encode_base64(self: &$ct) -> String {
+                return (&self.0).encode_base64();
             }
-            return ptr::null_mut();
         }
     };
 }
 
-/// Destroy a `TokenPreimage` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn token_preimage_destroy(t: *mut TokenPreimage) {
-    if !t.is_null() {
-        drop(Box::from_raw(t));
-    }
-}
-
-impl_base64!(
+impl_encode_decode_base64!(
     TokenPreimage,
-    token_preimage_encode_base64,
+    CxxTokenPreimage,
+    CxxTokenPreimageResult,
     token_preimage_decode_base64
 );
 
-/// Generate a new `Token`
-///
-/// # Safety
-///
-/// Make sure you destroy the token with [`token_destroy()`] once you are
-/// done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn token_random() -> *mut Token {
-    let mut rng = OsRng;
-    let token = Token::random::<Sha512, OsRng>(&mut rng);
-    Box::into_raw(Box::new(token))
-}
-
-/// Destroy a `Token` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn token_destroy(token: *mut Token) {
-    if !token.is_null() {
-        drop(Box::from_raw(token));
-    }
-}
-
-/// Take a reference to a `Token` and blind it, returning a `BlindedToken`
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `BlindedToken` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn token_blind(token: *const Token) -> *mut BlindedToken {
-    if token.is_null() {
-        update_last_error("Pointer to token was null");
-        return ptr::null_mut();
-    }
-
-    Box::into_raw(Box::new((*token).blind()))
-}
-
-impl_base64!(Token, token_encode_base64, token_decode_base64);
-
-/// Destroy a `BlindedToken` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn blinded_token_destroy(token: *mut BlindedToken) {
-    if !token.is_null() {
-        drop(Box::from_raw(token));
-    }
-}
-
-impl_base64!(
+impl_encode_decode_base64!(
     BlindedToken,
-    blinded_token_encode_base64,
+    CxxBlindedToken,
+    CxxBlindedTokenResult,
     blinded_token_decode_base64
 );
 
-/// Destroy a `SignedToken` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn signed_token_destroy(token: *mut SignedToken) {
-    if !token.is_null() {
-        drop(Box::from_raw(token));
-    }
-}
+impl_encode_decode_base64!(Token, CxxToken, CxxTokenResult, token_decode_base64);
 
-impl_base64!(
+impl_encode_decode_base64!(
     SignedToken,
-    signed_token_encode_base64,
+    CxxSignedToken,
+    CxxSignedTokenResult,
     signed_token_decode_base64
 );
 
-/// Destroy an `UnblindedToken` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn unblinded_token_destroy(token: *mut UnblindedToken) {
-    if !token.is_null() {
-        drop(Box::from_raw(token));
-    }
-}
-
-/// Take a reference to an `UnblindedToken` and use it to derive a `VerificationKey`
-/// using Sha512 as the hash function
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `VerificationKey` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn unblinded_token_derive_verification_key_sha512(
-    token: *const UnblindedToken,
-) -> *mut VerificationKey {
-    if token.is_null() {
-        update_last_error("Pointer to unblinded token was null");
-        return ptr::null_mut();
-    }
-    Box::into_raw(Box::new((*token).derive_verification_key::<Sha512>()))
-}
-
-/// Take a reference to an `UnblindedToken` and return the corresponding `TokenPreimage`
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `BlindedToken` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn unblinded_token_preimage(
-    token: *const UnblindedToken,
-) -> *mut TokenPreimage {
-    if token.is_null() {
-        update_last_error("Pointer to token was null");
-        return ptr::null_mut();
-    }
-
-    Box::into_raw(Box::new((*token).t))
-}
-
-impl_base64!(
-    UnblindedToken,
-    unblinded_token_encode_base64,
-    unblinded_token_decode_base64
-);
-
-/// Destroy a `VerificationKey` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn verification_key_destroy(key: *mut VerificationKey) {
-    if !key.is_null() {
-        drop(Box::from_raw(key));
-    }
-}
-
-/// Take a reference to a `VerificationKey` and use it to sign a message
-/// using Sha512 as the HMAC hash function to obtain a `VerificationSignature`
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `VerificationSignature` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn verification_key_sign_sha512(
-    key: *const VerificationKey,
-    message: *const u8,
-    message_length: usize,
-) -> *mut VerificationSignature {
-    if key.is_null() {
-        update_last_error("Pointer to verification key was null");
-        return ptr::null_mut();
-    }
-
-    let slice = slice::from_raw_parts(message, message_length);
-
-    Box::into_raw(Box::new((*key).sign::<HmacSha512>(slice)))
-}
-
-/// Take a reference to a `VerificationKey` and use it to verify an
-/// existing `VerificationSignature` using Sha512 as the HMAC hash function
-///
-/// Returns -1 if an error was encountered, 1 if the signature failed verification and 0 if valid
-///
-/// NOTE this is named "invalid" instead of "verify" as it returns true (non-zero) when
-/// the signature is invalid and false (zero) when valid
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn verification_key_invalid_sha512(
-    key: *const VerificationKey,
-    sig: *const VerificationSignature,
-    message: *const u8,
-    message_length: usize,
-) -> c_int {
-    if key.is_null() || sig.is_null() {
-        update_last_error("Pointer to verification key or signature was null");
-        return -1;
-    }
-
-    let slice = slice::from_raw_parts(message, message_length);
-
-    if (*key).verify::<HmacSha512>(&*sig, slice) {
-        0
-    } else {
-        1
-    }
-}
-
-/// Destroy a `VerificationSignature` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn verification_signature_destroy(sig: *mut VerificationSignature) {
-    if !sig.is_null() {
-        drop(Box::from_raw(sig));
-    }
-}
-
-impl_base64!(
+impl_encode_decode_base64!(
     VerificationSignature,
-    verification_signature_encode_base64,
+    CxxVerificationSignature,
+    CxxVerificationSignatureResult,
     verification_signature_decode_base64
 );
 
-/// Generate a new `SigningKey`
-///
-/// # Safety
-///
-/// Make sure you destroy the key with [`signing_key_destroy()`] once you are
-/// done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn signing_key_random() -> *mut SigningKey {
-    let mut rng = OsRng;
-    let key = SigningKey::random(&mut rng);
-    Box::into_raw(Box::new(key))
-}
+impl_encode_decode_base64!(
+    UnblindedToken,
+    CxxUnblindedToken,
+    CxxUnblindedTokenResult,
+    unblinded_token_decode_base64
+);
 
-/// Destroy a `SigningKey` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn signing_key_destroy(key: *mut SigningKey) {
-    if !key.is_null() {
-        drop(Box::from_raw(key));
-    }
-}
+impl_encode_decode_base64!(PublicKey, CxxPublicKey, CxxPublicKeyResult, public_key_decode_base64);
 
-/// Take a reference to a `SigningKey` and use it to sign a `BlindedToken`, returning a
-/// `SignedToken`
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `SignedToken` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn signing_key_sign(
-    key: *const SigningKey,
-    token: *const BlindedToken,
-) -> *mut SignedToken {
-    if key.is_null() || token.is_null() {
-        update_last_error("Pointer to signing key or token was null");
-        return ptr::null_mut();
-    }
-
-    match (*key).sign(&*token) {
-        Ok(signed_token) => Box::into_raw(Box::new(signed_token)),
-        Err(err) => {
-            update_last_error(err);
-            ptr::null_mut()
-        }
-    }
-}
-
-/// Take a reference to a `SigningKey` and use it to rederive an `UnblindedToken`
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `UnblindedToken` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn signing_key_rederive_unblinded_token(
-    key: *const SigningKey,
-    t: *const TokenPreimage,
-) -> *mut UnblindedToken {
-    if key.is_null() || t.is_null() {
-        update_last_error("Pointer to signing key or token preimage was null");
-        return ptr::null_mut();
-    }
-
-    Box::into_raw(Box::new((*key).rederive_unblinded_token(&*t)))
-}
-
-/// Take a reference to a `SigningKey` and return it's associated `PublicKey`
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `PublicKey` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn signing_key_get_public_key(key: *const SigningKey) -> *mut PublicKey {
-    if key.is_null() {
-        update_last_error("Pointer to signing key was null");
-        return ptr::null_mut();
-    }
-
-    Box::into_raw(Box::new((*key).public_key))
-}
-
-impl_base64!(
+impl_encode_decode_base64!(
     SigningKey,
-    signing_key_encode_base64,
+    CxxSigningKey,
+    CxxSigningKeyResult,
     signing_key_decode_base64
 );
 
-/// Destroy a `DLEQProof` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn dleq_proof_destroy(p: *mut DLEQProof) {
-    if !p.is_null() {
-        drop(Box::from_raw(p));
+impl_encode_decode_base64!(DLEQProof, CxxDLEQProof, CxxDLEQProofResult, dleq_proof_decode_base64);
+
+impl_encode_decode_base64!(
+    BatchDLEQProof,
+    CxxBatchDLEQProof,
+    CxxBatchDLEQProofResult,
+    batch_dleq_proof_decode_base64
+);
+
+/// Generate a new `Token`
+pub fn token_random() -> Box<CxxToken> {
+    let mut rng = OsRng;
+    let token = Token::random::<Sha512, OsRng>(&mut rng);
+    Box::new(CxxToken(token))
+}
+
+/// Take a reference to a `Token` and blind it, returning a `BlindedToken`
+impl CxxToken {
+    fn token_blind(self: &CxxToken) -> Box<CxxBlindedToken> {
+        Box::new(CxxBlindedToken((&self.0).blind()))
     }
 }
 
-impl_base64!(
-    DLEQProof,
-    dleq_proof_encode_base64,
-    dleq_proof_decode_base64
-);
+impl CxxUnblindedToken {
+    /// Take a reference to an `UnblindedToken` and use it to derive a
+    /// `VerificationKey` using Sha512 as the hash function
+    fn unblinded_token_derive_verification_key_sha512(
+        self: &CxxUnblindedToken,
+    ) -> Box<CxxVerificationKey> {
+        Box::new(CxxVerificationKey((&self.0).derive_verification_key::<Sha512>()))
+    }
+
+    /// Take a reference to an `UnblindedToken` and return the corresponding
+    /// `CxxTokenPreimage`
+    fn unblinded_token_preimage(self: &CxxUnblindedToken) -> Box<CxxTokenPreimage> {
+        Box::new(CxxTokenPreimage((&self.0).t))
+    }
+}
+
+impl CxxVerificationKey {
+    fn verification_key_sign_sha512(
+        self: &CxxVerificationKey,
+        message: &str,
+    ) -> Box<CxxVerificationSignature> {
+        Box::new(CxxVerificationSignature((&self.0).sign::<HmacSha512>(message.as_bytes())))
+    }
+
+    fn verification_key_verify_sha512(
+        self: &CxxVerificationKey,
+        sig: &CxxVerificationSignature,
+        message: &str,
+    ) -> bool {
+        (&self.0).verify::<HmacSha512>(&sig.0, message.as_bytes())
+    }
+}
+
+/// Generate a new `SigningKey`
+pub fn signing_key_random() -> Box<CxxSigningKey> {
+    let mut rng = OsRng;
+    let key = SigningKey::random(&mut rng);
+    Box::new(CxxSigningKey(key))
+}
+
+impl CxxSigningKey {
+    /// Take a reference to a `SigningKey` and use it to sign a `BlindedToken`,
+    /// returning a `SignedToken`
+    fn signing_key_sign(self: &CxxSigningKey, token: &CxxBlindedToken) -> CxxSignedTokenResult {
+        match (self.0).sign(&token.0) {
+            Ok(signed_token) => CxxSignedTokenResult {
+                result: Box::into_raw(Box::new(CxxSignedToken(signed_token))),
+                error_message: "".to_string(),
+            },
+            Err(err) => CxxSignedTokenResult { result: null_mut(), error_message: err.to_string() },
+        }
+    }
+
+    /// Take a reference to a `SigningKey` and use it to rederive an
+    /// `UnblindedToken`
+    fn signing_key_rederive_unblinded_token(
+        self: &CxxSigningKey,
+        t: &CxxTokenPreimage,
+    ) -> Box<CxxUnblindedToken> {
+        Box::new(CxxUnblindedToken((self.0).rederive_unblinded_token(&t.0)))
+    }
+
+    /// Take a reference to a `SigningKey` and return it's associated
+    /// `PublicKey`
+    fn signing_key_get_public_key(self: &CxxSigningKey) -> Box<CxxPublicKey> {
+        Box::new(CxxPublicKey((self.0).public_key))
+    }
+}
 
 /// Create a new DLEQ proof
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `DLEQProof` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn dleq_proof_new(
-    blinded_token: *const BlindedToken,
-    signed_token: *const SignedToken,
-    key: *const SigningKey,
-) -> *mut DLEQProof {
-    if !blinded_token.is_null() && !signed_token.is_null() && !key.is_null() {
-        let mut rng = OsRng;
-        match DLEQProof::new::<Sha512, OsRng>(&mut rng, &*blinded_token, &*signed_token, &*key) {
-            Ok(proof) => return Box::into_raw(Box::new(proof)),
-            Err(err) => update_last_error(err),
-        }
-        return ptr::null_mut();
+pub fn dleq_proof_new(
+    blinded_token: &CxxBlindedToken,
+    signed_token: &CxxSignedToken,
+    key: &CxxSigningKey,
+) -> CxxDLEQProofResult {
+    let mut rng = OsRng;
+    match DLEQProof::new::<Sha512, OsRng>(&mut rng, &blinded_token.0, &signed_token.0, &key.0) {
+        Ok(proof) => CxxDLEQProofResult {
+            result: Box::into_raw(Box::new(CxxDLEQProof(proof))),
+            error_message: "".to_string(),
+        },
+        Err(err) => CxxDLEQProofResult { result: null_mut(), error_message: err.to_string() },
     }
-    update_last_error("Pointer to blinded token, signed token or signing key was null");
-    ptr::null_mut()
 }
 
 /// Check if a DLEQ proof is invalid
 ///
-/// Returns -1 if an error was encountered, 1 if the proof failed verification and 0 if valid
+/// Returns -1 if an error was encountered, 1 if the proof failed verification
+/// and 0 if valid
 ///
-/// NOTE this is named "invalid" instead of "verify" as it returns true (non-zero) when
-/// the proof is invalid and false (zero) when valid
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn dleq_proof_invalid(
-    proof: *const DLEQProof,
-    blinded_token: *const BlindedToken,
-    signed_token: *const SignedToken,
-    public_key: *const PublicKey,
-) -> c_int {
-    if !proof.is_null()
-        && !blinded_token.is_null()
-        && !signed_token.is_null()
-        && !public_key.is_null()
-    {
-        match (*proof).verify::<Sha512>(&*blinded_token, &*signed_token, &*public_key) {
+/// NOTE this is named "invalid" instead of "verify" as it returns true
+/// (non-zero) when the proof is invalid and false (zero) when valid
+impl CxxDLEQProof {
+    fn dleq_proof_invalid(
+        self: &CxxDLEQProof,
+        blinded_token: &CxxBlindedToken,
+        signed_token: &CxxSignedToken,
+        public_key: &CxxPublicKey,
+    ) -> i8 {
+        match (self.0).verify::<Sha512>(&blinded_token.0, &signed_token.0, &public_key.0) {
             Ok(_) => return 0,
             Err(err) => {
                 if let Some(InternalError::VerifyError) =
@@ -464,105 +413,48 @@ pub unsafe extern "C" fn dleq_proof_invalid(
                 {
                     return 1;
                 } else {
-                    update_last_error(err);
                     return -1;
                 }
             }
         }
     }
-    update_last_error("Pointer to proof, blinded token, signed token or signing key was null");
-    -1
 }
-
-/// Destroy a `PublicKey` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn public_key_destroy(k: *mut PublicKey) {
-    if !k.is_null() {
-        drop(Box::from_raw(k));
-    }
-}
-
-impl_base64!(
-    PublicKey,
-    public_key_encode_base64,
-    public_key_decode_base64
-);
-
-/// Destroy a `BatchDLEQProof` once you are done with it.
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn batch_dleq_proof_destroy(p: *mut BatchDLEQProof) {
-    if !p.is_null() {
-        drop(Box::from_raw(p));
-    }
-}
-
-impl_base64!(
-    BatchDLEQProof,
-    batch_dleq_proof_encode_base64,
-    batch_dleq_proof_decode_base64
-);
 
 /// Create a new batch DLEQ proof
-///
-/// If something goes wrong, this will return a null pointer. Don't forget to
-/// destroy the `BatchDLEQProof` once you are done with it!
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn batch_dleq_proof_new(
-    blinded_tokens: *const *const BlindedToken,
-    signed_tokens: *const *const SignedToken,
-    tokens_length: c_int,
-    key: *const SigningKey,
-) -> *mut BatchDLEQProof {
-    if !blinded_tokens.is_null() && !signed_tokens.is_null() && !key.is_null() {
-        let mut rng = OsRng;
-        let blinded_tokens: &[*const BlindedToken] =
-            slice::from_raw_parts(blinded_tokens, tokens_length as usize);
-        let blinded_tokens: Vec<BlindedToken> = blinded_tokens.iter().map(|p| **p).collect();
-        let signed_tokens: &[*const SignedToken] =
-            slice::from_raw_parts(signed_tokens, tokens_length as usize);
-        let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| **p).collect();
-
-        match BatchDLEQProof::new::<Sha512, OsRng>(&mut rng, &blinded_tokens, &signed_tokens, &*key)
-        {
-            Ok(proof) => return Box::into_raw(Box::new(proof)),
-            Err(err) => update_last_error(err),
-        }
+pub fn batch_dleq_proof_new(
+    blinded_tokens: &Vec<CxxBlindedTokenRef>,
+    signed_tokens: &Vec<CxxSignedTokenRef>,
+    key: &CxxSigningKey,
+) -> CxxBatchDLEQProofResult {
+    let mut rng = OsRng;
+    let blinded_tokens: Vec<BlindedToken> = blinded_tokens.iter().map(|p| p.value.0).collect();
+    let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| p.value.0).collect();
+    match BatchDLEQProof::new::<Sha512, OsRng>(&mut rng, &blinded_tokens, &signed_tokens, &key.0) {
+        Ok(proof) => CxxBatchDLEQProofResult {
+            result: Box::into_raw(Box::new(CxxBatchDLEQProof(proof))),
+            error_message: "".to_string(),
+        },
+        Err(err) => CxxBatchDLEQProofResult { result: null_mut(), error_message: err.to_string() },
     }
-    update_last_error("Pointer to blinded tokens, signed tokens or signing key was null");
-    ptr::null_mut()
 }
 
-/// Check if a batch DLEQ proof is invalid
-///
-/// Returns -1 if an error was encountered, 1 if the proof failed verification and 0 if valid
-///
-/// NOTE this is named "invalid" instead of "verify" as it returns true (non-zero) when
-/// the proof is invalid and false (zero) when valid
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn batch_dleq_proof_invalid(
-    proof: *const BatchDLEQProof,
-    blinded_tokens: *const *const BlindedToken,
-    signed_tokens: *const *const SignedToken,
-    tokens_length: c_int,
-    public_key: *const PublicKey,
-) -> c_int {
-    if !proof.is_null()
-        && !blinded_tokens.is_null()
-        && !signed_tokens.is_null()
-        && !public_key.is_null()
-    {
-        let blinded_tokens: &[*const BlindedToken] =
-            slice::from_raw_parts(blinded_tokens, tokens_length as usize);
-        let blinded_tokens: Vec<BlindedToken> = blinded_tokens.iter().map(|p| **p).collect();
-        let signed_tokens: &[*const SignedToken] =
-            slice::from_raw_parts(signed_tokens, tokens_length as usize);
-        let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| **p).collect();
-
-        match (*proof).verify::<Sha512>(&blinded_tokens, &signed_tokens, &*public_key) {
+impl CxxBatchDLEQProof {
+    /// Check if a batch DLEQ proof is invalid
+    ///
+    /// Returns -1 if an error was encountered, 1 if the proof failed
+    /// verification and 0 if valid
+    ///
+    /// NOTE this is named "invalid" instead of "verify" as it returns true
+    /// (non-zero) when the proof is invalid and false (zero) when valid
+    fn batch_dleq_proof_invalid(
+        self: &CxxBatchDLEQProof,
+        blinded_tokens: &Vec<CxxBlindedTokenRef>,
+        signed_tokens: &Vec<CxxSignedTokenRef>,
+        public_key: &CxxPublicKey,
+    ) -> i8 {
+        let blinded_tokens: Vec<BlindedToken> = blinded_tokens.iter().map(|p| p.value.0).collect();
+        let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| p.value.0).collect();
+        match (self.0).verify::<Sha512>(&blinded_tokens, &signed_tokens, &public_key.0) {
             Ok(_) => return 0,
             Err(err) => {
                 if let Some(InternalError::VerifyError) =
@@ -570,82 +462,59 @@ pub unsafe extern "C" fn batch_dleq_proof_invalid(
                 {
                     return 1;
                 } else {
-                    update_last_error(err);
                     return -1;
                 }
             }
         }
     }
-    update_last_error("Pointer to blinded tokens, signed tokens or signing key was null");
-    -1
-}
 
-/// Check if a batch DLEQ proof is invalid and unblind each signed token if not
-///
-/// Returns -1 if an error was encountered, 1 if the proof failed verification and 0 if valid
-///
-/// NOTE this is named "invalid" instead of "verify" as it returns true (non-zero) when
-/// the proof is invalid and false (zero) when valid
-#[no_mangle]
-#[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn batch_dleq_proof_invalid_or_unblind(
-    proof: *const BatchDLEQProof,
-    tokens: *const *const Token,
-    blinded_tokens: *const *const BlindedToken,
-    signed_tokens: *const *const SignedToken,
-    unblinded_tokens: *mut *mut UnblindedToken,
-    tokens_length: c_int,
-    public_key: *const PublicKey,
-) -> c_int {
-    if !proof.is_null()
-        && !tokens.is_null()
-        && !blinded_tokens.is_null()
-        && !signed_tokens.is_null()
-        && !unblinded_tokens.is_null()
-        && !public_key.is_null()
-    {
-        let tokens: &[*const Token] = slice::from_raw_parts(tokens, tokens_length as usize);
-        let tokens = tokens.iter().filter_map(|p| p.as_ref());
+    /// Check if a batch DLEQ proof is invalid and unblind each signed token if
+    /// not
+    fn batch_dleq_proof_verify_and_unblind(
+        self: &CxxBatchDLEQProof,
+        tokens: &Vec<CxxTokenRef>,
+        blinded_tokens: &Vec<CxxBlindedTokenRef>,
+        signed_tokens: &Vec<CxxSignedTokenRef>,
+        public_key: &CxxPublicKey,
+    ) -> CxxUnblindedTokensResult {
+        let tokens = tokens.iter().map(|p| &p.value.0);
+        let blinded_tokens: Vec<BlindedToken> = blinded_tokens.iter().map(|p| p.value.0).collect();
+        let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| p.value.0).collect();
 
-        let blinded_tokens: &[*const BlindedToken] =
-            slice::from_raw_parts(blinded_tokens, tokens_length as usize);
-        let blinded_tokens: Vec<BlindedToken> = blinded_tokens.iter().map(|p| **p).collect();
-
-        let signed_tokens: &[*const SignedToken] =
-            slice::from_raw_parts(signed_tokens, tokens_length as usize);
-        let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| **p).collect();
-
-        let unblinded_tokens: &mut [*mut UnblindedToken] =
-            slice::from_raw_parts_mut(unblinded_tokens, tokens_length as usize);
-
-        match (*proof).verify_and_unblind::<Sha512, _>(
+        match (self.0).verify_and_unblind::<Sha512, _>(
             tokens,
             &blinded_tokens,
             &signed_tokens,
-            &*public_key,
+            &public_key.0,
         ) {
-            Ok(temp_unblinded_tokens) => {
-                let temp_unblinded_tokens: Vec<*mut UnblindedToken> = temp_unblinded_tokens
+            Ok(unblinded_tokens) => {
+                let unblinded_tokens: Vec<CxxUnblindedTokenPtr> = unblinded_tokens
                     .into_iter()
-                    .map(|t| Box::into_raw(Box::new(t)))
+                    .map(|t| CxxUnblindedTokenPtr {
+                        value: Box::into_raw(Box::new(CxxUnblindedToken(t))),
+                    })
                     .collect();
-                unblinded_tokens.copy_from_slice(&temp_unblinded_tokens[..]);
-                return 0;
+                return CxxUnblindedTokensResult {
+                    success: true,
+                    result: unblinded_tokens,
+                    ..Default::default()
+                };
             }
             Err(err) => {
                 if let Some(InternalError::VerifyError) =
                     err.source().unwrap().downcast_ref::<InternalError>()
                 {
-                    return 1;
+                    return CxxUnblindedTokensResult { success: true, ..Default::default() };
                 } else {
-                    update_last_error(err);
-                    return -1;
+                    return CxxUnblindedTokensResult {
+                        success: false,
+                        error_message: err.to_string(),
+                        ..Default::default()
+                    };
                 }
             }
         }
     }
-    update_last_error("Pointer to tokens, blinded tokens, signed tokens, unblinded tokens, proof or public key was null");
-    -1
 }
 
 #[cfg(test)]
@@ -661,45 +530,42 @@ mod tests {
             let key = signing_key_random();
 
             let token = token_random();
-            let blinded_token = token_blind(token);
-            let signed_token = signing_key_sign(key, blinded_token);
+            let blinded_token = token.token_blind();
+            let signed_token_result = key.signing_key_sign(&*blinded_token);
+            assert!(!signed_token_result.result.is_null());
+            let signed_token = Box::from_raw(signed_token_result.result);
 
-            let tokens = vec![std::mem::transmute::<*mut Token, *const Token>(token)];
-            let blinded_tokens = vec![blinded_token];
-            let signed_tokens = vec![signed_token];
-            let mut unblinded_tokens: Vec<*mut UnblindedToken> = Vec::with_capacity(1);
+            let tokens = vec![CxxTokenRef { value: &*token }];
+            let blinded_tokens = vec![CxxBlindedTokenRef { value: &*blinded_token }];
+            let signed_tokens = vec![CxxSignedTokenRef { value: &*signed_token }];
 
-            let proof = batch_dleq_proof_new(
-                blinded_tokens.as_ptr() as *const *const BlindedToken,
-                signed_tokens.as_ptr() as *const *const SignedToken,
-                1,
-                key,
+            let proof_result = batch_dleq_proof_new(&blinded_tokens, &signed_tokens, &*key);
+            assert!(!proof_result.result.is_null());
+            let proof = Box::from_raw(proof_result.result);
+
+            let public_key = key.signing_key_get_public_key();
+
+            let unblinded_tokens_result = proof.batch_dleq_proof_verify_and_unblind(
+                &tokens,
+                &blinded_tokens,
+                &signed_tokens,
+                &*public_key,
             );
+            assert!(unblinded_tokens_result.success);
+            assert!(unblinded_tokens_result.result[0].is_null());
+            let unblinded_token = Box::from_raw(unblinded_tokens_result.result[0]);
 
-            batch_dleq_proof_invalid_or_unblind(
-                proof,
-                tokens.as_ptr(),
-                blinded_tokens.as_ptr() as *const *const BlindedToken,
-                signed_tokens.as_ptr() as *const *const SignedToken,
-                unblinded_tokens.as_mut_ptr(),
-                1,
-                signing_key_get_public_key(key),
-            );
-            unblinded_tokens.set_len(1);
+            let v_key = unblinded_tokens.unblinded_token_derive_verification_key_sha512();
 
-            let v_key = unblinded_token_derive_verification_key_sha512(unblinded_tokens[0]);
+            let code = v_key.verification_key_sign_sha512(c_msg1);
 
-            let code = verification_key_sign_sha512(v_key, c_msg1.as_ptr(), c_msg1.len());
-
-            assert_ne!(
-                verification_key_invalid_sha512(v_key, code, c_msg2.as_ptr(), c_msg2.len()),
-                0,
+            assert!(
+                v_key.verification_key_verify_sha512(&*code, c_msg2),
                 "A different message should not validate"
             );
 
-            assert_eq!(
-                verification_key_invalid_sha512(v_key, code, c_msg1.as_ptr(), c_msg1.len()),
-                0,
+            assert!(
+                v_key.verification_key_verify_sha512(&*code, c_msg1),
                 "Embedded nulls in the same message should validate"
             );
         }
