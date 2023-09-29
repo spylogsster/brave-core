@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/files/file_path.h"
 #include "base/json/json_reader.h"
 #include "base/types/expected.h"
 #include "components/prefs/pref_service.h"
@@ -82,7 +83,7 @@ bool PsstRule::GetFilePathFromValue(const base::Value* value,
   if (!value->is_string()) {
     return false;
   }
-  *result = base::FilePath(value->GetString());
+  *result = base::FilePath(FILE_PATH_LITERAL(value->GetString()));
   return true;
 }
 

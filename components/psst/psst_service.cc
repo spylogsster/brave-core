@@ -45,7 +45,8 @@ MatchedRule CreateMatchedRule(const base::FilePath& component_path,
                               const base::FilePath& test_script_path,
                               const base::FilePath& policy_script_path,
                               const int version) {
-  auto prefix = base::FilePath(component_path).Append(kScriptsDir);
+  auto prefix =
+      base::FilePath(component_path).Append(FILE_PATH_LITERAL(kScriptsDir));
   auto test_script = brave_component_updater::GetDATFileAsString(
       base::FilePath(prefix).Append(test_script_path));
   auto policy_script = brave_component_updater::GetDATFileAsString(
