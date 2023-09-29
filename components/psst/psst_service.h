@@ -11,13 +11,13 @@
 #include <vector>
 
 #include "base/memory/raw_ptr.h"
+#include "base/memory/singleton.h"
 #include "base/memory/weak_ptr.h"
 #include "base/synchronization/lock.h"
 #include "brave/components/psst/psst_rule.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
 class GURL;
-struct PsstServiceSingletonTrait;
 
 namespace psst {
 
@@ -46,7 +46,7 @@ class PsstService {
 
   base::WeakPtrFactory<PsstService> weak_factory_{this};
 
-  friend struct PsstServiceSingletonTrait;
+  friend struct base::DefaultSingletonTraits<PsstService>;
 };
 
 }  // namespace psst

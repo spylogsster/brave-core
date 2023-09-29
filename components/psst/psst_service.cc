@@ -30,17 +30,9 @@ constexpr char kScriptsDir[] = "scripts";
 
 using base::AutoLock;
 
-struct PsstServiceSingletonTrait
-    : public base::DefaultSingletonTraits<PsstService> {
-  static PsstService* New() {
-    PsstService* instance = new PsstService();
-    return instance;
-  }
-};
-
 // static
 PsstService* PsstService::GetInstance() {
-  return base::Singleton<PsstService, PsstServiceSingletonTrait>::get();
+  return base::Singleton<PsstService>::get();
 }
 
 PsstService::PsstService() = default;
