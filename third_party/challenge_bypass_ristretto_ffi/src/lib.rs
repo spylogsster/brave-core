@@ -11,6 +11,7 @@ use challenge_bypass_ristretto::voprf::{
     BatchDLEQProof, BlindedToken, DLEQProof, PublicKey, SignedToken, SigningKey, Token,
     TokenPreimage, UnblindedToken, VerificationKey, VerificationSignature,
 };
+use cxx::CxxString;
 use ffi::{
     CxxBatchDLEQProofResult, CxxBlindedTokenRef, CxxBlindedTokenResult, CxxDLEQProofResult,
     CxxPublicKeyResult, CxxSignedTokenRef, CxxSignedTokenResult, CxxSigningKeyResult,
@@ -29,40 +30,40 @@ mod ffi {
     extern "Rust" {
         type CxxTokenPreimage;
         fn encode_base64(self: &CxxTokenPreimage) -> String;
-        fn token_preimage_decode_base64(s: &str) -> CxxTokenPreimageResult;
+        fn token_preimage_decode_base64(s: &CxxString) -> CxxTokenPreimageResult;
 
         type CxxBlindedToken;
         fn encode_base64(self: &CxxBlindedToken) -> String;
-        fn blinded_token_decode_base64(s: &str) -> CxxBlindedTokenResult;
+        fn blinded_token_decode_base64(s: &CxxString) -> CxxBlindedTokenResult;
 
         type CxxToken;
         fn token_random() -> Box<CxxToken>;
         fn token_blind(self: &CxxToken) -> Box<CxxBlindedToken>;
         fn encode_base64(self: &CxxToken) -> String;
-        fn token_decode_base64(s: &str) -> CxxTokenResult;
+        fn token_decode_base64(s: &CxxString) -> CxxTokenResult;
 
         type CxxSignedToken;
         fn encode_base64(self: &CxxSignedToken) -> String;
-        fn signed_token_decode_base64(s: &str) -> CxxSignedTokenResult;
+        fn signed_token_decode_base64(s: &CxxString) -> CxxSignedTokenResult;
 
         type CxxVerificationSignature;
         fn encode_base64(self: &CxxVerificationSignature) -> String;
-        fn verification_signature_decode_base64(s: &str) -> CxxVerificationSignatureResult;
+        fn verification_signature_decode_base64(s: &CxxString) -> CxxVerificationSignatureResult;
 
         type CxxVerificationKey;
         fn verification_key_sign_sha512(
             self: &CxxVerificationKey,
-            message: &str,
-        ) -> Box<CxxVerificationSignature>;
-        fn verification_key_verify_sha512(
+            message: &CxxString,
+        ) -> CxxVerificationSignatureResult;
+        fn verification_key_invalid_sha512(
             self: &CxxVerificationKey,
             sig: &CxxVerificationSignature,
-            message: &str,
-        ) -> bool;
+            message: &CxxString,
+        ) -> i8;
 
         type CxxUnblindedToken;
         fn encode_base64(self: &CxxUnblindedToken) -> String;
-        fn unblinded_token_decode_base64(s: &str) -> CxxUnblindedTokenResult;
+        fn unblinded_token_decode_base64(s: &CxxString) -> CxxUnblindedTokenResult;
         fn unblinded_token_derive_verification_key_sha512(
             self: &CxxUnblindedToken,
         ) -> Box<CxxVerificationKey>;
@@ -70,11 +71,11 @@ mod ffi {
 
         type CxxPublicKey;
         fn encode_base64(self: &CxxPublicKey) -> String;
-        fn public_key_decode_base64(s: &str) -> CxxPublicKeyResult;
+        fn public_key_decode_base64(s: &CxxString) -> CxxPublicKeyResult;
 
         type CxxSigningKey;
         fn encode_base64(self: &CxxSigningKey) -> String;
-        fn signing_key_decode_base64(s: &str) -> CxxSigningKeyResult;
+        fn signing_key_decode_base64(s: &CxxString) -> CxxSigningKeyResult;
         fn signing_key_random() -> Box<CxxSigningKey>;
         fn signing_key_sign(self: &CxxSigningKey, token: &CxxBlindedToken) -> CxxSignedTokenResult;
         fn signing_key_rederive_unblinded_token(
@@ -85,7 +86,7 @@ mod ffi {
 
         type CxxDLEQProof;
         fn encode_base64(self: &CxxDLEQProof) -> String;
-        fn dleq_proof_decode_base64(s: &str) -> CxxDLEQProofResult;
+        fn dleq_proof_decode_base64(s: &CxxString) -> CxxDLEQProofResult;
         fn dleq_proof_new(
             blinded_token: &CxxBlindedToken,
             signed_token: &CxxSignedToken,
@@ -100,7 +101,7 @@ mod ffi {
 
         type CxxBatchDLEQProof;
         fn encode_base64(self: &CxxBatchDLEQProof) -> String;
-        fn batch_dleq_proof_decode_base64(s: &str) -> CxxBatchDLEQProofResult;
+        fn batch_dleq_proof_decode_base64(s: &CxxString) -> CxxBatchDLEQProofResult;
         fn batch_dleq_proof_new(
             blinded_tokens: &Vec<CxxBlindedTokenRef>,
             signed_tokens: &Vec<CxxSignedTokenRef>,
@@ -220,12 +221,19 @@ pub struct CxxBatchDLEQProof(BatchDLEQProof);
 macro_rules! impl_encode_decode_base64 {
     ($t:ident, $ct:ident, $ctr:ident, $de:ident) => {
         /// Decode from base64 String.
-        pub fn $de(s: &str) -> $ctr {
-            match $t::decode_base64(s) {
-                Ok(t) => {
-                    $ctr { result: Box::into_raw(Box::new($ct(t))), error_message: "".to_string() }
-                }
-                Err(err) => $ctr { result: null_mut(), error_message: err.to_string() },
+        pub fn $de(encoded: &CxxString) -> $ctr {
+            match encoded.to_str() {
+                Ok(s) => match $t::decode_base64(s) {
+                    Ok(t) => $ctr {
+                        result: Box::into_raw(Box::new($ct(t))),
+                        error_message: "".to_string(),
+                    },
+                    Err(err) => $ctr { result: null_mut(), error_message: err.to_string() },
+                },
+                Err(_) => $ctr {
+                    result: null_mut(),
+                    error_message: "Failed to convert input string".to_string(),
+                },
             }
         }
 
@@ -325,17 +333,45 @@ impl CxxUnblindedToken {
 impl CxxVerificationKey {
     fn verification_key_sign_sha512(
         self: &CxxVerificationKey,
-        message: &str,
-    ) -> Box<CxxVerificationSignature> {
-        Box::new(CxxVerificationSignature((&self.0).sign::<HmacSha512>(message.as_bytes())))
+        message: &CxxString,
+    ) -> CxxVerificationSignatureResult {
+        match message.to_str() {
+            Ok(s) => CxxVerificationSignatureResult {
+                result: Box::into_raw(Box::new(CxxVerificationSignature(
+                    (&self.0).sign::<HmacSha512>(s.as_bytes()),
+                ))),
+                error_message: "".to_string(),
+            },
+            Err(_) => CxxVerificationSignatureResult {
+                result: null_mut(),
+                error_message: "Failed to convert input string".to_string(),
+            },
+        }
     }
 
-    fn verification_key_verify_sha512(
+    // Verify an existing `VerificationSignature` using Sha512 as the HMAC hash
+    // function
+    ///
+    /// Returns -1 if an error was encountered, 1 if the signature failed
+    /// verification and 0 if valid
+    ///
+    /// NOTE this is named "invalid" instead of "verify" as it returns true
+    /// (non-zero) when the signature is invalid and false (zero) when valid
+    fn verification_key_invalid_sha512(
         self: &CxxVerificationKey,
         sig: &CxxVerificationSignature,
-        message: &str,
-    ) -> bool {
-        (&self.0).verify::<HmacSha512>(&sig.0, message.as_bytes())
+        message: &CxxString,
+    ) -> i8 {
+        match message.to_str() {
+            Ok(s) => {
+                if (&self.0).verify::<HmacSha512>(&sig.0, s.as_bytes()) {
+                    0
+                } else {
+                    1
+                }
+            }
+            Err(_) => -1,
+        }
     }
 }
 
@@ -524,8 +560,8 @@ mod tests {
     #[test]
     fn test_embedded_null() {
         unsafe {
-            let c_msg1 = "\0hello";
-            let c_msg2 = "";
+            let_cxx_string!(c_msg1 = "\0hello");
+            let_cxx_string!(c_msg2 = "");
 
             let key = signing_key_random();
 
@@ -557,15 +593,19 @@ mod tests {
 
             let v_key = unblinded_tokens.unblinded_token_derive_verification_key_sha512();
 
-            let code = v_key.verification_key_sign_sha512(c_msg1);
+            let code_result = v_key.verification_key_sign_sha512(&c_msg1);
+            assert!(!code_result.result.is_null());
+            let code = Box::from_raw(code_result.result);
 
-            assert!(
-                v_key.verification_key_verify_sha512(&*code, c_msg2),
+            assert_ne!(
+                v_key.verification_key_verify_sha512(&*code, &c_msg2),
+                0,
                 "A different message should not validate"
             );
 
-            assert!(
-                v_key.verification_key_verify_sha512(&*code, c_msg1),
+            assert_eq!(
+                v_key.verification_key_verify_sha512(&*code, &c_msg1),
+                0,
                 "Embedded nulls in the same message should validate"
             );
         }

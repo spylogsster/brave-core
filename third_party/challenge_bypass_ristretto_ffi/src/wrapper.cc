@@ -232,15 +232,26 @@ VerificationKey::~VerificationKey() = default;
 
 base::expected<VerificationSignature, std::string> VerificationKey::sign(
     const std::string& message) {
-  rust::Box<cbr_ffi::CxxVerificationSignature> raw_verification_signature(
+  cbr_ffi::CxxVerificationSignatureResult raw_sig_result(
       raw()->verification_key_sign_sha512(message));
-  return VerificationSignature(std::move(raw_verification_signature));
+
+  if (!raw_sig_result.result) {
+    return base::unexpected(raw_sig_result.error_message.c_str());
+  }
+
+  return VerificationSignature(
+      rust::Box<cbr_ffi::CxxVerificationSignature>::from_raw(
+          raw_sig_result.result));
 }
 
 base::expected<bool, std::string> VerificationKey::verify(
     const VerificationSignature& sig,
     const std::string& message) {
-  return raw()->verification_key_verify_sha512(*sig.raw(), message);
+  int result = raw()->verification_key_invalid_sha512(*sig.raw(), message);
+  if (result < 0) {
+    base::unexpected("Failed to verify message signature");
+  }
+  return result == 0;
 }
 
 UnblindedToken::UnblindedToken(CxxUnblindedTokenBox raw)
