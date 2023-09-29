@@ -20,7 +20,6 @@
 # !!! few of those than not check at all.
 
 import argparse
-import json
 import re
 import os
 import sys
@@ -150,6 +149,7 @@ class ChromiumSrcOverridesChecker:
         self.gen_buildir = gen_buildir
         self.messages = {'infos': [], 'warnings': [], 'errors': []}
         self.overrides = []
+        self.config_data = {}
 
     def AddInfo(self, message):
         self.messages['infos'].append("-------------------------\n" +
@@ -256,15 +256,15 @@ class ChromiumSrcOverridesChecker:
             message = (
                 f"  Expected to find #undef {target} in {override_filepath}.")
             if override_filepath.endswith('.h'):
-                message += ("\n  If this symbol is intended to " +
-                            "propagate beyond this header then add it to " +
-                            "exceptions in check_chromium_src.json.")
+                message += (
+                    "\n  If this symbol is intended to " +
+                    "propagate beyond this header then add it to " +
+                    "exceptions in //brave/check_chromium_src_config.json5.")
             self.AddError(message)
 
         return found['other']
 
-    def do_check_defines(self, override_filepath, original_filepath,
-                         symbol_excludes):
+    def do_check_defines(self, override_filepath, original_filepath):
         """
         Finds `#define TARGET REPLACEMENT` statements in |override_filepath| and
         attempts to find the <TARGET> in the |original_filepath|.
@@ -300,8 +300,9 @@ class ChromiumSrcOverridesChecker:
                     continue
 
                 # Skip excluded defines.
-                if (override_filepath in symbol_excludes
-                        and target in symbol_excludes[override_filepath]):
+                if (override_filepath in self.config_data['symbol_excludes']
+                        and target in self.config_data['symbol_excludes']
+                    [override_filepath]):
                     continue
 
                 # Check if the symbol is used internally in the override.
@@ -332,7 +333,7 @@ class ChromiumSrcOverridesChecker:
                                          "\n  Symbol is NOT found in " +
                                          f"{original_filepath}.")
 
-    def do_check_overrides(self, symbol_excludes):
+    def do_check_overrides(self):
         """
         Checks that each path in the passed in list |overrides_list| exists in
         the passed in directory (|search_dir|), also checks includes.
@@ -368,13 +369,13 @@ class ChromiumSrcOverridesChecker:
                 self.AddError(
                     f"  No source for override {override_filepath}.\n" +
                     "  If this is not a true override, then add the " +
-                    "path to the PATH_EXCLUDES in check_chromium_src.json.\n" +
+                    "path to the `path_excludes` in " +
+                    "//brave/check_chromium_src_config.json5.\n" +
                     "  Otherwise, the upstream file is gone and a fix " +
                     "is required.")
                 continue
 
-            self.do_check_defines(override_filepath, original_filepath,
-                                  symbol_excludes)
+            self.do_check_defines(override_filepath, original_filepath)
             self.do_check_includes(override_filepath, original_is_in_gen)
 
     def validate_exclusion_symbol(self, path, symbol):
@@ -389,7 +390,7 @@ class ChromiumSrcOverridesChecker:
                               f"override chromium_src/{path} cannot be " +
                               "found.\n  If the symbol was removed then " +
                               "also remove it from the exclusions list in " +
-                              "check_chromium_src.json.")
+                              "//brave/check_chromium_src_config.json5.")
                 return False
         return True
 
@@ -400,25 +401,25 @@ class ChromiumSrcOverridesChecker:
         full_path = os.path.join(BRAVE_CHROMIUM_SRC, path).replace('\\', '/')
         if not os.path.isfile(full_path):
             self.AddError(
-                "  Path listed in check_chromium_src.json cannot be " +
-                f"found: chromium_src/{path}.\n  If the file " +
-                "was removed then also remove it from the list in " +
-                "check_chromium_src.json")
+                "  Path listed in //brave/check_chromium_src_config.json5 " +
+                f"cannot be found: chromium_src/{path}.\n  If the file was " +
+                "removed then also remove it from the list in " +
+                "//brave/check_chromium_src_config.json5")
             return False
         return True
 
-    def validate_exclusions(self, excludes):
+    def validate_exclusions(self):
         """
         Validate the each path listed in exclusions paths is still a valid path.
         Otherwise the developer who removed the excluded file should also remove
         it from the exclusions list.
         """
         result = True
-        for path in excludes['path_excludes']:
+        for path in self.config_data['path_excludes']:
             if not self.validate_exclusion_path(path):
                 result = False
 
-        for path, symbols in excludes['symbol_excludes'].items():
+        for path, symbols in self.config_data['symbol_excludes'].items():
             if not self.validate_exclusion_path(path):
                 result = False
                 for symbol in symbols:
@@ -428,49 +429,35 @@ class ChromiumSrcOverridesChecker:
         return result
 
     def load_exclusions(self):
-        excludes = {
-            'result': True,
-            're_excludes': [],
-            'path_excludes': [],
-            'symbol_excludes': {}
-        }
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        exclusions_path = os.path.join(script_dir, 'check_chromium_src.json')
-        if not os.path.exists(exclusions_path):
-            self.AddError(
-                f"  Unable to load exclusions file {exclusions_path}.")
-            return excludes
+        config_path = os.path.join(BRAVE_SRC, 'check_chromium_src_config.json5')
+        if not os.path.isfile(config_path):
+            self.AddError(f"  Unable to load config file {config_path}.")
+            return False
 
-        data = {}
-        with open(exclusions_path, "r", encoding='utf-8') as exclusions_file:
-            data = json.load(exclusions_file)
+        try:
+            json5_path = os.path.join(CHROMIUM_SRC, 'third_party', 'pyjson5',
+                                      'src')
+            sys.path.append(json5_path)
+            # pylint: disable=import-outside-toplevel,import-error
+            import json5
 
-        keys = ['RE_PATH_EXCLUDES', 'PATH_EXCLUDES', 'SYMBOL_EXCLUDES']
+            with open(config_path, "r", encoding='utf-8') as exclusions_file:
+                self.config_data = json5.load(exclusions_file)
+        finally:
+            # Restore sys.path to what it was before.
+            sys.path.remove(json5_path)
+
+        keys = ['re_excludes', 'path_excludes', 'symbol_excludes']
         for key in keys:
-            if not key in data:
-                self.AddError(
-                    f"  Key '{key}' is missing from {exclusions_path}.")
-                excludes['result'] = False
-            else:
-                if not 'values' in data[key]:
-                    self.AddError(
-                        f"  Key 'values' is missing from '{key}' in " +
-                        f"{exclusions_path}.")
-                    excludes['result'] = False
+            if not key in self.config_data:
+                self.AddError(f"  Key '{key}' is missing from {config_path}.")
+                return False
 
-        excludes['re_excludes'] = data['RE_PATH_EXCLUDES']['values']
-        excludes['path_excludes'] = data['PATH_EXCLUDES']['values']
-        excludes['symbol_excludes'] = data['SYMBOL_EXCLUDES']['values']
-
-        if not self.validate_exclusions(excludes):
-            excludes['result'] = False
-
-        return excludes
+        return self.validate_exclusions()
 
     def check_overrides(self, affected_paths=None):
         # Load and check exclusions
-        excludes = self.load_exclusions()
-        if not excludes['result']:
+        if not self.load_exclusions():
             return self.messages
 
         # Change into the chromium_src directory for convenience.
@@ -478,10 +465,10 @@ class ChromiumSrcOverridesChecker:
 
         # Build filters
         exclude_regexp = None
-        if (len(excludes['re_excludes']) > 0
-                or len(excludes['path_excludes']) > 0):
-            exclude_regexp = '|'.join(excludes['re_excludes'] +
-                                      excludes['path_excludes'])
+        if (len(self.config_data['re_excludes']) > 0
+                or len(self.config_data['path_excludes']) > 0):
+            exclude_regexp = '|'.join(self.config_data['re_excludes'] +
+                                      self.config_data['path_excludes'])
 
         # Build the list of files to check.
         if affected_paths is None:
@@ -495,7 +482,7 @@ class ChromiumSrcOverridesChecker:
             return self.messages
 
         # Check overrides
-        self.do_check_overrides(excludes['symbol_excludes'])
+        self.do_check_overrides()
 
         return self.messages
 
