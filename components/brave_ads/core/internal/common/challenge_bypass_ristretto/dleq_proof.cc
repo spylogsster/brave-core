@@ -35,7 +35,7 @@ absl::optional<challenge_bypass_ristretto::DLEQProof> Create(
   }
 
   return ValueOrLogError(
-      challenge_bypass_ristretto::DLEQProof::decode_base64(dleq_proof_base64));
+      challenge_bypass_ristretto::DLEQProof::DecodeBase64(dleq_proof_base64));
 }
 
 }  // namespace
@@ -69,7 +69,7 @@ absl::optional<std::string> DLEQProof::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(dleq_proof_->encode_base64());
+  return ValueOrLogError(dleq_proof_->EncodeBase64());
 }
 
 bool DLEQProof::Verify(const BlindedToken& blinded_token,
@@ -80,7 +80,7 @@ bool DLEQProof::Verify(const BlindedToken& blinded_token,
     return false;
   }
 
-  return ValueOrLogError(dleq_proof_->verify(blinded_token.get(),
+  return ValueOrLogError(dleq_proof_->Verify(blinded_token.get(),
                                              signed_token.get(),
                                              public_key.get()))
       .value_or(false);

@@ -48,9 +48,9 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT TokenPreimage {
 
   const CxxTokenPreimageBox& raw() const { return raw_->data; }
 
-  static base::expected<TokenPreimage, std::string> decode_base64(
+  static base::expected<TokenPreimage, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const TokenPreimage& rhs) const;
   bool operator!=(const TokenPreimage& rhs) const;
@@ -73,9 +73,9 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT BlindedToken {
 
   const CxxBlindedTokenBox& raw() const { return raw_->data; }
 
-  static base::expected<BlindedToken, std::string> decode_base64(
+  static base::expected<BlindedToken, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const BlindedToken& rhs) const;
   bool operator!=(const BlindedToken& rhs) const;
@@ -98,11 +98,11 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT Token {
 
   const CxxTokenBox& raw() const { return raw_->data; }
 
-  static base::expected<Token, std::string> random();
-  base::expected<BlindedToken, std::string> blind();
-  static base::expected<Token, std::string> decode_base64(
+  static base::expected<Token, std::string> Random();
+  base::expected<BlindedToken, std::string> Blind();
+  static base::expected<Token, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const Token& rhs) const;
   bool operator!=(const Token& rhs) const;
@@ -125,9 +125,9 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT SignedToken {
 
   const CxxSignedTokenBox& raw() const { return raw_->data; }
 
-  static base::expected<SignedToken, std::string> decode_base64(
+  static base::expected<SignedToken, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const SignedToken& rhs) const;
   bool operator!=(const SignedToken& rhs) const;
@@ -152,9 +152,9 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT VerificationSignature {
 
   const CxxVerificationSignatureBox& raw() const { return raw_->data; }
 
-  static base::expected<VerificationSignature, std::string> decode_base64(
+  static base::expected<VerificationSignature, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
  private:
   scoped_refptr<CxxVerificationSignatureRefData> raw_;
@@ -174,9 +174,9 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT VerificationKey {
 
   const CxxVerificationKeyBox& raw() const { return raw_->data; }
 
-  base::expected<VerificationSignature, std::string> sign(
+  base::expected<VerificationSignature, std::string> Sign(
       const std::string& message);
-  base::expected<bool, std::string> verify(const VerificationSignature& sig,
+  base::expected<bool, std::string> Verify(const VerificationSignature& sig,
                                            const std::string& message);
 
  private:
@@ -197,11 +197,11 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT UnblindedToken {
 
   const CxxUnblindedTokenBox& raw() const { return raw_->data; }
 
-  VerificationKey derive_verification_key() const;
-  TokenPreimage preimage() const;
-  static base::expected<UnblindedToken, std::string> decode_base64(
+  VerificationKey DeriveVerificationKey() const;
+  TokenPreimage Preimage() const;
+  static base::expected<UnblindedToken, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const UnblindedToken& rhs) const;
   bool operator!=(const UnblindedToken& rhs) const;
@@ -224,9 +224,9 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT PublicKey {
 
   const CxxPublicKeyBox& raw() const { return raw_->data; }
 
-  static base::expected<PublicKey, std::string> decode_base64(
+  static base::expected<PublicKey, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const PublicKey& rhs) const;
   bool operator!=(const PublicKey& rhs) const;
@@ -249,13 +249,13 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT SigningKey {
 
   const CxxSigningKeyBox& raw() const { return raw_->data; }
 
-  static base::expected<SigningKey, std::string> random();
-  base::expected<SignedToken, std::string> sign(const BlindedToken& tok) const;
-  UnblindedToken rederive_unblinded_token(const TokenPreimage& t);
-  PublicKey public_key();
-  static base::expected<SigningKey, std::string> decode_base64(
+  static base::expected<SigningKey, std::string> Random();
+  base::expected<SignedToken, std::string> Sign(const BlindedToken& tok) const;
+  UnblindedToken RederiveUnblindedToken(const TokenPreimage& t);
+  PublicKey GetPublicKey();
+  static base::expected<SigningKey, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const SigningKey& rhs) const;
   bool operator!=(const SigningKey& rhs) const;
@@ -278,12 +278,12 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT DLEQProof {
 
   const CxxDLEQProofBox& raw() const { return raw_->data; }
 
-  base::expected<bool, std::string> verify(const BlindedToken& blinded_token,
+  base::expected<bool, std::string> Verify(const BlindedToken& blinded_token,
                                            const SignedToken& signed_token,
                                            const PublicKey& key);
-  static base::expected<DLEQProof, std::string> decode_base64(
+  static base::expected<DLEQProof, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const DLEQProof& rhs) const;
   bool operator!=(const DLEQProof& rhs) const;
@@ -316,20 +316,20 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT BatchDLEQProof {
       const std::vector<SignedToken>& signed_tokens,
       const SigningKey& key);
 
-  base::expected<bool, std::string> verify(
+  base::expected<bool, std::string> Verify(
       const std::vector<BlindedToken>& blinded_tokens,
       const std::vector<SignedToken>& signed_tokens,
       const PublicKey& key);
 
-  base::expected<std::vector<UnblindedToken>, std::string> verify_and_unblind(
+  base::expected<std::vector<UnblindedToken>, std::string> VerifyAndUnblind(
       const std::vector<Token>& tokens,
       const std::vector<BlindedToken>& blinded_tokens,
       const std::vector<SignedToken>& signed_tokens,
       const PublicKey& public_key);
 
-  static base::expected<BatchDLEQProof, std::string> decode_base64(
+  static base::expected<BatchDLEQProof, std::string> DecodeBase64(
       const std::string& encoded);
-  base::expected<std::string, std::string> encode_base64() const;
+  base::expected<std::string, std::string> EncodeBase64() const;
 
   bool operator==(const BatchDLEQProof& rhs) const;
   bool operator!=(const BatchDLEQProof& rhs) const;

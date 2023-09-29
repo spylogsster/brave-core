@@ -23,7 +23,7 @@ TokenPreimage& TokenPreimage::operator=(TokenPreimage&&) noexcept = default;
 TokenPreimage::~TokenPreimage() = default;
 
 // static
-base::expected<TokenPreimage, std::string> TokenPreimage::decode_base64(
+base::expected<TokenPreimage, std::string> TokenPreimage::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxTokenPreimageResult raw_preimage_result(
       cbr_ffi::token_preimage_decode_base64(encoded));
@@ -37,13 +37,13 @@ base::expected<TokenPreimage, std::string> TokenPreimage::decode_base64(
       CxxTokenPreimageBox::from_raw(raw_preimage_result.result));
 }
 
-base::expected<std::string, std::string> TokenPreimage::encode_base64() const {
+base::expected<std::string, std::string> TokenPreimage::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool TokenPreimage::operator==(const TokenPreimage& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool TokenPreimage::operator!=(const TokenPreimage& rhs) const {
@@ -63,7 +63,7 @@ BlindedToken& BlindedToken::operator=(BlindedToken&& other) noexcept = default;
 
 BlindedToken::~BlindedToken() = default;
 
-base::expected<BlindedToken, std::string> BlindedToken::decode_base64(
+base::expected<BlindedToken, std::string> BlindedToken::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxBlindedTokenResult raw_blinded_result(
       cbr_ffi::blinded_token_decode_base64(encoded));
@@ -75,13 +75,13 @@ base::expected<BlindedToken, std::string> BlindedToken::decode_base64(
   return BlindedToken(CxxBlindedTokenBox::from_raw(raw_blinded_result.result));
 }
 
-base::expected<std::string, std::string> BlindedToken::encode_base64() const {
+base::expected<std::string, std::string> BlindedToken::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool BlindedToken::operator==(const BlindedToken& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool BlindedToken::operator!=(const BlindedToken& rhs) const {
@@ -102,18 +102,18 @@ Token& Token::operator=(Token&& other) noexcept = default;
 Token::~Token() = default;
 
 // static
-base::expected<Token, std::string> Token::random() {
+base::expected<Token, std::string> Token::Random() {
   CxxTokenBox raw_token(cbr_ffi::token_random());
   return Token(std::move(raw_token));
 }
 
-base::expected<BlindedToken, std::string> Token::blind() {
+base::expected<BlindedToken, std::string> Token::Blind() {
   rust::Box<cbr_ffi::CxxBlindedToken> raw_blinded(raw()->token_blind());
   return BlindedToken(std::move(raw_blinded));
 }
 
 // static
-base::expected<Token, std::string> Token::decode_base64(
+base::expected<Token, std::string> Token::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxTokenResult raw_token_result(
       cbr_ffi::token_decode_base64(encoded));
@@ -125,13 +125,13 @@ base::expected<Token, std::string> Token::decode_base64(
   return Token(CxxTokenBox::from_raw(raw_token_result.result));
 }
 
-base::expected<std::string, std::string> Token::encode_base64() const {
+base::expected<std::string, std::string> Token::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool Token::operator==(const Token& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool Token::operator!=(const Token& rhs) const {
@@ -151,7 +151,7 @@ SignedToken& SignedToken::operator=(SignedToken&&) noexcept = default;
 
 SignedToken::~SignedToken() = default;
 
-base::expected<SignedToken, std::string> SignedToken::decode_base64(
+base::expected<SignedToken, std::string> SignedToken::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxSignedTokenResult raw_signed_token_result(
       cbr_ffi::signed_token_decode_base64(encoded));
@@ -164,13 +164,13 @@ base::expected<SignedToken, std::string> SignedToken::decode_base64(
       CxxSignedTokenBox::from_raw(raw_signed_token_result.result));
 }
 
-base::expected<std::string, std::string> SignedToken::encode_base64() const {
+base::expected<std::string, std::string> SignedToken::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool SignedToken::operator==(const SignedToken& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool SignedToken::operator!=(const SignedToken& rhs) const {
@@ -197,7 +197,7 @@ VerificationSignature::~VerificationSignature() = default;
 
 // static
 base::expected<VerificationSignature, std::string>
-VerificationSignature::decode_base64(const std::string& encoded) {
+VerificationSignature::DecodeBase64(const std::string& encoded) {
   cbr_ffi::CxxVerificationSignatureResult raw_sig_result(
       cbr_ffi::verification_signature_decode_base64(encoded));
 
@@ -209,7 +209,7 @@ VerificationSignature::decode_base64(const std::string& encoded) {
       CxxVerificationSignatureBox::from_raw(raw_sig_result.result));
 }
 
-base::expected<std::string, std::string> VerificationSignature::encode_base64()
+base::expected<std::string, std::string> VerificationSignature::EncodeBase64()
     const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
@@ -230,7 +230,7 @@ VerificationKey& VerificationKey::operator=(VerificationKey&& other) noexcept =
 
 VerificationKey::~VerificationKey() = default;
 
-base::expected<VerificationSignature, std::string> VerificationKey::sign(
+base::expected<VerificationSignature, std::string> VerificationKey::Sign(
     const std::string& message) {
   cbr_ffi::CxxVerificationSignatureResult raw_sig_result(
       raw()->verification_key_sign_sha512(message));
@@ -244,7 +244,7 @@ base::expected<VerificationSignature, std::string> VerificationKey::sign(
           raw_sig_result.result));
 }
 
-base::expected<bool, std::string> VerificationKey::verify(
+base::expected<bool, std::string> VerificationKey::Verify(
     const VerificationSignature& sig,
     const std::string& message) {
   int result = raw()->verification_key_invalid_sha512(*sig.raw(), message);
@@ -269,17 +269,17 @@ UnblindedToken& UnblindedToken::operator=(UnblindedToken&& other) noexcept =
 
 UnblindedToken::~UnblindedToken() = default;
 
-VerificationKey UnblindedToken::derive_verification_key() const {
+VerificationKey UnblindedToken::DeriveVerificationKey() const {
   return VerificationKey(rust::Box<cbr_ffi::CxxVerificationKey>(
       raw()->unblinded_token_derive_verification_key_sha512()));
 }
 
-TokenPreimage UnblindedToken::preimage() const {
+TokenPreimage UnblindedToken::Preimage() const {
   return TokenPreimage(raw()->unblinded_token_preimage());
 }
 
 // static
-base::expected<UnblindedToken, std::string> UnblindedToken::decode_base64(
+base::expected<UnblindedToken, std::string> UnblindedToken::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxUnblindedTokenResult raw_unblinded_result(
       cbr_ffi::unblinded_token_decode_base64(encoded));
@@ -292,13 +292,13 @@ base::expected<UnblindedToken, std::string> UnblindedToken::decode_base64(
       CxxUnblindedTokenBox::from_raw(raw_unblinded_result.result));
 }
 
-base::expected<std::string, std::string> UnblindedToken::encode_base64() const {
+base::expected<std::string, std::string> UnblindedToken::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool UnblindedToken::operator==(const UnblindedToken& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool UnblindedToken::operator!=(const UnblindedToken& rhs) const {
@@ -318,7 +318,7 @@ PublicKey& PublicKey::operator=(PublicKey&& other) noexcept = default;
 
 PublicKey::~PublicKey() = default;
 
-base::expected<PublicKey, std::string> PublicKey::decode_base64(
+base::expected<PublicKey, std::string> PublicKey::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxPublicKeyResult raw_key_result(
       cbr_ffi::public_key_decode_base64(encoded));
@@ -330,13 +330,13 @@ base::expected<PublicKey, std::string> PublicKey::decode_base64(
   return PublicKey(CxxPublicKeyBox::from_raw(raw_key_result.result));
 }
 
-base::expected<std::string, std::string> PublicKey::encode_base64() const {
+base::expected<std::string, std::string> PublicKey::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool PublicKey::operator==(const PublicKey& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool PublicKey::operator!=(const PublicKey& rhs) const {
@@ -357,12 +357,12 @@ SigningKey& SigningKey::operator=(SigningKey&& other) noexcept = default;
 SigningKey::~SigningKey() = default;
 
 // static
-base::expected<SigningKey, std::string> SigningKey::random() {
+base::expected<SigningKey, std::string> SigningKey::Random() {
   rust::Box<cbr_ffi::CxxSigningKey> raw_key(cbr_ffi::signing_key_random());
   return SigningKey(std::move(raw_key));
 }
 
-base::expected<SignedToken, std::string> SigningKey::sign(
+base::expected<SignedToken, std::string> SigningKey::Sign(
     const BlindedToken& tok) const {
   cbr_ffi::CxxSignedTokenResult raw_signed_result(
       raw()->signing_key_sign(*tok.raw()));
@@ -375,17 +375,17 @@ base::expected<SignedToken, std::string> SigningKey::sign(
       rust::Box<cbr_ffi::CxxSignedToken>::from_raw(raw_signed_result.result));
 }
 
-UnblindedToken SigningKey::rederive_unblinded_token(const TokenPreimage& t) {
+UnblindedToken SigningKey::RederiveUnblindedToken(const TokenPreimage& t) {
   return UnblindedToken(rust::Box<cbr_ffi::CxxUnblindedToken>(
       raw()->signing_key_rederive_unblinded_token(*t.raw())));
 }
 
-PublicKey SigningKey::public_key() {
+PublicKey SigningKey::GetPublicKey() {
   return PublicKey(
       rust::Box<cbr_ffi::CxxPublicKey>(raw()->signing_key_get_public_key()));
 }
 
-base::expected<SigningKey, std::string> SigningKey::decode_base64(
+base::expected<SigningKey, std::string> SigningKey::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxSigningKeyResult raw_key_result(
       cbr_ffi::signing_key_decode_base64(encoded));
@@ -397,13 +397,13 @@ base::expected<SigningKey, std::string> SigningKey::decode_base64(
   return SigningKey(CxxSigningKeyBox::from_raw(raw_key_result.result));
 }
 
-base::expected<std::string, std::string> SigningKey::encode_base64() const {
+base::expected<std::string, std::string> SigningKey::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool SigningKey::operator==(const SigningKey& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool SigningKey::operator!=(const SigningKey& rhs) const {
@@ -438,7 +438,7 @@ base::expected<DLEQProof, std::string> DLEQProof::Create(
   return DLEQProof(CxxDLEQProofBox::from_raw(raw_proof_result.result));
 }
 
-base::expected<bool, std::string> DLEQProof::verify(
+base::expected<bool, std::string> DLEQProof::Verify(
     const BlindedToken& blinded_token,
     const SignedToken& signed_token,
     const PublicKey& key) {
@@ -450,7 +450,7 @@ base::expected<bool, std::string> DLEQProof::verify(
   return result == 0;
 }
 
-base::expected<DLEQProof, std::string> DLEQProof::decode_base64(
+base::expected<DLEQProof, std::string> DLEQProof::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxDLEQProofResult raw_proof_result(
       cbr_ffi::dleq_proof_decode_base64(encoded));
@@ -462,13 +462,13 @@ base::expected<DLEQProof, std::string> DLEQProof::decode_base64(
   return DLEQProof(CxxDLEQProofBox::from_raw(raw_proof_result.result));
 }
 
-base::expected<std::string, std::string> DLEQProof::encode_base64() const {
+base::expected<std::string, std::string> DLEQProof::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool DLEQProof::operator==(const DLEQProof& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool DLEQProof::operator!=(const DLEQProof& rhs) const {
@@ -522,7 +522,7 @@ base::expected<BatchDLEQProof, std::string> BatchDLEQProof::Create(
       CxxBatchDLEQProofBox::from_raw(raw_proof_result.result));
 }
 
-base::expected<bool, std::string> BatchDLEQProof::verify(
+base::expected<bool, std::string> BatchDLEQProof::Verify(
     const std::vector<BlindedToken>& blinded_tokens,
     const std::vector<SignedToken>& signed_tokens,
     const PublicKey& key) {
@@ -550,7 +550,7 @@ base::expected<bool, std::string> BatchDLEQProof::verify(
 }
 
 base::expected<std::vector<UnblindedToken>, std::string>
-BatchDLEQProof::verify_and_unblind(
+BatchDLEQProof::VerifyAndUnblind(
     const std::vector<Token>& tokens,
     const std::vector<BlindedToken>& blinded_tokens,
     const std::vector<SignedToken>& signed_tokens,
@@ -593,7 +593,7 @@ BatchDLEQProof::verify_and_unblind(
   return unblinded_tokens;
 }
 
-base::expected<BatchDLEQProof, std::string> BatchDLEQProof::decode_base64(
+base::expected<BatchDLEQProof, std::string> BatchDLEQProof::DecodeBase64(
     const std::string& encoded) {
   cbr_ffi::CxxBatchDLEQProofResult raw_proof_result(
       cbr_ffi::batch_dleq_proof_decode_base64(encoded));
@@ -606,13 +606,13 @@ base::expected<BatchDLEQProof, std::string> BatchDLEQProof::decode_base64(
       rust::Box<cbr_ffi::CxxBatchDLEQProof>::from_raw(raw_proof_result.result));
 }
 
-base::expected<std::string, std::string> BatchDLEQProof::encode_base64() const {
+base::expected<std::string, std::string> BatchDLEQProof::EncodeBase64() const {
   const std::string result = static_cast<std::string>(raw()->encode_base64());
   return base::ok(result);
 }
 
 bool BatchDLEQProof::operator==(const BatchDLEQProof& rhs) const {
-  return encode_base64() == rhs.encode_base64();
+  return EncodeBase64() == rhs.EncodeBase64();
 }
 
 bool BatchDLEQProof::operator!=(const BatchDLEQProof& rhs) const {

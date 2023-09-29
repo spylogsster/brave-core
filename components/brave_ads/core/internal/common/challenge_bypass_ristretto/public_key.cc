@@ -18,7 +18,7 @@ absl::optional<challenge_bypass_ristretto::PublicKey> Create(
   }
 
   return ValueOrLogError(
-      challenge_bypass_ristretto::PublicKey::decode_base64(public_key_base64));
+      challenge_bypass_ristretto::PublicKey::DecodeBase64(public_key_base64));
 }
 
 }  // namespace
@@ -58,7 +58,7 @@ absl::optional<std::string> PublicKey::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(public_key_->encode_base64());
+  return ValueOrLogError(public_key_->EncodeBase64());
 }
 
 std::ostream& operator<<(std::ostream& os, const PublicKey& public_key) {

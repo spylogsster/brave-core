@@ -17,5 +17,6 @@ component("challenge_bypass_ristretto") {
     "//build/rust:cxx_cppdeps",
   ]
 
-  public_deps = [ "//brave/third_party/challenge_bypass_ristretto_ffi:rust_lib" ]
+  public_deps =
+      [ "//brave/third_party/challenge_bypass_ristretto_ffi:rust_lib" ]
 }

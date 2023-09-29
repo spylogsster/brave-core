@@ -17,9 +17,8 @@ absl::optional<challenge_bypass_ristretto::BlindedToken> Create(
     return absl::nullopt;
   }
 
-  return ValueOrLogError(
-      challenge_bypass_ristretto::BlindedToken::decode_base64(
-          blinded_token_base64));
+  return ValueOrLogError(challenge_bypass_ristretto::BlindedToken::DecodeBase64(
+      blinded_token_base64));
 }
 
 }  // namespace
@@ -61,7 +60,7 @@ absl::optional<std::string> BlindedToken::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(blinded_token_->encode_base64());
+  return ValueOrLogError(blinded_token_->EncodeBase64());
 }
 
 std::ostream& operator<<(std::ostream& os, const BlindedToken& blinded_token) {

@@ -22,15 +22,15 @@ absl::optional<challenge_bypass_ristretto::SigningKey> Create(
     return absl::nullopt;
   }
 
-  return ValueOrLogError(challenge_bypass_ristretto::SigningKey::decode_base64(
-      signing_key_base64));
+  return ValueOrLogError(
+      challenge_bypass_ristretto::SigningKey::DecodeBase64(signing_key_base64));
 }
 
 }  // namespace
 
 SigningKey::SigningKey()
     : signing_key_(
-          ValueOrLogError(challenge_bypass_ristretto::SigningKey::random())) {}
+          ValueOrLogError(challenge_bypass_ristretto::SigningKey::Random())) {}
 
 SigningKey::SigningKey(const std::string& signing_key_base64)
     : signing_key_(Create(signing_key_base64)) {}
@@ -58,7 +58,7 @@ absl::optional<std::string> SigningKey::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(signing_key_->encode_base64());
+  return ValueOrLogError(signing_key_->EncodeBase64());
 }
 
 absl::optional<SignedToken> SigningKey::Sign(
@@ -68,7 +68,7 @@ absl::optional<SignedToken> SigningKey::Sign(
   }
 
   return ValueOrLogError<challenge_bypass_ristretto::SignedToken, SignedToken>(
-      signing_key_->sign(blinded_token.get()));
+      signing_key_->Sign(blinded_token.get()));
 }
 
 absl::optional<UnblindedToken> SigningKey::RederiveUnblindedToken(
@@ -79,7 +79,7 @@ absl::optional<UnblindedToken> SigningKey::RederiveUnblindedToken(
 
   return ValueOrLogError<challenge_bypass_ristretto::UnblindedToken,
                          UnblindedToken>(
-      signing_key_->rederive_unblinded_token(token_preimage.get()));
+      signing_key_->RederiveUnblindedToken(token_preimage.get()));
 }
 
 absl::optional<PublicKey> SigningKey::GetPublicKey() {
@@ -87,7 +87,7 @@ absl::optional<PublicKey> SigningKey::GetPublicKey() {
     return absl::nullopt;
   }
 
-  return PublicKey(signing_key_->public_key());
+  return PublicKey(signing_key_->GetPublicKey());
 }
 
 std::ostream& operator<<(std::ostream& os, const SigningKey& signing_key) {

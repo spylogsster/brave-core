@@ -18,7 +18,7 @@ absl::optional<challenge_bypass_ristretto::VerificationSignature> Create(
   }
 
   return ValueOrLogError(
-      challenge_bypass_ristretto::VerificationSignature::decode_base64(
+      challenge_bypass_ristretto::VerificationSignature::DecodeBase64(
           verification_signature_base64));
 }
 
@@ -69,7 +69,7 @@ absl::optional<std::string> VerificationSignature::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(verification_signature_->encode_base64());
+  return ValueOrLogError(verification_signature_->EncodeBase64());
 }
 
 std::ostream& operator<<(std::ostream& os,

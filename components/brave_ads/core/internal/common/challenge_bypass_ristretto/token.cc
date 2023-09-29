@@ -19,13 +19,13 @@ absl::optional<challenge_bypass_ristretto::Token> Create(
   }
 
   return ValueOrLogError(
-      challenge_bypass_ristretto::Token::decode_base64(token_base64));
+      challenge_bypass_ristretto::Token::DecodeBase64(token_base64));
 }
 
 }  // namespace
 
 Token::Token()
-    : token_(ValueOrLogError(challenge_bypass_ristretto::Token::random())) {}
+    : token_(ValueOrLogError(challenge_bypass_ristretto::Token::Random())) {}
 
 Token::Token(const std::string& token_base64) : token_(Create(token_base64)) {}
 
@@ -56,7 +56,7 @@ absl::optional<std::string> Token::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(token_->encode_base64());
+  return ValueOrLogError(token_->EncodeBase64());
 }
 
 absl::optional<BlindedToken> Token::Blind() {
@@ -65,7 +65,7 @@ absl::optional<BlindedToken> Token::Blind() {
   }
 
   return ValueOrLogError<challenge_bypass_ristretto::BlindedToken,
-                         BlindedToken>(token_->blind());
+                         BlindedToken>(token_->Blind());
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& token) {

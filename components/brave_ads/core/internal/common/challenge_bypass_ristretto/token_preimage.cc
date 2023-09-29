@@ -18,7 +18,7 @@ absl::optional<challenge_bypass_ristretto::TokenPreimage> Create(
   }
 
   return ValueOrLogError(
-      challenge_bypass_ristretto::TokenPreimage::decode_base64(
+      challenge_bypass_ristretto::TokenPreimage::DecodeBase64(
           token_preimage_base64));
 }
 
@@ -62,7 +62,7 @@ absl::optional<std::string> TokenPreimage::EncodeBase64() const {
     return absl::nullopt;
   }
 
-  return ValueOrLogError(token_preimage_->encode_base64());
+  return ValueOrLogError(token_preimage_->EncodeBase64());
 }
 
 std::ostream& operator<<(std::ostream& os,
