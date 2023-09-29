@@ -305,9 +305,10 @@ class ChromiumSrcOverridesChecker:
                     continue
 
                 # Skip excluded defines.
-                if (override_filepath in self.config_data['symbol_excludes']
+                normalized_path = override_filepath.replace('\\', '/')
+                if (normalized_path in self.config_data['symbol_excludes']
                         and target in self.config_data['symbol_excludes']
-                    [override_filepath]):
+                    [normalized_path]):
                     continue
 
                 # Check if the symbol is used internally in the override.
