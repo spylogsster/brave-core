@@ -10,7 +10,7 @@
 #include <string>
 
 #include "base/check.h"
-#include "brave/third_party/challenge_bypass_ristretto_ffi/src/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/wrapper.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
 namespace brave_ads::cbr {

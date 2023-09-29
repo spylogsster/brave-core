@@ -19,17 +19,3 @@ rust_static_library("rust_lib") {
     "//third_party/rust/base64/v0_13:lib",
   ]
 }
-
-static_library("wrapper") {
-  sources = [
-    "src/wrapper.cc",
-    "src/wrapper.h",
-  ]
-
-  deps = [
-    "//base",
-    "//build/rust:cxx_cppdeps",
-  ]
-
-  public_deps = [ ":rust_lib" ]
-}

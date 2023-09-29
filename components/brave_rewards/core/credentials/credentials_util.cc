@@ -10,7 +10,7 @@
 #include "base/json/json_writer.h"
 #include "brave/components/brave_rewards/core/credentials/credentials_util.h"
 #include "brave/components/brave_rewards/core/rewards_engine_impl.h"
-#include "brave/third_party/challenge_bypass_ristretto_ffi/src/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/wrapper.h"
 
 namespace brave_rewards::internal {
 namespace credential {

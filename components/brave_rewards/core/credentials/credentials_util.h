@@ -16,7 +16,7 @@
 #include "brave/components/brave_rewards/core/mojom_structs.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
-#include "brave/third_party/challenge_bypass_ristretto_ffi/src/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/wrapper.h"
 
 using challenge_bypass_ristretto::BlindedToken;
 using challenge_bypass_ristretto::Token;

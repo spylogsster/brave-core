@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#ifndef BRAVE_THIRD_PARTY_CHALLENGE_BYPASS_RISTRETTO_FFI_SRC_WRAPPER_H_
-#define BRAVE_THIRD_PARTY_CHALLENGE_BYPASS_RISTRETTO_FFI_SRC_WRAPPER_H_
+#ifndef BRAVE_COMPONENTS_CHALLENGE_BYPASS_RISTRETTO_WRAPPER_H_
+#define BRAVE_COMPONENTS_CHALLENGE_BYPASS_RISTRETTO_WRAPPER_H_
 
 #include <string>
 #include <vector>
@@ -14,7 +14,7 @@
 #include "base/types/expected.h"
 #include "brave/third_party/challenge_bypass_ristretto_ffi/src/lib.rs.h"
 
-#if defined(CHALLENGE_BYPASS_RISTRETTO_SHARED_LIBRARY)
+#if defined(COMPONENT_BUILD)
 #if defined(WIN32)
 #if defined(CHALLENGE_BYPASS_RISTRETTO_IMPLEMENTATION)
 #define CHALLENGE_BYPASS_RISTRETTO_EXPORT __declspec(dllexport)
@@ -28,7 +28,7 @@
 #define CHALLENGE_BYPASS_RISTRETTO_EXPORT
 #endif
 #endif
-#else  // defined(CHALLENGE_BYPASS_RISTRETTO_SHARED_LIBRARY)
+#else  // defined(COMPONENT_BUILD)
 #define CHALLENGE_BYPASS_RISTRETTO_EXPORT
 #endif
 
@@ -340,4 +340,4 @@ class CHALLENGE_BYPASS_RISTRETTO_EXPORT BatchDLEQProof {
 
 }  // namespace challenge_bypass_ristretto
 
-#endif  // BRAVE_THIRD_PARTY_CHALLENGE_BYPASS_RISTRETTO_FFI_SRC_WRAPPER_H_
+#endif  // BRAVE_COMPONENTS_CHALLENGE_BYPASS_RISTRETTO_WRAPPER_H_

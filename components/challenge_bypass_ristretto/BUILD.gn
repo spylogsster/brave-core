@@ -1,0 +1,21 @@
+# Copyright (c) 2023 The Brave Authors. All rights reserved.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at https://mozilla.org/MPL/2.0/.
+
+component("challenge_bypass_ristretto") {
+  output_name = "challenge_bypass_ristretto"
+  defines = [ "CHALLENGE_BYPASS_RISTRETTO_IMPLEMENTATION" ]
+
+  sources = [
+    "wrapper.cc",
+    "wrapper.h",
+  ]
+
+  deps = [
+    "//base",
+    "//build/rust:cxx_cppdeps",
+  ]
+
+  public_deps = [ "//brave/third_party/challenge_bypass_ristretto_ffi:rust_lib" ]
+}
