@@ -50,9 +50,10 @@ def CheckOverriddenHeadersDeclareIWYUExport(input_api, output_api):
 def CheckOverrides(input_api, output_api):
     items = []
     with import_inline.sys_path(
-            input_api.os_path.join(input_api.PresubmitLocalPath(), '..')):
+            input_api.os_path.join(input_api.PresubmitLocalPath(), '..',
+                                   'tools')):
         # pylint: disable=import-error,import-outside-toplevel
-        from script import check_chromium_src
+        from chromium_src import check_chromium_src
         overrides = [
             f.AbsoluteLocalPath() for f in input_api.AffectedSourceFiles(None)
             if f.IsTestableFile()

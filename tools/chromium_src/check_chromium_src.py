@@ -3,7 +3,7 @@
 # Copyright (c) 2021 The Brave Authors. All rights reserved.
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at http://mozilla.org/MPL/2.0/. */
+# You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # This script looks for problems in chromium_src.
 #
@@ -26,7 +26,8 @@ import sys
 
 # Look for potential problems in chromium_src overrides.
 
-BRAVE_SRC = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+BRAVE_SRC = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 BRAVE_CHROMIUM_SRC = os.path.join(BRAVE_SRC, 'chromium_src')
 CHROMIUM_SRC = os.path.abspath(os.path.dirname(BRAVE_SRC))
 
@@ -62,8 +63,7 @@ def get_generated_builddir(build, target_os=None, target_arch=None):
     Returns the path to the generated build directory for a |build|, accounting
     for the optional |target_os| and |target_arch| parameters, if present.
     """
-    build_dirname = '_'.join(filter(None,
-                                    [target_os, build, target_arch]))
+    build_dirname = '_'.join(filter(None, [target_os, build, target_arch]))
     return os.path.join(CHROMIUM_SRC, 'out', build_dirname, 'gen')
 
 
@@ -504,8 +504,7 @@ def main(args):
                         help='Target architecture (e.g. x86|x64|arm|arm64)')
     options = parser.parse_args(args)
 
-    gen_buildir = get_generated_builddir(options.build,
-                                         options.os,
+    gen_buildir = get_generated_builddir(options.build, options.os,
                                          options.arch)
 
     # Check that the required directories exist.
