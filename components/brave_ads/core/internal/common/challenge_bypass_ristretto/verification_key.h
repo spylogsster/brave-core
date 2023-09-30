@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include "brave/components/challenge_bypass_ristretto/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/verification_key.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
 namespace brave_ads::cbr {

@@ -14,9 +14,9 @@
 #include "base/values.h"
 #include "brave/components/brave_rewards/core/credentials/credentials_redeem.h"
 #include "brave/components/brave_rewards/core/mojom_structs.h"
+#include "brave/components/challenge_bypass_ristretto/blinded_token.h"
+#include "brave/components/challenge_bypass_ristretto/token.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
-
-#include "brave/components/challenge_bypass_ristretto/wrapper.h"
 
 using challenge_bypass_ristretto::BlindedToken;
 using challenge_bypass_ristretto::Token;

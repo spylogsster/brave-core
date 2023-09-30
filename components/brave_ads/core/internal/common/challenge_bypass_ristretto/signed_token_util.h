@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#include "brave/components/challenge_bypass_ristretto/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/signed_token.h"
 
 namespace brave_ads::cbr {
 

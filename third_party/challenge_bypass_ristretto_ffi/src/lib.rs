@@ -125,61 +125,61 @@ mod ffi {
 
     impl Box<CxxTokenPreimage> {}
     struct CxxTokenPreimageResult {
-        result: *mut CxxTokenPreimage,
+        value: *mut CxxTokenPreimage,
         error_message: String,
     }
 
     impl Box<CxxBlindedToken> {}
     struct CxxBlindedTokenResult {
-        result: *mut CxxBlindedToken,
+        value: *mut CxxBlindedToken,
         error_message: String,
     }
 
     impl Box<CxxToken> {}
     struct CxxTokenResult {
-        result: *mut CxxToken,
+        value: *mut CxxToken,
         error_message: String,
     }
 
     impl Box<CxxSignedToken> {}
     struct CxxSignedTokenResult {
-        result: *mut CxxSignedToken,
+        value: *mut CxxSignedToken,
         error_message: String,
     }
 
     impl Box<CxxVerificationSignature> {}
     struct CxxVerificationSignatureResult {
-        result: *mut CxxVerificationSignature,
+        value: *mut CxxVerificationSignature,
         error_message: String,
     }
 
     impl Box<CxxUnblindedToken> {}
     struct CxxUnblindedTokenResult {
-        result: *mut CxxUnblindedToken,
+        value: *mut CxxUnblindedToken,
         error_message: String,
     }
 
     impl Box<CxxPublicKey> {}
     struct CxxPublicKeyResult {
-        result: *mut CxxPublicKey,
+        value: *mut CxxPublicKey,
         error_message: String,
     }
 
     impl Box<CxxSigningKey> {}
     struct CxxSigningKeyResult {
-        result: *mut CxxSigningKey,
+        value: *mut CxxSigningKey,
         error_message: String,
     }
 
     impl Box<CxxDLEQProof> {}
     struct CxxDLEQProofResult {
-        result: *mut CxxDLEQProof,
+        value: *mut CxxDLEQProof,
         error_message: String,
     }
 
     impl Box<CxxBatchDLEQProof> {}
     struct CxxBatchDLEQProofResult {
-        result: *mut CxxBatchDLEQProof,
+        value: *mut CxxBatchDLEQProof,
         error_message: String,
     }
 
@@ -200,7 +200,7 @@ mod ffi {
     }
     #[derive(Default)]
     struct CxxUnblindedTokensResult {
-        result: Vec<CxxUnblindedTokenPtr>,
+        value: Vec<CxxUnblindedTokenPtr>,
         success: bool,
         error_message: String,
     }
@@ -225,13 +225,13 @@ macro_rules! impl_encode_decode_base64 {
             match encoded.to_str() {
                 Ok(s) => match $t::decode_base64(s) {
                     Ok(t) => $ctr {
-                        result: Box::into_raw(Box::new($ct(t))),
+                        value: Box::into_raw(Box::new($ct(t))),
                         error_message: "".to_string(),
                     },
-                    Err(err) => $ctr { result: null_mut(), error_message: err.to_string() },
+                    Err(err) => $ctr { value: null_mut(), error_message: err.to_string() },
                 },
                 Err(_) => $ctr {
-                    result: null_mut(),
+                    value: null_mut(),
                     error_message: "Failed to convert input string".to_string(),
                 },
             }
@@ -337,13 +337,13 @@ impl CxxVerificationKey {
     ) -> CxxVerificationSignatureResult {
         match message.to_str() {
             Ok(s) => CxxVerificationSignatureResult {
-                result: Box::into_raw(Box::new(CxxVerificationSignature(
+                value: Box::into_raw(Box::new(CxxVerificationSignature(
                     (&self.0).sign::<HmacSha512>(s.as_bytes()),
                 ))),
                 error_message: "".to_string(),
             },
             Err(_) => CxxVerificationSignatureResult {
-                result: null_mut(),
+                value: null_mut(),
                 error_message: "Failed to convert input string".to_string(),
             },
         }
@@ -388,10 +388,10 @@ impl CxxSigningKey {
     fn signing_key_sign(self: &CxxSigningKey, token: &CxxBlindedToken) -> CxxSignedTokenResult {
         match (self.0).sign(&token.0) {
             Ok(signed_token) => CxxSignedTokenResult {
-                result: Box::into_raw(Box::new(CxxSignedToken(signed_token))),
+                value: Box::into_raw(Box::new(CxxSignedToken(signed_token))),
                 error_message: "".to_string(),
             },
-            Err(err) => CxxSignedTokenResult { result: null_mut(), error_message: err.to_string() },
+            Err(err) => CxxSignedTokenResult { value: null_mut(), error_message: err.to_string() },
         }
     }
 
@@ -420,10 +420,10 @@ pub fn dleq_proof_new(
     let mut rng = OsRng;
     match DLEQProof::new::<Sha512, OsRng>(&mut rng, &blinded_token.0, &signed_token.0, &key.0) {
         Ok(proof) => CxxDLEQProofResult {
-            result: Box::into_raw(Box::new(CxxDLEQProof(proof))),
+            value: Box::into_raw(Box::new(CxxDLEQProof(proof))),
             error_message: "".to_string(),
         },
-        Err(err) => CxxDLEQProofResult { result: null_mut(), error_message: err.to_string() },
+        Err(err) => CxxDLEQProofResult { value: null_mut(), error_message: err.to_string() },
     }
 }
 
@@ -467,10 +467,10 @@ pub fn batch_dleq_proof_new(
     let signed_tokens: Vec<SignedToken> = signed_tokens.iter().map(|p| p.value.0).collect();
     match BatchDLEQProof::new::<Sha512, OsRng>(&mut rng, &blinded_tokens, &signed_tokens, &key.0) {
         Ok(proof) => CxxBatchDLEQProofResult {
-            result: Box::into_raw(Box::new(CxxBatchDLEQProof(proof))),
+            value: Box::into_raw(Box::new(CxxBatchDLEQProof(proof))),
             error_message: "".to_string(),
         },
-        Err(err) => CxxBatchDLEQProofResult { result: null_mut(), error_message: err.to_string() },
+        Err(err) => CxxBatchDLEQProofResult { value: null_mut(), error_message: err.to_string() },
     }
 }
 
@@ -532,7 +532,7 @@ impl CxxBatchDLEQProof {
                     .collect();
                 return CxxUnblindedTokensResult {
                     success: true,
-                    result: unblinded_tokens,
+                    value: unblinded_tokens,
                     ..Default::default()
                 };
             }
@@ -556,6 +556,7 @@ impl CxxBatchDLEQProof {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cxx::let_cxx_string;
 
     #[test]
     fn test_embedded_null() {
@@ -568,16 +569,16 @@ mod tests {
             let token = token_random();
             let blinded_token = token.token_blind();
             let signed_token_result = key.signing_key_sign(&*blinded_token);
-            assert!(!signed_token_result.result.is_null());
-            let signed_token = Box::from_raw(signed_token_result.result);
+            assert!(!signed_token_result.value.is_null());
+            let signed_token = Box::from_raw(signed_token_result.value);
 
             let tokens = vec![CxxTokenRef { value: &*token }];
             let blinded_tokens = vec![CxxBlindedTokenRef { value: &*blinded_token }];
             let signed_tokens = vec![CxxSignedTokenRef { value: &*signed_token }];
 
             let proof_result = batch_dleq_proof_new(&blinded_tokens, &signed_tokens, &*key);
-            assert!(!proof_result.result.is_null());
-            let proof = Box::from_raw(proof_result.result);
+            assert!(!proof_result.value.is_null());
+            let proof = Box::from_raw(proof_result.value);
 
             let public_key = key.signing_key_get_public_key();
 
@@ -588,23 +589,23 @@ mod tests {
                 &*public_key,
             );
             assert!(unblinded_tokens_result.success);
-            assert!(unblinded_tokens_result.result[0].is_null());
-            let unblinded_token = Box::from_raw(unblinded_tokens_result.result[0]);
+            assert!(!unblinded_tokens_result.value[0].value.is_null());
+            let unblinded_token = Box::from_raw(unblinded_tokens_result.value[0].value);
 
-            let v_key = unblinded_tokens.unblinded_token_derive_verification_key_sha512();
+            let v_key = unblinded_token.unblinded_token_derive_verification_key_sha512();
 
             let code_result = v_key.verification_key_sign_sha512(&c_msg1);
-            assert!(!code_result.result.is_null());
-            let code = Box::from_raw(code_result.result);
+            assert!(!code_result.value.is_null());
+            let code = Box::from_raw(code_result.value);
 
             assert_ne!(
-                v_key.verification_key_verify_sha512(&*code, &c_msg2),
+                v_key.verification_key_invalid_sha512(&*code, &c_msg2),
                 0,
                 "A different message should not validate"
             );
 
             assert_eq!(
-                v_key.verification_key_verify_sha512(&*code, &c_msg1),
+                v_key.verification_key_invalid_sha512(&*code, &c_msg1),
                 0,
                 "Embedded nulls in the same message should validate"
             );

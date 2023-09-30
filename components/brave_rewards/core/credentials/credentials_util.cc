@@ -10,7 +10,12 @@
 #include "base/json/json_writer.h"
 #include "brave/components/brave_rewards/core/credentials/credentials_util.h"
 #include "brave/components/brave_rewards/core/rewards_engine_impl.h"
-#include "brave/components/challenge_bypass_ristretto/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/batch_dleq_proof.h"
+#include "brave/components/challenge_bypass_ristretto/public_key.h"
+#include "brave/components/challenge_bypass_ristretto/signed_token.h"
+#include "brave/components/challenge_bypass_ristretto/unblinded_token.h"
+#include "brave/components/challenge_bypass_ristretto/verification_key.h"
+#include "brave/components/challenge_bypass_ristretto/verification_signature.h"
 
 namespace brave_rewards::internal {
 namespace credential {

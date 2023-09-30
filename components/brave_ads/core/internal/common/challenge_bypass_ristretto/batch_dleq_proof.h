@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "base/check.h"
-#include "brave/components/challenge_bypass_ristretto/wrapper.h"
+#include "brave/components/challenge_bypass_ristretto/batch_dleq_proof.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
 namespace brave_ads::cbr {
