@@ -13,7 +13,6 @@
 #include "base/memory/raw_ptr.h"
 #include "base/memory/singleton.h"
 #include "base/memory/weak_ptr.h"
-#include "base/synchronization/lock.h"
 #include "brave/components/psst/psst_rule.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
@@ -37,10 +36,6 @@ class PsstService {
  private:
   void OnFileDataReady(const std::string& data);
   base::FilePath component_path_;
-
-  mutable base::Lock lock_;
-
-  // Protected by |lock_|.
   std::vector<std::unique_ptr<PsstRule>> rules_;
   base::flat_set<std::string> host_cache_;
 

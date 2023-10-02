@@ -57,7 +57,6 @@ class PsstComponentInstallerPolicy
     : public component_updater::ComponentInstallerPolicy {
  public:
   PsstComponentInstallerPolicy();
-  ~PsstComponentInstallerPolicy() override;
 
   PsstComponentInstallerPolicy(const PsstComponentInstallerPolicy&) = delete;
   PsstComponentInstallerPolicy& operator=(const PsstComponentInstallerPolicy&) =
@@ -102,8 +101,6 @@ PsstComponentInstallerPolicy::PsstComponentInstallerPolicy()
   base::Base64Decode(kPsstComponentBase64PublicKey, &decoded_public_key);
   crypto::SHA256HashString(decoded_public_key, component_hash_, kHashSize);
 }
-
-PsstComponentInstallerPolicy::~PsstComponentInstallerPolicy() = default;
 
 bool PsstComponentInstallerPolicy::SupportsGroupPolicyEnabledComponentUpdates()
     const {
