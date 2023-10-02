@@ -3,12 +3,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef BRAVE_COMPONENTS_PSST_PSST_TAB_HELPER_H_
-#define BRAVE_COMPONENTS_PSST_PSST_TAB_HELPER_H_
+#ifndef BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
+#define BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
 
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "brave/components/psst/psst_rule.h"
+#include "brave/components/psst/core/psst_rule.h"
 #include "build/build_config.h"
 #include "components/sessions/core/session_id.h"
 #include "content/public/browser/media_player_id.h"
@@ -22,7 +22,7 @@ class PsstService;
 class PsstTabHelper : public content::WebContentsObserver,
                       public content::WebContentsUserData<PsstTabHelper> {
  public:
-  explicit PsstTabHelper(content::WebContents*);
+  explicit PsstTabHelper(content::WebContents*, int32_t world_id);
   ~PsstTabHelper() override;
 
   PsstTabHelper(const PsstTabHelper&) = delete;
@@ -30,6 +30,7 @@ class PsstTabHelper : public content::WebContentsObserver,
 
  private:
   friend class content::WebContentsUserData<PsstTabHelper>;
+  int32_t world_id_;
   // content::WebContentsObserver overrides
   void DidFinishNavigation(
       content::NavigationHandle* navigation_handle) override;
@@ -46,4 +47,4 @@ class PsstTabHelper : public content::WebContentsObserver,
 
 }  // namespace psst
 
-#endif  // BRAVE_COMPONENTS_PSST_PSST_TAB_HELPER_H_
+#endif  // BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_

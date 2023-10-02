@@ -3,26 +3,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import("//brave/build/config.gni")
+component("content") {
+  output_name = "psst_content"
 
-static_library("psst") {
   sources = [
-    "psst_component_installer.cc",
-    "psst_component_installer.h",
-    "psst_rule.cc",
-    "psst_rule.h",
-    "psst_service.cc",
-    "psst_service.h",
     "psst_tab_helper.cc",
     "psst_tab_helper.h",
   ]
 
   deps = [
     "//base",
-    "//brave/components/brave_component_updater/browser",
-    "//brave/extensions:common",
-    "//chrome/common",
-    "//components/component_updater:component_updater",
+    "//brave/components/psst/core",
     "//components/sessions",
     "//content/public/browser",
     "//url",

@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/psst_tab_helper.h"
+#include "brave/components/psst/content/psst_tab_helper.h"
 
 #include <string>
 #include <utility>
@@ -13,9 +13,8 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/task/thread_pool.h"
 #include "base/values.h"
-#include "brave/components/psst/psst_rule.h"
-#include "brave/components/psst/psst_service.h"
-#include "chrome/common/chrome_isolated_world_ids.h"
+#include "brave/components/psst/core/psst_rule.h"
+#include "brave/components/psst/core/psst_service.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
@@ -23,9 +22,11 @@
 
 namespace psst {
 
-PsstTabHelper::PsstTabHelper(content::WebContents* web_contents)
+PsstTabHelper::PsstTabHelper(content::WebContents* web_contents,
+                             int32_t world_id)
     : WebContentsObserver(web_contents),
       content::WebContentsUserData<PsstTabHelper>(*web_contents),
+      world_id_(world_id),
       tab_id_(sessions::SessionTabHelper::IdForTab(web_contents)),
       weak_factory_(this) {
   if (!tab_id_.is_valid()) {
@@ -42,6 +43,7 @@ PsstTabHelper::~PsstTabHelper() = default;
 
 void InsertScriptInPage(
     const content::GlobalRenderFrameHostId render_frame_host_id,
+    int32_t world_id,
     const std::string& script,
     content::RenderFrameHost::JavaScriptResultCallback cb) {
   content::RenderFrameHost* render_frame_host =
@@ -49,38 +51,41 @@ void InsertScriptInPage(
 
   if (render_frame_host) {
     render_frame_host->ExecuteJavaScriptInIsolatedWorld(
-        base::UTF8ToUTF16(script), std::move(cb),
-        ISOLATED_WORLD_ID_BRAVE_INTERNAL);
+        base::UTF8ToUTF16(script), std::move(cb), world_id);
   }
 }
 
 void InsertPolicyScript(
     const content::GlobalRenderFrameHostId render_frame_host_id,
+    int32_t world_id,
     std::string policy_script) {
-  InsertScriptInPage(render_frame_host_id, policy_script, base::DoNothing());
+  InsertScriptInPage(render_frame_host_id, world_id, policy_script,
+                     base::DoNothing());
 }
 
 void OnTestScriptResult(
     std::string policy_script,
     const content::GlobalRenderFrameHostId render_frame_host_id,
+    int32_t world_id,
     base::Value value) {
   if (!value.is_bool()) {
     return;
   }
   const bool execute_policy = value.GetBool();
   if (execute_policy) {
-    InsertPolicyScript(render_frame_host_id, policy_script);
+    InsertPolicyScript(render_frame_host_id, world_id, policy_script);
   }
 }
 
 void InsertTestScript(
     const content::GlobalRenderFrameHostId render_frame_host_id,
+    int32_t world_id,
     MatchedRule rule) {
   CHECK(render_frame_host_id);
 
-  InsertScriptInPage(render_frame_host_id, rule.test_script,
+  InsertScriptInPage(render_frame_host_id, world_id, rule.test_script,
                      base::BindOnce(&OnTestScriptResult, rule.policy_script,
-                                    render_frame_host_id));
+                                    render_frame_host_id, world_id));
 }
 
 void PsstTabHelper::DidFinishNavigation(
@@ -111,7 +116,7 @@ void PsstTabHelper::DocumentOnLoadCompletedInPrimaryMainFrame() {
       web_contents()->GetPrimaryMainFrame()->GetGlobalId();
 
   psst_service_->CheckIfMatch(
-      url, base::BindOnce(&InsertTestScript, render_frame_host_id));
+      url, base::BindOnce(&InsertTestScript, render_frame_host_id, world_id_));
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(PsstTabHelper);

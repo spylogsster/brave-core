@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/psst_service.h"
+#include "brave/components/psst/core/psst_service.h"
 
 #include <memory>
 #include <string>
@@ -18,7 +18,7 @@
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/task/thread_pool.h"
-#include "brave/components/psst/psst_rule.h"
+#include "brave/components/psst/core/psst_rule.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 #include "url/gurl.h"

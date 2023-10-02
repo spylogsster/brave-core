@@ -24,7 +24,7 @@
 
 #include "brave/browser/brave_shields/https_everywhere_component_installer.h"
 #include "brave/components/brave_wallet/browser/wallet_data_files_installer.h"
-#include "brave/components/psst/psst_component_installer.h"
+#include "brave/components/psst/core/psst_component_installer.h"
 #include "chrome/browser/browser_process.h"
 
 namespace component_updater {

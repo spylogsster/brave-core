@@ -3,8 +3,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef BRAVE_COMPONENTS_PSST_PSST_RULE_H_
-#define BRAVE_COMPONENTS_PSST_PSST_RULE_H_
+#ifndef BRAVE_COMPONENTS_PSST_CORE_PSST_RULE_H_
+#define BRAVE_COMPONENTS_PSST_CORE_PSST_RULE_H_
 
 #include <memory>
 #include <string>
@@ -16,7 +16,6 @@
 #include "base/json/json_value_converter.h"
 #include "base/types/expected.h"
 #include "base/values.h"
-#include "components/prefs/pref_service.h"
 #include "extensions/common/url_pattern_set.h"
 
 class GURL;
@@ -70,4 +69,4 @@ class PsstRule {
 
 }  // namespace psst
 
-#endif  // BRAVE_COMPONENTS_PSST_PSST_RULE_H_
+#endif  // BRAVE_COMPONENTS_PSST_CORE_PSST_RULE_H_

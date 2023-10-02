@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/psst_rule.h"
+#include "brave/components/psst/core/psst_rule.h"
 
 #include <memory>
 #include <utility>
@@ -12,7 +12,6 @@
 #include "base/files/file_path.h"
 #include "base/json/json_reader.h"
 #include "base/types/expected.h"
-#include "components/prefs/pref_service.h"
 #include "extensions/common/url_pattern.h"
 #include "net/base/url_util.h"
 #include "url/gurl.h"

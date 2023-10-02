@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/psst_component_installer.h"
+#include "brave/components/psst/core/psst_component_installer.h"
 
 #include <memory>
 #include <string>
@@ -14,7 +14,7 @@
 #include "base/functional/callback.h"
 #include "base/no_destructor.h"
 #include "brave/components/brave_component_updater/browser/brave_on_demand_updater.h"
-#include "brave/components/psst/psst_service.h"
+#include "brave/components/psst/core/psst_service.h"
 #include "components/component_updater/component_installer.h"
 #include "components/component_updater/component_updater_service.h"
 #include "crypto/sha2.h"
