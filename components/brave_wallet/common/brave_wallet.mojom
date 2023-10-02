@@ -337,6 +337,7 @@ interface PanelHandlerFactory {
                      pending_receiver<WalletHandler> wallet_handler,
                      pending_receiver<JsonRpcService> json_rpc_service,
                      pending_receiver<BitcoinWalletService> bitcoin_wallet_service,
+                     pending_receiver<ZCashWalletService> zcash_wallet_service,
                      pending_receiver<SwapService> swap_service,
                      pending_receiver<SimulationService> simulation_service,
                      pending_receiver<AssetRatioService> asset_ratio_service,
@@ -363,6 +364,7 @@ interface PageHandlerFactory {
                     pending_receiver<WalletHandler> wallet_handler,
                     pending_receiver<JsonRpcService> json_rpc_service,
                     pending_receiver<BitcoinWalletService> bitcoin_wallet_service,
+                    pending_receiver<ZCashWalletService> zcash_wallet_service,
                     pending_receiver<SwapService> swap_service,
                     pending_receiver<AssetRatioService> asset_ratio_service,
                     pending_receiver<KeyringService> keyring_service,
@@ -714,6 +716,7 @@ struct WalletInfo {
   bool is_filecoin_enabled;
   bool is_solana_enabled;
   bool is_bitcoin_enabled;
+  bool is_z_cash_enabled;
   bool is_nft_pinning_feature_enabled;
   bool is_panel_v2_feature_enabled;
 };
@@ -1110,6 +1113,7 @@ const string kBaseMainnetChainId = "0x2105";
 // https://github.com/satoshilabs/slips/blob/master/slip-0044.md
 enum CoinType {
   BTC = 0,
+  ZEC = 133,
   ETH = 60,
   FIL = 461,
   SOL = 501
@@ -1386,12 +1390,21 @@ struct BitcoinBalance {
   map<string, uint64> balances;  // address -> balance of that address(sum of all related utxos)
 };
 
+struct ZCashBalance {
+  uint64 total_balance;
+  map<string, uint64> balances;  // address -> balance of that address(sum of all related utxos)
+};
+
 interface BitcoinWalletService {
   // Fetches BitcoinBalance struct for all addresses associated with account_id.
   // Now includes both confirmed and mempool utxos.
   GetBalance(string network_id, AccountId account_id) => (BitcoinBalance? balance, string? error_message);
   GetBitcoinAccountInfo(string network_id, AccountId account_id) => (BitcoinAccountInfo? account_info);
   SendTo(string network_id, AccountId account_id, string address_to, uint64 amount, uint64 fee) => (string txid, string error);
+};
+
+interface ZCashWalletService {
+  GetBalance(string network_id, AccountId account_id) => (ZCashBalance? balance, string? error_message);
 };
 
 enum TransactionStatus {

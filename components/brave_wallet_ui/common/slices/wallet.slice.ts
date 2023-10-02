@@ -57,6 +57,7 @@ const defaultState: WalletState = {
   isFilecoinEnabled: false,
   isSolanaEnabled: false,
   isBitcoinEnabled: false,
+  isZCashEnabled: false,
   isWalletCreated: false,
   isWalletLocked: true,
   favoriteApps: [],
@@ -285,6 +286,7 @@ export const createWalletSlice = (initialState: WalletState = defaultState) => {
         state.isFilecoinEnabled = payload.walletInfo.isFilecoinEnabled
         state.isSolanaEnabled = payload.walletInfo.isSolanaEnabled
         state.isBitcoinEnabled = payload.walletInfo.isBitcoinEnabled
+        state.isZCashEnabled = payload.walletInfo.isZCashEnabled
         state.isWalletLocked = payload.walletInfo.isWalletLocked
         state.isWalletBackedUp = payload.walletInfo.isWalletBackedUp
         state.isNftPinningFeatureEnabled =

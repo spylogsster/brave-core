@@ -43,6 +43,7 @@ class SolanaProviderImplUnitTest;
 class FilecoinKeyring;
 class JsonRpcService;
 class AssetDiscoveryManagerUnitTest;
+class ZCashKeyring;
 
 // This class is not thread-safe and should have single owner
 class KeyringService : public KeyedService, public mojom::KeyringService {
@@ -220,6 +221,11 @@ class KeyringService : public KeyedService, public mojom::KeyringService {
 
   absl::optional<std::vector<std::pair<std::string, mojom::BitcoinKeyIdPtr>>>
   GetBitcoinAddresses(const mojom::AccountId& account_id);
+  absl::optional<std::vector<std::pair<std::string, mojom::ZCashKeyIdPtr>>>
+  GetZCashAddresses(const mojom::AccountId& account_id);
+  absl::optional<std::string> GetZCashAddress(
+      const mojom::AccountId& account_id,
+      const mojom::ZCashKeyId& key_id);
   absl::optional<std::string> GetBitcoinAddress(
       const mojom::AccountId& account_id,
       const mojom::BitcoinKeyId& key_id);
@@ -310,6 +316,7 @@ class KeyringService : public KeyedService, public mojom::KeyringService {
   void OnAutoLockFired();
   HDKeyring* GetHDKeyringById(mojom::KeyringId keyring_id) const;
   BitcoinKeyring* GetBitcoinKeyringById(mojom::KeyringId keyring_id) const;
+  ZCashKeyring* GetZCashKeyringById(mojom::KeyringId keyring_id) const;
   std::vector<mojom::AccountInfoPtr> GetHardwareAccountsSync(
       mojom::KeyringId keyring_id) const;
   // Address will be returned when success

@@ -84,6 +84,11 @@ bool IsBitcoinKeyring(mojom::KeyringId keyring_id) {
          keyring_id == mojom::KeyringId::kBitcoin84Testnet;
 }
 
+bool IsZCashKeyring(mojom::KeyringId keyring_id) {
+  return keyring_id == mojom::KeyringId::kZCashMainnet ||
+         keyring_id == mojom::KeyringId::kZCashTestnet;
+}
+
 bool IsBitcoinMainnetKeyring(mojom::KeyringId keyring_id) {
   return keyring_id == mojom::KeyringId::kBitcoin84;
 }
@@ -95,6 +100,11 @@ bool IsBitcoinTestnetKeyring(mojom::KeyringId keyring_id) {
 bool IsBitcoinNetwork(const std::string& network_id) {
   return network_id == mojom::kBitcoinMainnet ||
          network_id == mojom::kBitcoinTestnet;
+}
+
+bool IsZCashNetwork(const std::string& network_id) {
+  return network_id == mojom::kZCashMainnet ||
+         network_id == mojom::kZCashTestnet;
 }
 
 bool IsValidBitcoinNetworkKeyringPair(const std::string& network_id,
@@ -115,6 +125,12 @@ bool IsValidBitcoinNetworkKeyringPair(const std::string& network_id,
 bool IsBitcoinAccount(const mojom::AccountId& account_id) {
   return account_id.coin == mojom::CoinType::BTC &&
          IsBitcoinKeyring(account_id.keyring_id) &&
+         account_id.kind == mojom::AccountKind::kDerived;
+}
+
+bool IsZCashAccount(const mojom::AccountId& account_id) {
+  return account_id.coin == mojom::CoinType::ZEC &&
+         IsZCashKeyring(account_id.keyring_id) &&
          account_id.kind == mojom::AccountKind::kDerived;
 }
 
@@ -146,6 +162,8 @@ mojom::CoinType GetCoinForKeyring(mojom::KeyringId keyring_id) {
     return mojom::CoinType::SOL;
   } else if (IsBitcoinKeyring(keyring_id)) {
     return mojom::CoinType::BTC;
+  } else if (IsZCashKeyring(keyring_id)) {
+    return mojom::CoinType::ZEC;
   }
 
   DCHECK_EQ(keyring_id, mojom::KeyringId::kDefault);
@@ -173,6 +191,10 @@ std::vector<mojom::KeyringId> GetSupportedKeyrings() {
   if (IsBitcoinEnabled()) {
     ids.push_back(mojom::KeyringId::kBitcoin84);
     ids.push_back(mojom::KeyringId::kBitcoin84Testnet);
+  }
+  if (IsZCashEnabled()) {
+    ids.push_back(mojom::KeyringId::kZCashMainnet);
+    ids.push_back(mojom::KeyringId::kZCashTestnet);
   }
 
   DCHECK_GT(ids.size(), 0u);
@@ -203,6 +225,12 @@ std::vector<mojom::KeyringId> GetSupportedKeyringsForNetwork(
         return {mojom::KeyringId::kBitcoin84};
       } else {
         return {mojom::KeyringId::kBitcoin84Testnet};
+      }
+    case mojom::CoinType::ZEC:
+      if (chain_id == mojom::kZCashMainnet) {
+        return {mojom::KeyringId::kZCashMainnet};
+      } else {
+        return {mojom::KeyringId::kZCashTestnet};
       }
     default:
       NOTREACHED_NORETURN();

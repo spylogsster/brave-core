@@ -37,12 +37,15 @@ bool IsAllowed(PrefService* prefs);
 bool IsFilecoinKeyringId(mojom::KeyringId keyring_id);
 
 bool IsBitcoinKeyring(mojom::KeyringId keyring_id);
+bool IsZCashKeyring(mojom::KeyringId keyring_id);
 bool IsBitcoinMainnetKeyring(mojom::KeyringId keyring_id);
 bool IsBitcoinTestnetKeyring(mojom::KeyringId keyring_id);
 bool IsBitcoinNetwork(const std::string& network_id);
+bool IsZCashNetwork(const std::string& network_id);
 bool IsValidBitcoinNetworkKeyringPair(const std::string& network_id,
                                       mojom::KeyringId keyring_id);
 bool IsBitcoinAccount(const mojom::AccountId& account_id);
+bool IsZCashAccount(const mojom::AccountId& account_id);
 
 mojom::KeyringId GetFilecoinKeyringId(const std::string& network);
 
