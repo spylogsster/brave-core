@@ -4,9 +4,9 @@
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
 component("content") {
-  output_name = "psst_content"
+  output_name = "psst_browser_content"
 
-  defines = [ "IS_PSST_CONTENT_IMPL" ]
+  defines = [ "IS_PSST_BROWSER_CONTENT_IMPL" ]
 
   sources = [
     "psst_tab_helper.cc",
@@ -15,8 +15,8 @@ component("content") {
 
   deps = [
     "//base",
+    "//brave/components/psst/browser/core",
     "//brave/components/psst/common",
-    "//brave/components/psst/core",
     "//components/sessions",
     "//content/public/browser",
     "//url",

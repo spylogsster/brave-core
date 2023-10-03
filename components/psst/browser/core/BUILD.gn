@@ -4,9 +4,9 @@
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 
 component("core") {
-  output_name = "psst_browser"
+  output_name = "psst_browser_core"
 
-  defines = [ "IS_PSST_BROWSER_IMPL" ]
+  defines = [ "IS_PSST_BROWSER_CORE_IMPL" ]
 
   sources = [
     "psst_component_installer.cc",

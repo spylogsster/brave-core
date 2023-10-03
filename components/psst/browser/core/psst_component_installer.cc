@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/core/psst_component_installer.h"
+#include "brave/components/psst/browser/core/psst_component_installer.h"
 
 #include <memory>
 #include <string>
@@ -15,7 +15,8 @@
 #include "base/functional/callback.h"
 #include "base/functional/callback_forward.h"
 #include "base/no_destructor.h"
-#include "brave/components/psst/core/psst_rule_service.h"
+#include "brave/components/psst/browser/core/psst_rule_service.h"
+#include "brave/components/psst/common/features.h"
 #include "components/component_updater/component_installer.h"
 #include "components/component_updater/component_updater_service.h"
 #include "crypto/sha2.h"
@@ -151,8 +152,8 @@ PsstComponentInstallerPolicy::GetInstallerAttributes() const {
 void RegisterPsstComponent(
     component_updater::ComponentUpdateService* cus,
     base::OnceCallback<void(const std::string&)> callback) {
-  // In test, |cus| could be nullptr.
-  if (!cus) {
+  if (!base::FeatureList::IsEnabled(psst::features::kBravePsst) || !cus) {
+    // In test, |cus| could be nullptr.
     return;
   }
 

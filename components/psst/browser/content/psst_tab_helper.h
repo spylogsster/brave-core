@@ -3,14 +3,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
-#define BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
+#ifndef BRAVE_COMPONENTS_PSST_BROWSER_CONTENT_PSST_TAB_HELPER_H_
+#define BRAVE_COMPONENTS_PSST_BROWSER_CONTENT_PSST_TAB_HELPER_H_
 
 #include "base/component_export.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
 
-#include "brave/components/psst/core/psst_rule.h"
+#include "brave/components/psst/browser/core/psst_rule.h"
 #include "build/build_config.h"
 #include "components/sessions/core/session_id.h"
 #include "content/public/browser/media_player_id.h"
@@ -21,7 +21,7 @@ namespace psst {
 
 class PsstRuleService;
 
-class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
+class COMPONENT_EXPORT(PSST_BROWSER_CONTENT) PsstTabHelper
     : public content::WebContentsObserver,
       public content::WebContentsUserData<PsstTabHelper> {
  public:
@@ -30,7 +30,7 @@ class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
   PsstTabHelper& operator=(const PsstTabHelper&) = delete;
 
  private:
-  COMPONENT_EXPORT(PSST_CONTENT)
+  COMPONENT_EXPORT(PSST_BROWSER_CONTENT)
   PsstTabHelper(content::WebContents*, const int32_t world_id);
 
   friend class content::WebContentsUserData<PsstTabHelper>;
@@ -51,4 +51,4 @@ class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
 
 }  // namespace psst
 
-#endif  // BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
+#endif  // BRAVE_COMPONENTS_PSST_BROWSER_CONTENT_PSST_TAB_HELPER_H_

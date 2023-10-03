@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/content/psst_tab_helper.h"
+#include "brave/components/psst/browser/content/psst_tab_helper.h"
 
 #include <string>
 #include <utility>
@@ -13,8 +13,8 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/task/thread_pool.h"
 #include "base/values.h"
-#include "brave/components/psst/core/psst_rule.h"
-#include "brave/components/psst/core/psst_rule_service.h"
+#include "brave/components/psst/browser/core/psst_rule.h"
+#include "brave/components/psst/browser/core/psst_rule_service.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
