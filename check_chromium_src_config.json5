@@ -35,6 +35,8 @@
         "chrome/install_static/brave_install_modes_unittest.cc",
         "chrome/install_static/brave_install_util_unittest.cc",
         "chrome/install_static/brave_product_install_details_unittest.cc",
+        "chrome/install_static/brave_restore_google_update_integration.h",
+        "chrome/install_static/brave_stash_google_update_integration.h",
         "chrome/install_static/brave_user_data_dir_win_unittest.cc",
         "components/history/core/browser/sync/brave_typed_url_sync_bridge_unittest.cc",
         "components/history/core/browser/sync/chromium_typed_url_sync_bridge_unittest.cc",
@@ -61,6 +63,9 @@
             "IF_BUILDFLAG_IMPL_1",
             "IF_BUILDFLAG_IMPL_CAT"
         ],
+        "chrome/browser/active_use_util.cc": [
+            "BUILDFLAG_INTERNAL_USE_GOOGLE_UPDATE_INTEGRATION"
+        ],
         "chrome/browser/bookmarks/android/bookmark_bridge.cc": [
             "BraveBookmarkBridge"
         ],
@@ -74,6 +79,9 @@
             "CHROME_BROWSER_WEB_APPLICATIONS_SYSTEM_WEB_APPS_SYSTEM_WEB_APP_MANAGER_H_",
             "CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_",
             "CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_REGISTRAR_H_"
+        ],
+        "chrome/browser/metrics/google_update_metrics_provider_win.cc": [
+            "BUILDFLAG_INTERNAL_USE_GOOGLE_UPDATE_INTEGRATION"
         ],
         "chrome/browser/prefs/browser_prefs.cc": [
             "CHROME_BROWSER_WEB_APPLICATIONS_WEB_APP_PROVIDER_H_"
@@ -93,8 +101,20 @@
             "EXTENSIONS_COMMON_CONSTANTS_H_",
             "EXTENSIONS_COMMON_MANIFEST_H_"
         ],
+        "chrome/install_static/install_constants.h": [
+            "BUILDFLAG_INTERNAL_USE_GOOGLE_UPDATE_INTEGRATION"
+        ],
+        "chrome/install_static/install_util.cc": [
+            "BUILDFLAG_INTERNAL_USE_GOOGLE_UPDATE_INTEGRATION"
+        ],
         "chrome/installer/mini_installer/appid.h": [
             "CHROME_INSTALLER_MINI_INSTALLER_APPID_H_"
+        ],
+        "chrome/installer/setup/install_worker.cc": [
+            "BUILDFLAG_INTERNAL_USE_GOOGLE_UPDATE_INTEGRATION"
+        ],
+        "chrome/installer/setup/user_experiment.cc": [
+            "BUILDFLAG_INTERNAL_USE_GOOGLE_UPDATE_INTEGRATION"
         ],
         "components/permissions/permission_request_data.h": [
             "BRAVE_CHROMIUM_SRC_COMPONENTS_PERMISSIONS_PERMISSION_REQUEST_DATA_PERMISSION_CONTEXT_BASE"
@@ -103,6 +123,8 @@
             "TargetGetModuleFileNameExA64",
             "TargetGetModuleFileNameExW64"
         ],
-        "v8/src/builtins/builtins-utils.h": ["BUILTIN"]
+        "v8/src/builtins/builtins-utils.h": [
+            "BUILTIN"
+        ]
     }
 }
