@@ -1,0 +1,11 @@
+diff --git a/third_party/blink/renderer/modules/video_rvfc/DEPS b/third_party/blink/renderer/modules/video_rvfc/DEPS
+index 4430949198d72a166276bd5cf1c2fc4065d38cbe..ae75db37eeac6fc131cd0363f53ceaf88f87c284 100644
+--- a/third_party/blink/renderer/modules/video_rvfc/DEPS
++++ b/third_party/blink/renderer/modules/video_rvfc/DEPS
+@@ -1,3 +1,4 @@
+ include_rules = [
+     "+media/base/video_frame.h",
+-]
+\ No newline at end of file
++]
++include_rules += [ "+net/http/http_util.h" ]
