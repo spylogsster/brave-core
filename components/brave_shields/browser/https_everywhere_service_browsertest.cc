@@ -115,15 +115,13 @@ class HTTPSEverywhereServiceTest : public ExtensionBrowserTest {
   std::vector<std::unique_ptr<brave_shields::TestFiltersProvider>>
       source_providers_;
 
-  void UpdateCustomAdBlockInstanceWithRules(const std::string& rules,
-                                            const std::string& resources) {
+  void UpdateCustomAdBlockInstanceWithRules(const std::string& rules) {
     auto source_provider =
-        std::make_unique<brave_shields::TestFiltersProvider>(rules, resources);
+        std::make_unique<brave_shields::TestFiltersProvider>(rules);
 
     brave_shields::AdBlockService* ad_block_service =
         g_brave_browser_process->ad_block_service();
-    ad_block_service->UseCustomSourceProvidersForTest(source_provider.get(),
-                                                      source_provider.get());
+    ad_block_service->UseCustomSourceProviderForTest(source_provider.get());
 
     source_providers_.push_back(std::move(source_provider));
 
@@ -143,55 +141,6 @@ IN_PROC_BROWSER_TEST_F(HTTPSEverywhereServiceTest, RedirectsKnownSite) {
   content::WebContents* contents =
       browser()->tab_strip_model()->GetActiveWebContents();
   EXPECT_EQ(GURL("https://www.digg.com/"), contents->GetLastCommittedURL());
-}
-
-// Load a URL which has an HTTPSE rule and an adblock redirect rule - verify
-// that the adblock rule takes precedence
-IN_PROC_BROWSER_TEST_F(HTTPSEverywhereServiceTest, PreferAdblockRedirect) {
-  ASSERT_TRUE(InstallHTTPSEverywhereExtension());
-
-  std::string frame_html =
-      "<html><script>"
-      "  const customResource = true;"
-      "</script></html>";
-
-  std::string resource_base64;
-  base::Base64Encode(frame_html, &resource_base64);
-
-  UpdateCustomAdBlockInstanceWithRules(
-      "www.digg.com$subdocument,redirect=custom-resource-html",
-      R"(
-      [
-        {
-          "name": "custom-resource-html",
-          "aliases": [],
-          "kind": {
-            "mime":"text/html"
-          },
-          "content": ")" +
-          resource_base64 + R"("
-        }
-      ])");
-
-  GURL url = embedded_test_server()->GetURL("a.com", "/iframe.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
-
-  GURL iframe_url = embedded_test_server()->GetURL("www.digg.com", "/");
-  const char kIframeID[] = "test";
-  content::WebContents* contents =
-      browser()->tab_strip_model()->GetActiveWebContents();
-  EXPECT_TRUE(NavigateIframeToURL(contents, kIframeID, iframe_url));
-  content::RenderFrameHost* iframe_contents =
-      ChildFrameAt(contents->GetPrimaryMainFrame(), 0);
-  WaitForLoadStop(contents);
-
-  // The URL should not be modified
-  ASSERT_EQ(iframe_url, iframe_contents->GetLastCommittedURL());
-
-  // The `customResource` JS property should be defined
-  const GURL resource_url =
-      embedded_test_server()->GetURL("example.com", "/example.html");
-  ASSERT_EQ(true, EvalJs(iframe_contents, "customResource"));
 }
 
 // Load a URL which has no HTTPSE rule and verify we did not rewrite it.
