@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "base/component_export.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/singleton.h"
 #include "base/memory/weak_ptr.h"
@@ -20,13 +21,15 @@ class GURL;
 
 namespace psst {
 
-class PsstService {
+class COMPONENT_EXPORT(PSST_BROWSER) PsstService {
  public:
   PsstService(const PsstService&) = delete;
   PsstService& operator=(const PsstService&) = delete;
   ~PsstService();
+  COMPONENT_EXPORT(PSST_BROWSER)
   void CheckIfMatch(const GURL& url,
                     base::OnceCallback<void(MatchedRule)> cb) const;
+  COMPONENT_EXPORT(PSST_BROWSER)
   static PsstService* GetInstance();  // singleton
   void LoadPsstRules(const base::FilePath& path);
 

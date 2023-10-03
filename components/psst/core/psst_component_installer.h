@@ -6,12 +6,15 @@
 #ifndef BRAVE_COMPONENTS_PSST_CORE_PSST_COMPONENT_INSTALLER_H_
 #define BRAVE_COMPONENTS_PSST_CORE_PSST_COMPONENT_INSTALLER_H_
 
+#include "base/component_export.h"
+
 namespace component_updater {
 class ComponentUpdateService;
 }  // namespace component_updater
 
 namespace psst {
 
+COMPONENT_EXPORT(PSST_BROWSER)
 void RegisterPsstComponent(component_updater::ComponentUpdateService* cus);
 
 }  // namespace psst

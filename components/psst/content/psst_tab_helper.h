@@ -6,8 +6,10 @@
 #ifndef BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
 #define BRAVE_COMPONENTS_PSST_CONTENT_PSST_TAB_HELPER_H_
 
+#include "base/component_export.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/weak_ptr.h"
+
 #include "brave/components/psst/core/psst_rule.h"
 #include "build/build_config.h"
 #include "components/sessions/core/session_id.h"
@@ -19,23 +21,26 @@ namespace psst {
 
 class PsstService;
 
-class PsstTabHelper : public content::WebContentsObserver,
-                      public content::WebContentsUserData<PsstTabHelper> {
+class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
+    : public content::WebContentsObserver,
+      public content::WebContentsUserData<PsstTabHelper> {
  public:
-  explicit PsstTabHelper(content::WebContents*, int32_t world_id);
   ~PsstTabHelper() override;
-
   PsstTabHelper(const PsstTabHelper&) = delete;
   PsstTabHelper& operator=(const PsstTabHelper&) = delete;
 
  private:
+  COMPONENT_EXPORT(PSST_CONTENT)
+  PsstTabHelper(content::WebContents*, const int32_t world_id);
+
   friend class content::WebContentsUserData<PsstTabHelper>;
-  int32_t world_id_;
+
   // content::WebContentsObserver overrides
   void DidFinishNavigation(
       content::NavigationHandle* navigation_handle) override;
   void DocumentOnLoadCompletedInPrimaryMainFrame() override;
 
+  const int32_t world_id_;
   SessionID tab_id_;
   raw_ptr<PsstService> psst_service_ = nullptr;  // NOT OWNED
   bool should_process_ = false;

@@ -6,6 +6,8 @@
 component("core") {
   output_name = "psst_browser"
 
+  defines = [ "IS_PSST_BROWSER_IMPL" ]
+
   sources = [
     "psst_component_installer.cc",
     "psst_component_installer.h",

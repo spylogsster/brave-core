@@ -6,6 +6,8 @@
 component("content") {
   output_name = "psst_content"
 
+  defines = [ "IS_PSST_CONTENT_IMPL" ]
+
   sources = [
     "psst_tab_helper.cc",
     "psst_tab_helper.h",

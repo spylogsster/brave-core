@@ -23,7 +23,7 @@
 namespace psst {
 
 PsstTabHelper::PsstTabHelper(content::WebContents* web_contents,
-                             int32_t world_id)
+                             const int32_t world_id)
     : WebContentsObserver(web_contents),
       content::WebContentsUserData<PsstTabHelper>(*web_contents),
       world_id_(world_id),
@@ -43,7 +43,7 @@ PsstTabHelper::~PsstTabHelper() = default;
 
 void InsertScriptInPage(
     const content::GlobalRenderFrameHostId render_frame_host_id,
-    int32_t world_id,
+    const int32_t world_id,
     const std::string& script,
     content::RenderFrameHost::JavaScriptResultCallback cb) {
   content::RenderFrameHost* render_frame_host =
@@ -57,7 +57,7 @@ void InsertScriptInPage(
 
 void InsertPolicyScript(
     const content::GlobalRenderFrameHostId render_frame_host_id,
-    int32_t world_id,
+    const int32_t world_id,
     std::string policy_script) {
   InsertScriptInPage(render_frame_host_id, world_id, policy_script,
                      base::DoNothing());
@@ -66,20 +66,16 @@ void InsertPolicyScript(
 void OnTestScriptResult(
     std::string policy_script,
     const content::GlobalRenderFrameHostId render_frame_host_id,
-    int32_t world_id,
+    const int32_t world_id,
     base::Value value) {
-  if (!value.is_bool()) {
-    return;
-  }
-  const bool execute_policy = value.GetBool();
-  if (execute_policy) {
+  if (value.GetIfBool().value_or(false)) {
     InsertPolicyScript(render_frame_host_id, world_id, policy_script);
   }
 }
 
 void InsertTestScript(
     const content::GlobalRenderFrameHostId render_frame_host_id,
-    int32_t world_id,
+    const int32_t world_id,
     MatchedRule rule) {
   CHECK(render_frame_host_id);
 
