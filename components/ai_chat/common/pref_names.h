@@ -22,6 +22,10 @@ constexpr char kBraveChatP3APromptCountWeeklyStorage[] =
     "brave.ai_chat.p3a_prompt_count";
 constexpr char kUserDismissedPremiumPrompt[] =
     "brave.ai_chat.user_dismissed_premium_prompt";
+constexpr char kBraveChatP3AOmniboxOpenWeeklyStorage[] =
+    "brave.ai_chat.p3a_omnibox_open";
+constexpr char kBraveChatP3AOmniboxAutocompleteWeeklyStorage[] =
+    "brave.ai_chat.p3a_omnibox_autocomplete";
 
 void RegisterProfilePrefs(PrefRegistrySimple* registry);
 

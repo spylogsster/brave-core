@@ -10,8 +10,11 @@
 #include "build/build_config.h"
 
 #if !BUILDFLAG(IS_ANDROID)
+#include "brave/browser/brave_browser_process.h"
+#include "brave/browser/misc_metrics/process_misc_metrics.h"
 #include "brave/browser/ui/brave_browser.h"
 #include "brave/browser/ui/sidebar/sidebar_controller.h"
+#include "brave/components/ai_chat/browser/ai_chat_metrics.h"
 #endif  // BUILDFLAG(!IS_ANDROID)
 
 #if BUILDFLAG(ENABLE_COMMANDER)
@@ -63,6 +66,10 @@ void ChromeAutocompleteProviderClient::OpenLeo(const std::u16string& query) {
       ai_chat::mojom::ConversationTurnVisibility::VISIBLE,
       base::UTF16ToUTF8(query)};
   chat_tab_helper->MakeAPIRequestWithConversationHistoryUpdate(std::move(turn));
+  ai_chat::AIChatMetrics* metrics =
+      g_brave_browser_process->process_misc_metrics()->ai_chat_metrics();
+  CHECK(metrics);
+  metrics->RecordOmniboxOpen();
 #endif
 }
 

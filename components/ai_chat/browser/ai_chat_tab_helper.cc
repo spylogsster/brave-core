@@ -74,6 +74,10 @@ AIChatTabHelper::AIChatTabHelper(content::WebContents* web_contents,
   DCHECK(engine_);
   favicon::ContentFaviconDriver::FromWebContents(web_contents)
       ->AddObserver(this);
+
+  if (ai_chat_metrics_ != nullptr && HasUserOptedIn()) {
+    ai_chat_metrics_->RecordEnabled(false);
+  }
 }
 
 AIChatTabHelper::~AIChatTabHelper() = default;
@@ -150,7 +154,7 @@ void AIChatTabHelper::OnUserOptedIn() {
   }
 
   if (ai_chat_metrics_ != nullptr && HasUserOptedIn()) {
-    ai_chat_metrics_->RecordEnabled();
+    ai_chat_metrics_->RecordEnabled(true);
   }
 }
 
