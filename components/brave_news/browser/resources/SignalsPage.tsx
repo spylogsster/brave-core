@@ -19,7 +19,6 @@ interface Props {
 }
 
 const Container = styled(Flex)`
-  width: 800px;
 `
 
 function SignalCards<T>({ items, sort, filter, getName, getKey, stats }: { items: T[], sort: 'name' | 'subscribed' | 'visitWeight' | 'shownCount', filter: string, getName: (item: T) => string, getKey: (item: T) => string, stats: { [key: string]: number } }) {
@@ -67,7 +66,7 @@ export default function SignalsPage(props: Props) {
 
   return <Container direction='column'>
     <h2>Signals</h2>
-    <Flex direction='row' gap={8}>
+    <Flex direction='row' gap={8} wrap='wrap'>
       <div>
         Publishers: {Object.keys(publishers).length}
         <br />

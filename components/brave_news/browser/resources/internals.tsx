@@ -16,7 +16,7 @@ setIconBasePath('//resources/brave-icons')
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: 400px auto;
+  grid-template-columns: 300px auto;
   padding: 16px;
   gap: 8px;
 `
