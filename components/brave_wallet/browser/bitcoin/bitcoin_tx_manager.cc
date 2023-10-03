@@ -56,6 +56,7 @@ void BitcoinTxManager::AddUnapprovedTransaction(
     const absl::optional<url::Origin>& origin,
     AddUnapprovedTransactionCallback callback) {
   const auto& btc_tx_data = tx_data_union->get_btc_tx_data();
+  // TODO(nvonpentz) Ensure to address is not an OFAC banned address.
 
   bitcoin_wallet_service_->CreateTransaction(
       chain_id, from->Clone(), btc_tx_data->to, btc_tx_data->amount,
