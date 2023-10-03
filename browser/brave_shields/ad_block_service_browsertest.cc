@@ -42,10 +42,8 @@
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
 #include "chrome/browser/profiles/profile.h"
-#include "chrome/browser/ui/browser.h"
 #include "chrome/test/base/chrome_test_utils.h"
 #include "chrome/test/base/in_process_browser_test.h"
-#include "chrome/test/base/ui_test_utils.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/test/browser_test.h"
@@ -53,6 +51,10 @@
 #include "net/dns/mock_host_resolver.h"
 #include "net/test/test_data_directory.h"
 #include "services/network/host_resolver.h"
+
+#if !BUILDFLAG(IS_ANDROID)
+#include "chrome/test/base/ui_test_utils.h"
+#endif
 
 #if BUILDFLAG(ENABLE_PLAYLIST)
 #include "brave/browser/playlist/playlist_service_factory.h"
@@ -264,6 +266,11 @@ void AdBlockServiceTest::GetTestDataDir(base::FilePath* test_data_dir) {
   base::PathService::Get(brave::DIR_TEST_DATA, test_data_dir);
 }
 
+void AdBlockServiceTest::NavigateToURL(GURL url) {
+  content::NavigateToURLBlockUntilNavigationsComplete(web_contents(), url, 1,
+                                                      true);
+}
+
 void AdBlockServiceTest::InstallComponent(
     const brave_shields::FilterListCatalogEntry& catalog_entry) {
   auto* service = g_brave_browser_process->ad_block_service();
@@ -348,7 +355,7 @@ void AdBlockServiceTest::DisableAggressiveMode() {
 // Load a page with an ad image, and make sure it is blocked.
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, AdsGetBlockedByDefaultBlocker) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -364,7 +371,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
   UpdateCustomAdBlockInstanceWithRules("*ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -381,7 +388,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, AdsGetBlockedByCustomBlocker) {
   UpdateCustomAdBlockInstanceWithRules("*ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(contents,
@@ -397,7 +404,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, DefaultBlockCustomException) {
   UpdateCustomAdBlockInstanceWithRules("@@ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(contents,
@@ -413,7 +420,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CustomBlockDefaultException) {
   UpdateCustomAdBlockInstanceWithRules("*ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -427,7 +434,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CustomBlockDefaultException) {
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
                        NotAdsDoNotGetBlockedByDefaultBlocker) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -445,7 +452,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, AdsGetBlockedByRegionalBlocker) {
   InstallRegionalAdBlockComponent(kAdBlockEasyListFranceUUID);
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -464,7 +471,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
   InstallRegionalAdBlockComponent(kAdBlockEasyListFranceUUID);
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -477,7 +484,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 // count 1.
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, TwoSameAdsGetCountedAsOne) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -495,7 +502,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, TwoSameAdsGetCountedAsOne) {
 // Load a page with different adblocked xhr requests, it should count each.
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, TwoDiffAdsGetCountedAsTwo) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -513,7 +520,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, TwoDiffAdsGetCountedAsTwo) {
 // New tab continues to count blocking the same resource
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, NewTabContinuesToBlock) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -521,7 +528,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, NewTabContinuesToBlock) {
                          "xhr('adbanner.js')"));
   EXPECT_EQ(profile()->GetPrefs()->GetUint64(kAdsBlocked), 1ULL);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -529,13 +536,13 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, NewTabContinuesToBlock) {
                          "xhr('adbanner.js')"));
   EXPECT_EQ(profile()->GetPrefs()->GetUint64(kAdsBlocked), 2ULL);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
 }
 
 // XHRs and ads in a cross-site iframe are blocked as well.
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, SubFrame) {
   GURL url = embedded_test_server()->GetURL("a.com", "/iframe_blocking.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(ChildFrameAt(contents, 0),
@@ -565,7 +572,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, SubFrameShieldsOff) {
 
   brave_shields::SetBraveShieldsEnabled(content_settings(), false, url);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(ChildFrameAt(contents, 0),
@@ -595,7 +602,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, ServiceWorkerRequest) {
   UpdateAdBlockInstanceWithRules("adbanner.js");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -611,7 +618,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, WebSocketBlocking) {
   ASSERT_TRUE(ws_server_.Start());
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   GURL ws_url = ws_server_.GetURL("echo-with-no-extension");
@@ -634,7 +641,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
   UpdateAdBlockInstanceWithRules("*ad_fr*\n@@*ad_fr.png*");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
   ASSERT_EQ(true, EvalJs(contents,
                          "setExpectations(1, 0, 0, 0);"
@@ -649,7 +656,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, AdBlockThirdPartyWorksByETLDP1) {
   GURL tab_url = embedded_test_server()->GetURL("test.a.com", kAdBlockTestPage);
   GURL resource_url =
       embedded_test_server()->GetURL("test2.a.com", "/logo.png");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   content::WebContents* contents = web_contents();
   ASSERT_EQ(true,
             EvalJs(contents, base::StringPrintf("setExpectations(1, 0, 0, 0);"
@@ -664,7 +671,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
   UpdateAdBlockInstanceWithRules("||a.com$third-party");
   GURL tab_url = embedded_test_server()->GetURL("b.com", kAdBlockTestPage);
   GURL resource_url = embedded_test_server()->GetURL("a.com", "/logo.png");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   content::WebContents* contents = web_contents();
   ASSERT_EQ(true,
             EvalJs(contents, base::StringPrintf("setExpectations(0, 1, 0, 0);"
@@ -777,7 +784,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, SubscribeToCustomSubscription) {
   }
 
   // Make sure the list is applied during browsing
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   content::WebContents* contents = web_contents();
   EXPECT_EQ(true,
             EvalJs(contents, base::StringPrintf("setExpectations(0, 0, 0, 1);"
@@ -947,7 +954,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 
   brave::SetAdblockCnameHostResolverForTesting(&resolver);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1031,7 +1038,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 
   brave::SetAdblockCnameHostResolverForTesting(&resolver);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1131,7 +1138,7 @@ IN_PROC_BROWSER_TEST_F(CnameUncloakingFlagDisabledTest, NoDnsQueriesIssued) {
 
   brave::SetAdblockCnameHostResolverForTesting(&resolver);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1179,7 +1186,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, BlockNYP) {
   GURL tab_url = embedded_test_server()->GetURL("b.com", kAdBlockTestPage);
   GURL resource_url =
       embedded_test_server()->GetURL("sp1.nypost.com", "/logo.png");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   content::WebContents* contents = web_contents();
   ASSERT_EQ(true,
             EvalJs(contents, base::StringPrintf("setExpectations(0, 1, 0, 0);"
@@ -1192,7 +1199,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, BlockNYP) {
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, FrameSourceURL) {
   UpdateAdBlockInstanceWithRules("adbanner.js$domain=a.com");
   GURL url = embedded_test_server()->GetURL("a.com", "/iframe_blocking.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(ChildFrameAt(contents, 0),
@@ -1201,7 +1208,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, FrameSourceURL) {
   EXPECT_EQ(profile()->GetPrefs()->GetUint64(kAdsBlocked), 0ULL);
 
   UpdateAdBlockInstanceWithRules("adbanner.js$domain=b.com");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(ChildFrameAt(contents, 0),
@@ -1222,7 +1229,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, SocialButttonAdBlockTagTest) {
   WaitForAdBlockServiceThreads();
   GURL resource_url =
       embedded_test_server()->GetURL("example.com", "/logo.png");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   content::WebContents* contents = web_contents();
   ASSERT_EQ(true,
             EvalJs(contents, base::StringPrintf("setExpectations(0, 1, 0, 0);"
@@ -1240,7 +1247,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, SocialButttonAdBlockDiffTagTest) {
   WaitForAdBlockServiceThreads();
   GURL resource_url =
       embedded_test_server()->GetURL("example.com", "/logo.png");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   content::WebContents* contents = web_contents();
   ASSERT_EQ(true,
             EvalJs(contents, base::StringPrintf("setExpectations(1, 0, 0, 0);"
@@ -1309,7 +1316,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, TagPrefsControlTags) {
 // Load a page with a blocked image, and make sure it is collapsed.
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CollapseBlockedImage) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(contents,
@@ -1328,7 +1335,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CollapseBlockedImage) {
 // Load a page with a blocked iframe, and make sure it is collapsed.
 IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CollapseBlockedIframe) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(contents, "addFrame('ad_banner.png')"));
@@ -1356,7 +1363,7 @@ class CollapseBlockedElementsFlagDisabledTest : public AdBlockServiceTest {
 IN_PROC_BROWSER_TEST_F(CollapseBlockedElementsFlagDisabledTest,
                        DontCollapseBlockedImage) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(contents,
@@ -1376,7 +1383,7 @@ IN_PROC_BROWSER_TEST_F(CollapseBlockedElementsFlagDisabledTest,
 IN_PROC_BROWSER_TEST_F(CollapseBlockedElementsFlagDisabledTest,
                        DontCollapseBlockedIframe) {
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   EXPECT_EQ(true, EvalJs(contents, "addFrame('ad_banner.png')"));
@@ -1408,7 +1415,7 @@ IN_PROC_BROWSER_TEST_F(Default1pBlockingFlagDisabledTest, Default1pBlocking) {
   UpdateAdBlockInstanceWithRules("^ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -1431,7 +1438,7 @@ IN_PROC_BROWSER_TEST_F(Default1pBlockingFlagDisabledTest, SpecialUrlException) {
 
   // Must use HTTPS because `youtube.com` is in Chromium's HSTS preload list
   GURL url = https_server_.GetURL("youtube.com", kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -1453,7 +1460,7 @@ IN_PROC_BROWSER_TEST_F(Default1pBlockingFlagDisabledTest,
   UpdateAdBlockInstanceWithRules("^ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -1475,7 +1482,7 @@ IN_PROC_BROWSER_TEST_F(Default1pBlockingFlagDisabledTest, Custom1pBlocking) {
   UpdateCustomAdBlockInstanceWithRules("^ad_banner.png");
 
   GURL url = embedded_test_server()->GetURL(kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   ASSERT_EQ(true, EvalJs(contents,
@@ -1506,7 +1513,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, RedirectRulesAreRespected) {
 
   const GURL url =
       embedded_test_server()->GetURL("example.com", kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   const std::string noopjs = "(function() {\\n    \\'use strict\\';\\n})();\\n";
@@ -1538,7 +1545,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, RedirectWithoutBlockIsNoop) {
 
   const GURL url =
       embedded_test_server()->GetURL("example.com", kAdBlockTestPage);
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   const std::string noopjs = "(function() {\\n    \\'use strict\\';\\n})();\\n";
@@ -1589,7 +1596,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, RemoveparamSubresource) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1612,8 +1619,19 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, RemoveparamSubresource) {
   ASSERT_EQ("?test=true", EvalJs(inner_frame, "window.location.search"));
 }
 
+// ui_test_utils::NavigateToURL isn't available on Android, but
+// content::NavigateToURLBlockUntilNavigationsComplete doesn't work with this
+// redirected navigation.
+#if BUILDFLAG(IS_ANDROID)
+#define MAYBE_RemoveparamTopLevelNavigation \
+  DISABLED_RemoveparamTopLevelNavigation
+#else
+#define MAYBE_RemoveparamTopLevelNavigation RemoveparamTopLevelNavigation
+#endif
+
 // `$removeparam` should be respected for top-level navigations
-IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, RemoveparamTopLevelNavigation) {
+IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
+                       MAYBE_RemoveparamTopLevelNavigation) {
   UpdateAdBlockInstanceWithRules("*$document,removeparam=evil");
 
   dynamic_server_.RegisterRequestHandler(base::BindRepeating(&NoParamHandler));
@@ -1621,7 +1639,9 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, RemoveparamTopLevelNavigation) {
 
   GURL original_url = dynamic_server_.GetURL("/?evil=true");
   GURL landing_url = dynamic_server_.GetURL("/");
+#if !BUILDFLAG(IS_ANDROID)
   ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), original_url));
+#endif
   content::WebContents* contents = web_contents();
   ASSERT_TRUE(content::WaitForLoadStop(contents));
   EXPECT_EQ(contents->GetLastCommittedURL(), landing_url);
@@ -1639,7 +1659,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, DefaultNoRemoveparam) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1661,7 +1681,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CspRule) {
 
   const GURL url =
       embedded_test_server()->GetURL("example.com", "/csp_rules.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   auto res = EvalJs(contents, "await window.allLoaded");
@@ -1691,7 +1711,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CspRuleMerging) {
 
   const GURL url =
       embedded_test_server()->GetURL("sub.example.com", "/csp_rules.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   auto res = EvalJs(contents, "await window.allLoaded");
@@ -1738,7 +1758,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CspRuleShieldsDown) {
       embedded_test_server()->GetURL("example.com", "/csp_rules.html");
   ShieldsDown(url);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   content::WebContents* contents = web_contents();
 
   auto res = EvalJs(contents, "await window.allLoaded");
@@ -1771,7 +1791,7 @@ IN_PROC_BROWSER_TEST_F(CosmeticFilteringFlagDisabledTest,
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1838,7 +1858,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringDisabled) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1859,7 +1879,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringSimple) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1886,7 +1906,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringFrames) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1922,7 +1942,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1938,7 +1958,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -1975,7 +1995,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringProtect1p) {
   // It's a private suffix from https://publicsuffix.org/list/
   GURL tab_url = embedded_test_server()->GetURL("test.lion.appspot.com",
                                                 "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2003,7 +2023,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringHide1pContent) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2019,7 +2039,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringDynamic) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2051,7 +2071,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringDynamicCustom) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2078,7 +2098,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringGenerichide) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2098,7 +2118,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringCustomStyle) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2118,7 +2138,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringUnhide) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2155,7 +2175,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringWindowScriptlet) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2192,7 +2212,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, ScriptletInjectionPermissions) {
   // Add the list with default (i.e. no) permissions
   UpdateAdBlockInstanceWithRules(rules);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   contents = web_contents();
 
   {
@@ -2203,7 +2223,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, ScriptletInjectionPermissions) {
   // Add a list with different but still insufficient permissions
   AddNewRules(rules, 5, true);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   contents = web_contents();
 
   {
@@ -2214,7 +2234,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, ScriptletInjectionPermissions) {
   // Finally add a list with sufficient permissions
   AddNewRules(rules, 7, true);
 
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
   contents = web_contents();
 
   {
@@ -2255,7 +2275,7 @@ IN_PROC_BROWSER_TEST_F(ScriptletDebugLogsFlagEnabledTest, CanDebugSetToTrue) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2289,7 +2309,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CheckForDeAmpPref) {
 
   GURL url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
+  NavigateToURL(url);
   auto result1 =
       EvalJs(web_contents(), R"(waitCSSSelector('body', 'color', 'green'))");
   ASSERT_TRUE(result1.error.empty());
@@ -2326,7 +2346,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest, CosmeticFilteringIframeScriptlet) {
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/iframe_messenger.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2341,7 +2361,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2361,7 +2381,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTest,
 
   GURL tab_url =
       embedded_test_server()->GetURL("b.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2480,7 +2500,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTestJsPerformance,
 
   GURL tab_url =
       embedded_test_server()->GetURL("a.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
@@ -2521,7 +2541,7 @@ IN_PROC_BROWSER_TEST_F(AdBlockServiceTestJsPerformance,
 
   GURL tab_url =
       embedded_test_server()->GetURL("a.com", "/cosmetic_filtering.html");
-  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), tab_url));
+  NavigateToURL(tab_url);
 
   content::WebContents* contents = web_contents();
 
