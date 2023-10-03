@@ -15,11 +15,14 @@ import Icon from "@brave/leo/react/icon";
 import { api } from "../context";
 
 const MenuButton = styled(Button)`
-  flex-grow: 0;
   --leo-button-padding: ${spacing.s};
+
+  flex-grow: 0;
 `
 
 export const MetaInfoContainer = styled.h4`
+  --leo-icon-size: 12px;
+
   margin: 0;
 
   font: ${font.primary.xSmall.regular};
@@ -30,8 +33,6 @@ export const MetaInfoContainer = styled.h4`
   display: flex;
   align-items: center;
   gap: ${spacing.s};
-
-  --leo-icon-size: 12px;
 `
 
 export const getOrigin = (article: FeedItemMetadata) => {
@@ -40,7 +41,6 @@ export const getOrigin = (article: FeedItemMetadata) => {
 }
 
 export function MetaInfo(props: { article: FeedItemMetadata, hideChannel?: boolean }) {
-
   const maybeChannel = !props.hideChannel && <>
     • {channelIcons[props.article.categoryName] ?? channelIcons.default} {props.article.categoryName}
   </>

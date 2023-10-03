@@ -22,7 +22,6 @@ const Container = styled(Card)`
 `
 
 const ArticleImage = styled.img`
-  width: 96px;
   min-width: 96px;
   height: 64px;
 
