@@ -14,6 +14,7 @@
 #include "base/types/expected.h"
 #include "extensions/common/url_pattern.h"
 #include "net/base/url_util.h"
+#include "third_party/abseil-cpp/absl/types/optional.h"
 #include "url/gurl.h"
 #include "url/origin.h"
 #include "url/url_constants.h"
@@ -42,15 +43,6 @@ const char kExclude[] = "exclude";
 const char kTestScript[] = "test_script";
 const char kPolicyScript[] = "policy_script";
 const char kVersion[] = "version";
-
-// Removes trailing dot from |host_piece| if any.
-// Copied from extensions/common/url_pattern.cc
-base::StringPiece CanonicalizeHostForMatching(base::StringPiece host_piece) {
-  if (base::EndsWith(host_piece, ".")) {
-    host_piece.remove_suffix(1);
-  }
-  return host_piece;
-}
 
 }  // namespace
 
@@ -101,26 +93,15 @@ void PsstRule::RegisterJSONConverter(
 }
 
 // static
-const std::string PsstRule::GetETLDForPsst(const std::string& host) {
-  base::StringPiece host_piece = CanonicalizeHostForMatching(host);
-  return net::registry_controlled_domains::GetDomainAndRegistry(
-      host_piece, net::registry_controlled_domains::PrivateRegistryFilter::
-                      EXCLUDE_PRIVATE_REGISTRIES);
-}
-
-// static
-base::expected<std::pair<std::vector<std::unique_ptr<PsstRule>>,
-                         base::flat_set<std::string>>,
-               std::string>
-PsstRule::ParseRules(const std::string& contents) {
+absl::optional<std::vector<std::unique_ptr<PsstRule>>> PsstRule::ParseRules(
+    const std::string& contents) {
   if (contents.empty()) {
-    return base::unexpected("Could not obtain psst configuration");
+    return absl::nullopt;
   }
   absl::optional<base::Value> root = base::JSONReader::Read(contents);
   if (!root) {
-    return base::unexpected("Failed to parse psst configuration");
+    return absl::nullopt;
   }
-  std::vector<std::string> hosts;
   std::vector<std::unique_ptr<PsstRule>> rules;
   base::JSONValueConverter<PsstRule> converter;
   for (base::Value& it : root->GetList()) {
@@ -128,18 +109,9 @@ PsstRule::ParseRules(const std::string& contents) {
     if (!converter.Convert(it, rule.get())) {
       continue;
     }
-    for (const URLPattern& pattern : rule->include_pattern_set()) {
-      if (!pattern.host().empty()) {
-        const std::string etldp1 = PsstRule::GetETLDForPsst(pattern.host());
-        if (!etldp1.empty()) {
-          hosts.push_back(std::move(etldp1));
-        }
-      }
-    }
     rules.push_back(std::move(rule));
   }
-  return std::pair<std::vector<std::unique_ptr<PsstRule>>,
-                   base::flat_set<std::string>>(std::move(rules), hosts);
+  return std::vector<std::unique_ptr<PsstRule>>(std::move(rules));
 }
 
 bool PsstRule::ShouldInsertScript(const GURL& url) const {

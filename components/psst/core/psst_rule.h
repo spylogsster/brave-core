@@ -14,9 +14,9 @@
 #include "base/containers/flat_set.h"
 #include "base/files/file_path.h"
 #include "base/json/json_value_converter.h"
-#include "base/types/expected.h"
 #include "base/values.h"
 #include "extensions/common/url_pattern_set.h"
+#include "third_party/abseil-cpp/absl/types/optional.h"
 
 class GURL;
 
@@ -37,11 +37,8 @@ class PsstRule {
   // class.
   static void RegisterJSONConverter(
       base::JSONValueConverter<PsstRule>* converter);
-  static base::expected<std::pair<std::vector<std::unique_ptr<PsstRule>>,
-                                  base::flat_set<std::string>>,
-                        std::string>
-  ParseRules(const std::string& contents);
-  static const std::string GetETLDForPsst(const std::string& host);
+  static absl::optional<std::vector<std::unique_ptr<PsstRule>>> ParseRules(
+      const std::string& contents);
   static bool GetURLPatternSetFromValue(const base::Value* value,
                                         extensions::URLPatternSet* result);
   static bool GetFilePathFromValue(const base::Value* value,

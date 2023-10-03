@@ -40,7 +40,6 @@ class COMPONENT_EXPORT(PSST_BROWSER) PsstService {
   void OnFileDataReady(const std::string& data);
   base::FilePath component_path_;
   std::vector<std::unique_ptr<PsstRule>> rules_;
-  base::flat_set<std::string> host_cache_;
 
   base::WeakPtrFactory<PsstService> weak_factory_{this};
 

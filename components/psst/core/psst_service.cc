@@ -67,13 +67,6 @@ MatchedRule CreateMatchedRule(const base::FilePath& component_path,
 
 void PsstService::CheckIfMatch(const GURL& url,
                                base::OnceCallback<void(MatchedRule)> cb) const {
-  // Check host cache to see if this URL needs to have any psst rules
-  // applied.
-  const std::string etldp1 = PsstRule::GetETLDForPsst(url.host());
-  if (!base::Contains(host_cache_, etldp1)) {
-    return;
-  }
-
   for (const std::unique_ptr<PsstRule>& rule : rules_) {
     if (rule->ShouldInsertScript(url)) {
       base::ThreadPool::PostTaskAndReplyWithResult(
@@ -98,14 +91,12 @@ void PsstService::LoadPsstRules(const base::FilePath& path) {
 
 void PsstService::OnFileDataReady(const std::string& contents) {
   auto parsed_rules = PsstRule::ParseRules(contents);
-  if (!parsed_rules.has_value()) {
-    VLOG(1) << parsed_rules.error();
+  if (!parsed_rules) {
+    VLOG(1) << "OnFileDataReady: cannot parse rules";
     return;
   }
   rules_.clear();
-  host_cache_.clear();
-  rules_ = std::move(parsed_rules.value().first);
-  host_cache_ = parsed_rules.value().second;
+  rules_ = std::move(parsed_rules.value());
 }
 
 }  // namespace psst
