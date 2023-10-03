@@ -184,6 +184,7 @@ brave_chrome_browser_deps = [
   "//brave/components/p3a:buildflags",
   "//brave/components/playlist/common/buildflags",
   "//brave/components/privacy_sandbox",
+  "//brave/components/psst/common",
   "//brave/components/psst/content",
   "//brave/components/psst/core",
   "//brave/components/request_otr/common/buildflags",

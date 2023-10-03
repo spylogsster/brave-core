@@ -15,6 +15,7 @@ component("content") {
 
   deps = [
     "//base",
+    "//brave/components/psst/common",
     "//brave/components/psst/core",
     "//components/sessions",
     "//content/public/browser",

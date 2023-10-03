@@ -33,6 +33,7 @@ include_rules = [
   "+brave/components/permissions",
   "+brave/components/playlist",
   "+brave/components/privacy_sandbox",
+  "+brave/components/psst/common",
   "+brave/components/psst/core",
   "+brave/components/request_otr",
   "+brave/components/sidebar",

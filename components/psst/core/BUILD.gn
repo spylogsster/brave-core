@@ -20,6 +20,7 @@ component("core") {
   deps = [
     "//base",
     "//brave/components/brave_component_updater/browser",
+    "//brave/components/psst/common",
     "//components/component_updater",
     "//crypto",
     "//extensions/common",
