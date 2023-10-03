@@ -34,6 +34,7 @@ include_rules = [
   "+brave/components/playlist",
   "+brave/components/privacy_sandbox",
   "+brave/components/psst/browser/core",
+  "+brave/components/psst/common",
   "+brave/components/request_otr",
   "+brave/components/sidebar",
   "+brave/components/speedreader",

@@ -25,6 +25,8 @@ class COMPONENT_EXPORT(PSST_BROWSER_CONTENT) PsstTabHelper
     : public content::WebContentsObserver,
       public content::WebContentsUserData<PsstTabHelper> {
  public:
+  static void MaybeCreateForWebContents(content::WebContents* contents,
+                                        const int32_t world_id);
   ~PsstTabHelper() override;
   PsstTabHelper(const PsstTabHelper&) = delete;
   PsstTabHelper& operator=(const PsstTabHelper&) = delete;

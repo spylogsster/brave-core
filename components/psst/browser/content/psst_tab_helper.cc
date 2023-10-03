@@ -15,12 +15,25 @@
 #include "base/values.h"
 #include "brave/components/psst/browser/core/psst_rule.h"
 #include "brave/components/psst/browser/core/psst_rule_service.h"
+#include "brave/components/psst/common/features.h"
 #include "components/sessions/content/session_tab_helper.h"
+#include "content/public/browser/browser_context.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
 #include "content/public/browser/web_contents.h"
 
 namespace psst {
+
+// static
+void PsstTabHelper::MaybeCreateForWebContents(content::WebContents* contents,
+                                              const int32_t world_id) {
+  if (contents->GetBrowserContext()->IsOffTheRecord() ||
+      !base::FeatureList::IsEnabled(psst::features::kBravePsst)) {
+    return;
+  }
+
+  psst::PsstTabHelper::CreateForWebContents(contents, world_id);
+}
 
 PsstTabHelper::PsstTabHelper(content::WebContents* web_contents,
                              const int32_t world_id)

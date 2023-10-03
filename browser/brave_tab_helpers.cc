@@ -27,7 +27,6 @@
 #include "brave/components/ipfs/buildflags/buildflags.h"
 #include "brave/components/playlist/common/buildflags/buildflags.h"
 #include "brave/components/psst/browser/content/psst_tab_helper.h"
-#include "brave/components/psst/common/features.h"
 #include "brave/components/request_otr/common/buildflags/buildflags.h"
 #include "brave/components/speedreader/common/buildflags/buildflags.h"
 #include "brave/components/tor/buildflags/buildflags.h"
@@ -136,13 +135,8 @@ void AttachTabHelpers(content::WebContents* web_contents) {
 
   brave_ads::AdsTabHelper::CreateForWebContents(web_contents);
   brave_ads::SearchResultAdTabHelper::MaybeCreateForWebContents(web_contents);
-
-  if (!web_contents->GetBrowserContext()->IsOffTheRecord()) {
-    if (base::FeatureList::IsEnabled(psst::features::kBravePsst)) {
-      psst::PsstTabHelper::CreateForWebContents(
-          web_contents, ISOLATED_WORLD_ID_BRAVE_INTERNAL);
-    }
-  }
+  psst::PsstTabHelper::MaybeCreateForWebContents(
+      web_contents, ISOLATED_WORLD_ID_BRAVE_INTERNAL);
 #if BUILDFLAG(ENABLE_EXTENSIONS)
   WebDiscoveryTabHelper::MaybeCreateForWebContents(web_contents);
 #endif
