@@ -18,6 +18,7 @@
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "base/task/thread_pool.h"
+#include "brave/components/psst/common/features.h"
 #include "brave/components/psst/core/psst_rule.h"
 #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
@@ -31,6 +32,10 @@ constexpr char kScriptsDir[] = "scripts";
 
 // static
 PsstService* PsstService::GetInstance() {
+  // Check if feature flag is enabled.
+  if (!base::FeatureList::IsEnabled(psst::features::kBravePsst)) {
+    return nullptr;
+  }
   return base::Singleton<PsstService>::get();
 }
 

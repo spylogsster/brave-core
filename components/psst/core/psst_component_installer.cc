@@ -7,19 +7,18 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/base64.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback.h"
+#include "base/functional/callback_forward.h"
 #include "base/no_destructor.h"
-#include "brave/components/brave_component_updater/browser/brave_on_demand_updater.h"
 #include "brave/components/psst/core/psst_service.h"
 #include "components/component_updater/component_installer.h"
 #include "components/component_updater/component_updater_service.h"
 #include "crypto/sha2.h"
-
-using brave_component_updater::BraveOnDemandUpdater;
 
 namespace psst {
 
@@ -149,11 +148,9 @@ PsstComponentInstallerPolicy::GetInstallerAttributes() const {
   return update_client::InstallerAttributes();
 }
 
-void OnRegistered() {
-  BraveOnDemandUpdater::GetInstance()->OnDemandUpdate(kPsstComponentId);
-}
-
-void RegisterPsstComponent(component_updater::ComponentUpdateService* cus) {
+void RegisterPsstComponent(
+    component_updater::ComponentUpdateService* cus,
+    base::OnceCallback<void(const std::string&)> callback) {
   // In test, |cus| could be nullptr.
   if (!cus) {
     return;
@@ -161,7 +158,11 @@ void RegisterPsstComponent(component_updater::ComponentUpdateService* cus) {
 
   auto installer = base::MakeRefCounted<component_updater::ComponentInstaller>(
       std::make_unique<PsstComponentInstallerPolicy>());
-  installer->Register(cus, base::BindOnce(&OnRegistered));
+  installer->Register(
+      // After Register, run the callback with component id.
+      cus, base::BindOnce([](base::OnceCallback<void(const std::string&)> cb,
+                             const std::string& id) { std::move(cb).Run(id); },
+                          std::move(callback), kPsstComponentId));
 }
 
 }  // namespace psst

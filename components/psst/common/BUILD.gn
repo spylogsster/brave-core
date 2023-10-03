@@ -17,5 +17,4 @@ component("common") {
   ]
 
   deps = [ "//base" ]
-
 }

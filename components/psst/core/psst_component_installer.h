@@ -6,7 +6,10 @@
 #ifndef BRAVE_COMPONENTS_PSST_CORE_PSST_COMPONENT_INSTALLER_H_
 #define BRAVE_COMPONENTS_PSST_CORE_PSST_COMPONENT_INSTALLER_H_
 
+#include <string>
+
 #include "base/component_export.h"
+#include "base/functional/callback.h"
 
 namespace component_updater {
 class ComponentUpdateService;
@@ -15,7 +18,8 @@ class ComponentUpdateService;
 namespace psst {
 
 COMPONENT_EXPORT(PSST_BROWSER)
-void RegisterPsstComponent(component_updater::ComponentUpdateService* cus);
+void RegisterPsstComponent(component_updater::ComponentUpdateService* cus,
+                           base::OnceCallback<void(const std::string&)> cb);
 
 }  // namespace psst
 

@@ -27,12 +27,7 @@ PsstTabHelper::PsstTabHelper(content::WebContents* web_contents,
     : WebContentsObserver(web_contents),
       content::WebContentsUserData<PsstTabHelper>(*web_contents),
       world_id_(world_id),
-      tab_id_(sessions::SessionTabHelper::IdForTab(web_contents)),
       weak_factory_(this) {
-  if (!tab_id_.is_valid()) {
-    return;
-  }
-
   psst_service_ = PsstService::GetInstance();
   if (!psst_service_) {
     return;
@@ -89,7 +84,7 @@ void PsstTabHelper::DidFinishNavigation(
   CHECK(navigation_handle);
 
   if (!psst_service_ || !navigation_handle->IsInPrimaryMainFrame() ||
-      !navigation_handle->HasCommitted() || !tab_id_.is_valid()) {
+      !navigation_handle->HasCommitted()) {
     return;
   }
 

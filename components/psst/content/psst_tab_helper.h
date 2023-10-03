@@ -41,7 +41,6 @@ class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
   void DocumentOnLoadCompletedInPrimaryMainFrame() override;
 
   const int32_t world_id_;
-  SessionID tab_id_;
   raw_ptr<PsstService> psst_service_ = nullptr;  // NOT OWNED
   bool should_process_ = false;
 

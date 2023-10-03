@@ -7,8 +7,6 @@
 
 namespace psst::features {
 
-BASE_FEATURE(kBravePsst,
-             "BravePsst",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+BASE_FEATURE(kBravePsst, "BravePsst", base::FEATURE_DISABLED_BY_DEFAULT);
 
 }  // namespace psst::features
