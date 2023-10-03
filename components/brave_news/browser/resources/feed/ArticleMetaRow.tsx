@@ -54,17 +54,12 @@ export default function ArticleMetaRow(props: { article: FeedItemMetadata, hideC
     <MetaInfo {...props} />
 
     <ButtonMenu>
-      <MenuButton slot='anchor-content' kind='plain-faint' onClick={e => {
-        e.preventDefault()
-        e.stopPropagation()
-      }}>
+      <MenuButton slot='anchor-content' kind='plain-faint'>
         <Icon name='more-horizontal' />
       </MenuButton>
       <leo-menu-item onClick={e => {
-        e.preventDefault()
-        e.stopPropagation()
-
         api.setPublisherPref(props.article.publisherId, UserEnabled.DISABLED)
+        e.stopPropagation()
       }}>Hide content from {getOrigin(props.article)}</leo-menu-item>
     </ButtonMenu>
   </Flex>
