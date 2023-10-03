@@ -1132,10 +1132,10 @@ BraveContentBrowserClient::CreateThrottlesForNavigation(
   }
 
   // Rewards
-  if (auto rewards_protocol_throttle = brave_rewards::
-          RewardsProtocolNavigationThrottle::MaybeCreateThrottleFor(handle)) {
-    throttles.insert(throttles.begin(), std::move(rewards_protocol_throttle));
-  }
+  throttles.insert(
+      throttles.begin(),
+      std::make_unique<brave_rewards::RewardsProtocolNavigationThrottle>(
+          handle));
 
   // The HostContentSettingsMap might be null for some irregular profiles, e.g.
   // the System Profile.

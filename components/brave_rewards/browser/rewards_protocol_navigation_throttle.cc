@@ -3,14 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+#include "brave/components/brave_rewards/browser/rewards_protocol_navigation_throttle.h"
+
 #include <map>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-
-#include "brave/components/brave_rewards/browser/rewards_protocol_navigation_throttle.h"
 
 #include "base/ranges/algorithm.h"
 #include "base/strings/escape.h"
@@ -38,16 +38,11 @@ using content::WebContents;
 
 namespace brave_rewards {
 
-// static
-std::unique_ptr<RewardsProtocolNavigationThrottle>
-RewardsProtocolNavigationThrottle::MaybeCreateThrottleFor(
-    NavigationHandle* navigation_handle) {
-  return std::make_unique<RewardsProtocolNavigationThrottle>(navigation_handle);
-}
-
 RewardsProtocolNavigationThrottle::RewardsProtocolNavigationThrottle(
     NavigationHandle* handle)
-    : NavigationThrottle(handle) {}
+    : NavigationThrottle(handle) {
+  CHECK(handle);
+}
 
 RewardsProtocolNavigationThrottle::~RewardsProtocolNavigationThrottle() =
     default;
@@ -107,8 +102,7 @@ GURL TransformUrl(const GURL& url) {
                        : ""}));
 }
 
-void LoadRewardsURL(const GURL& redirect_url,
-                    content::WebContents* web_contents) {
+void LoadRewardsURL(const GURL& redirect_url, WebContents* web_contents) {
   if (!web_contents) {
     return;
   }
@@ -140,12 +134,9 @@ void LoadRewardsURL(const GURL& redirect_url,
 
   if (IsValidWalletProviderRedirect(web_contents->GetURL(), redirect_url,
                                     kAllowedReferrerUrls)) {
-    // web_contents->GetController().LoadURL(
-    //     TransformUrl(redirect_url), content::Referrer(), page_transition,
-    //     "");
     base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
         FROM_HERE, base::BindOnce(
-                       [](base::WeakPtr<content::WebContents> web_contents,
+                       [](base::WeakPtr<WebContents> web_contents,
                           const GURL& redirect_url) {
                          if (!web_contents) {
                            return;
@@ -166,16 +157,12 @@ RewardsProtocolNavigationThrottle::MaybeRedirect() {
   }
 
   GURL original_url = navigation_handle()->GetURL();
-  auto is_rewards_protocol = original_url.SchemeIs("rewards");
-
-  if (is_rewards_protocol) {
-    CHECK(is_rewards_protocol);
-
+  if (original_url.SchemeIs("rewards")) {
     LoadRewardsURL(original_url, web_contents);
     return NavigationThrottle::CANCEL;
-  } else {
-    return NavigationThrottle::PROCEED;
   }
+
+  return NavigationThrottle::PROCEED;
 }
 
 const char* RewardsProtocolNavigationThrottle::GetNameForLogging() {

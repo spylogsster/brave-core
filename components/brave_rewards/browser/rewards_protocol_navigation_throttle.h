@@ -14,7 +14,6 @@
 
 namespace content {
 class NavigationHandle;
-class WebContents;
 }  // namespace content
 
 namespace brave_rewards {

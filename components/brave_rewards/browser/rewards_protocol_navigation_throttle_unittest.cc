@@ -11,8 +11,8 @@
 #include "brave/components/brave_rewards/browser/rewards_protocol_navigation_throttle.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-// npm run test -- brave_unit_tests
-// --filter="*RewardsProtocolNavigationThrottleTest*"
+// NOLINTNEXTLINE
+// npm run test -- brave_unit_tests --filter="*RewardsProtocolNavigationThrottleTest*"
 
 using ::testing::TestWithParam;
 using ::testing::Values;
