@@ -19,7 +19,7 @@
 
 namespace psst {
 
-class PsstService;
+class PsstRuleService;
 
 class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
     : public content::WebContentsObserver,
@@ -41,7 +41,7 @@ class COMPONENT_EXPORT(PSST_CONTENT) PsstTabHelper
   void DocumentOnLoadCompletedInPrimaryMainFrame() override;
 
   const int32_t world_id_;
-  raw_ptr<PsstService> psst_service_ = nullptr;  // NOT OWNED
+  raw_ptr<PsstRuleService> psst_service_ = nullptr;  // NOT OWNED
   bool should_process_ = false;
 
   base::WeakPtrFactory<PsstTabHelper> weak_factory_;

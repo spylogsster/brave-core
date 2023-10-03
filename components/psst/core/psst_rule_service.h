@@ -3,8 +3,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef BRAVE_COMPONENTS_PSST_CORE_PSST_SERVICE_H_
-#define BRAVE_COMPONENTS_PSST_CORE_PSST_SERVICE_H_
+#ifndef BRAVE_COMPONENTS_PSST_CORE_PSST_RULE_SERVICE_H_
+#define BRAVE_COMPONENTS_PSST_CORE_PSST_RULE_SERVICE_H_
 
 #include <memory>
 #include <string>
@@ -21,31 +21,31 @@ class GURL;
 
 namespace psst {
 
-class COMPONENT_EXPORT(PSST_BROWSER) PsstService {
+class COMPONENT_EXPORT(PSST_BROWSER) PsstRuleService {
  public:
-  PsstService(const PsstService&) = delete;
-  PsstService& operator=(const PsstService&) = delete;
-  ~PsstService();
+  PsstRuleService(const PsstRuleService&) = delete;
+  PsstRuleService& operator=(const PsstRuleService&) = delete;
+  ~PsstRuleService();
   COMPONENT_EXPORT(PSST_BROWSER)
   void CheckIfMatch(const GURL& url,
                     base::OnceCallback<void(MatchedRule)> cb) const;
   COMPONENT_EXPORT(PSST_BROWSER)
-  static PsstService* GetInstance();  // singleton
+  static PsstRuleService* GetInstance();  // singleton
   void LoadPsstRules(const base::FilePath& path);
 
  protected:
-  PsstService();
+  PsstRuleService();
 
  private:
   void OnFileDataReady(const std::string& data);
   base::FilePath component_path_;
   std::vector<std::unique_ptr<PsstRule>> rules_;
 
-  base::WeakPtrFactory<PsstService> weak_factory_{this};
+  base::WeakPtrFactory<PsstRuleService> weak_factory_{this};
 
-  friend struct base::DefaultSingletonTraits<PsstService>;
+  friend struct base::DefaultSingletonTraits<PsstRuleService>;
 };
 
 }  // namespace psst
 
-#endif  // BRAVE_COMPONENTS_PSST_CORE_PSST_SERVICE_H_
+#endif  // BRAVE_COMPONENTS_PSST_CORE_PSST_RULE_SERVICE_H_

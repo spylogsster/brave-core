@@ -13,8 +13,8 @@ component("core") {
     "psst_component_installer.h",
     "psst_rule.cc",
     "psst_rule.h",
-    "psst_service.cc",
-    "psst_service.h",
+    "psst_rule_service.cc",
+    "psst_rule_service.h",
   ]
 
   deps = [

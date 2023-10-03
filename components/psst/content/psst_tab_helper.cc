@@ -14,7 +14,7 @@
 #include "base/task/thread_pool.h"
 #include "base/values.h"
 #include "brave/components/psst/core/psst_rule.h"
-#include "brave/components/psst/core/psst_service.h"
+#include "brave/components/psst/core/psst_rule_service.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
@@ -28,7 +28,7 @@ PsstTabHelper::PsstTabHelper(content::WebContents* web_contents,
       content::WebContentsUserData<PsstTabHelper>(*web_contents),
       world_id_(world_id),
       weak_factory_(this) {
-  psst_service_ = PsstService::GetInstance();
+  psst_service_ = PsstRuleService::GetInstance();
   if (!psst_service_) {
     return;
   }

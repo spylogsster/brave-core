@@ -15,7 +15,7 @@
 #include "base/functional/callback.h"
 #include "base/functional/callback_forward.h"
 #include "base/no_destructor.h"
-#include "brave/components/psst/core/psst_service.h"
+#include "brave/components/psst/core/psst_rule_service.h"
 #include "components/component_updater/component_installer.h"
 #include "components/component_updater/component_updater_service.h"
 #include "crypto/sha2.h"
@@ -122,7 +122,7 @@ void PsstComponentInstallerPolicy::OnCustomUninstall() {}
 void PsstComponentInstallerPolicy::ComponentReady(const base::Version& version,
                                                   const base::FilePath& path,
                                                   base::Value::Dict manifest) {
-  PsstService::GetInstance()->LoadPsstRules(path);
+  PsstRuleService::GetInstance()->LoadPsstRules(path);
 }
 
 bool PsstComponentInstallerPolicy::VerifyInstallation(

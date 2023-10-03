@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#include "brave/components/psst/core/psst_service.h"
+#include "brave/components/psst/core/psst_rule_service.h"
 
 #include <memory>
 #include <string>
@@ -31,17 +31,17 @@ constexpr char kJsonFile[] = "psst.json";
 constexpr char kScriptsDir[] = "scripts";
 
 // static
-PsstService* PsstService::GetInstance() {
+PsstRuleService* PsstRuleService::GetInstance() {
   // Check if feature flag is enabled.
   if (!base::FeatureList::IsEnabled(psst::features::kBravePsst)) {
     return nullptr;
   }
-  return base::Singleton<PsstService>::get();
+  return base::Singleton<PsstRuleService>::get();
 }
 
-PsstService::PsstService() = default;
+PsstRuleService::PsstRuleService() = default;
 
-PsstService::~PsstService() = default;
+PsstRuleService::~PsstRuleService() = default;
 
 std::string ReadFile(const base::FilePath& file_path) {
   std::string contents;
@@ -65,8 +65,9 @@ MatchedRule CreateMatchedRule(const base::FilePath& component_path,
   return {test_script, policy_script, version};
 }
 
-void PsstService::CheckIfMatch(const GURL& url,
-                               base::OnceCallback<void(MatchedRule)> cb) const {
+void PsstRuleService::CheckIfMatch(
+    const GURL& url,
+    base::OnceCallback<void(MatchedRule)> cb) const {
   for (const std::unique_ptr<PsstRule>& rule : rules_) {
     if (rule->ShouldInsertScript(url)) {
       base::ThreadPool::PostTaskAndReplyWithResult(
@@ -80,16 +81,16 @@ void PsstService::CheckIfMatch(const GURL& url,
   return;
 }
 
-void PsstService::LoadPsstRules(const base::FilePath& path) {
+void PsstRuleService::LoadPsstRules(const base::FilePath& path) {
   component_path_ = path;
   base::ThreadPool::PostTaskAndReplyWithResult(
       FROM_HERE, {base::MayBlock()},
       base::BindOnce(&ReadFile, path.AppendASCII(kJsonFile)),
-      base::BindOnce(&PsstService::OnFileDataReady,
+      base::BindOnce(&PsstRuleService::OnFileDataReady,
                      weak_factory_.GetWeakPtr()));
 }
 
-void PsstService::OnFileDataReady(const std::string& contents) {
+void PsstRuleService::OnFileDataReady(const std::string& contents) {
   auto parsed_rules = PsstRule::ParseRules(contents);
   if (!parsed_rules) {
     VLOG(1) << "OnFileDataReady: cannot parse rules";
