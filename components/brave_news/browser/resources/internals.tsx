@@ -22,6 +22,8 @@ const Grid = styled.div`
 
   backdrop-filter: blur(64px);
   background: rgba(255, 255, 255, 0.7);
+
+  min-height: 100vh;
 `
 
 function App() {
