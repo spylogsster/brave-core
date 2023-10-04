@@ -33,6 +33,8 @@ export default function HeroArticle({ info }: Props) {
   return <Card onClick={() => openArticle(info.data)} ref={setElementRef}>
     <HeroImage src={url} />
     <ArticleMetaRow article={info.data} />
-    <Title>{info.data.title}</Title>
+    <Title>
+      <a href={info.data.url.url}>{info.data.title}</a>
+    </Title>
   </Card>
 }
