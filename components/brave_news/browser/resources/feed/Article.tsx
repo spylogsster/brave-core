@@ -33,13 +33,14 @@ const ArticleImage = styled.img`
 export const openArticle = (article: FeedItemMetadata) => window.open(article.url.url, '_blank', 'noopener noreferrer')
 
 export default function Article({ info, hideChannel }: Props) {
-  const { url, setElementRef } = useLazyUnpaddedImageUrl(info.data.image.paddedImageUrl?.url, { useCache: true })
+  const { url: imageUrl, setElementRef } = useLazyUnpaddedImageUrl(info.data.image.paddedImageUrl?.url, { useCache: true })
+  const url = info.data.url.url;
 
-  return <Container onClick={() => openArticle(info.data)} ref={setElementRef}>
+  return <Container ref={setElementRef} onClick={console.log}>
     <ArticleMetaRow article={info.data} hideChannel={hideChannel} />
     <Flex direction='row' gap={spacing.m} justify='space-between'>
-      <Title>{info.data.title}{('isDiscover' in info && info.isDiscover) && " (discovering)"}</Title>
-      <ArticleImage src={url} />
+      <Title><a href={url}>{info.data.title}{('isDiscover' in info && info.isDiscover) && " (discovering)"}</a></Title>
+      <ArticleImage src={imageUrl} />
     </Flex>
   </Container>
 }

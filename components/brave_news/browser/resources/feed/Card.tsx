@@ -20,9 +20,12 @@ export const Title = styled.h3`
 
   font: ${font.primary.default.regular};
   color: ${color.text.primary};
+
+  &> a { all: unset; }
 `
 
 export default styled.div`
+  text-decoration: none;
   background: rgba(255, 255, 255, 0.3);
   border-radius: ${radius.xl};
   color: ${color.text.primary};
