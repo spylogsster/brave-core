@@ -62,11 +62,7 @@ public class AddCustomFilterListsFragment
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.toString().trim().length() > 0) {
-                    addBtn.setEnabled(true);
-                } else {
-                    addBtn.setEnabled(false);
-                }
+                addBtn.setEnabled(s.toString().trim().length() > 0 ? true : false);
             }
         });
 
