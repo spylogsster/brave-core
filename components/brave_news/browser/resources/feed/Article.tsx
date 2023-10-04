@@ -7,7 +7,7 @@ import { FeedItemMetadata, Article as Info } from 'gen/brave/components/brave_ne
 import * as React from 'react';
 import styled from 'styled-components';
 import Flex from '$web-common/Flex'
-import { useLazyUnpaddedImageUrl } from '../../../../brave_new_tab_ui/components/default/braveNews/useUnpaddedImageUrl';
+import { useLazyUnpaddedImageUrl } from '../shared/useUnpaddedImageUrl';
 import ArticleMetaRow from './ArticleMetaRow';
 import Card, { Title } from './Card';
 

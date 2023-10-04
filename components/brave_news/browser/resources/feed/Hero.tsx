@@ -5,7 +5,7 @@
 import { HeroArticle as Info } from 'gen/brave/components/brave_news/common/brave_news.mojom.m';
 import * as React from 'react';
 import styled from 'styled-components';
-import { useLazyUnpaddedImageUrl } from '../../../../brave_new_tab_ui/components/default/braveNews/useUnpaddedImageUrl';
+import { useLazyUnpaddedImageUrl } from '../shared/useUnpaddedImageUrl';
 import { openArticle } from './Article';
 import ArticleMetaRow from './ArticleMetaRow';
 import Card, { Title } from './Card';

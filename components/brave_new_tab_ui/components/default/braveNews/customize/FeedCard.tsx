@@ -10,8 +10,8 @@ import Flex from '$web-common/Flex'
 import FollowButton from './FollowButton'
 import { getCardColor } from './colors'
 import { usePublisher, usePublisherFollowed } from './Context'
-import { useLazyUnpaddedImageUrl } from '../useUnpaddedImageUrl'
-import getBraveNewsController from '../../../../api/brave_news'
+import { useLazyUnpaddedImageUrl } from '../../../../../brave_news/browser/resources/shared/useUnpaddedImageUrl'
+import getBraveNewsController from '../../../../../brave_news/browser/resources/shared/api'
 
 interface CardProps {
   backgroundColor?: string

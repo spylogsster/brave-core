@@ -4,8 +4,8 @@
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { color, font, spacing } from "@brave/leo/tokens/css"
-import { FeedItemMetadata, UserEnabled } from "../../../../brave_new_tab_ui/api/brave_news"
-import { channelIcons } from "../../../../brave_new_tab_ui/components/default/braveNews/customize/Icons"
+import { FeedItemMetadata, UserEnabled } from "../shared/api"
+import { channelIcons } from "../shared/Icons"
 import styled from "styled-components";
 import * as React from "react";
 import Flex from '$web-common/Flex'

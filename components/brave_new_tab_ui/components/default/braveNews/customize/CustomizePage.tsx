@@ -9,7 +9,7 @@ import { getLocale } from '../../../../../common/locale'
 import Button from '../../../../../web-components/button'
 import Flex from '$web-common/Flex'
 import { useBraveNews } from './Context'
-import { BackArrow } from './Icons'
+import { BackArrow } from '../../../../../brave_news/browser/resources/shared/Icons'
 
 const BackButtonContainer = styled.div`
   all: unset;
