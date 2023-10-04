@@ -6,7 +6,7 @@ import { spacing } from '@brave/leo/tokens/css';
 import { FeedItemMetadata, Article as Info } from 'gen/brave/components/brave_news/common/brave_news.mojom.m';
 import * as React from 'react';
 import styled from 'styled-components';
-import Flex from '../../../../brave_new_tab_ui/components/Flex';
+import Flex from '$web-common/Flex'
 import { useLazyUnpaddedImageUrl } from '../../../../brave_new_tab_ui/components/default/braveNews/useUnpaddedImageUrl';
 import ArticleMetaRow from './ArticleMetaRow';
 import Card, { Title } from './Card';

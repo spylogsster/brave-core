@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import * as React from 'react'
 import styled from 'styled-components'
-import Flex from '../../../Flex'
+import Flex from '$web-common/Flex'
 import FollowButton from './FollowButton'
 import { getCardColor } from './colors'
 import { usePublisher, usePublisherFollowed } from './Context'

@@ -5,7 +5,7 @@
 
 import styled from 'styled-components'
 import * as React from 'react'
-import Flex from '../../../Flex'
+import Flex from '$web-common/Flex'
 import FollowButton from './FollowButton'
 import { useChannelSubscribed } from './Context'
 import { channelIcons } from './Icons'

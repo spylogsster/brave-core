@@ -5,7 +5,7 @@
 
 import * as React from 'react'
 import styled, { css } from 'styled-components'
-import Flex from '../../../Flex'
+import Flex from '$web-common/Flex'
 import FeedCard from './FeedCard'
 import { ArrowRight } from './Icons'
 

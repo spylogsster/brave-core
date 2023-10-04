@@ -6,7 +6,7 @@
 import * as React from 'react'
 import styled from 'styled-components'
 import { getLocale } from '$web-common/locale'
-import Flex from '../../../Flex'
+import Flex from '$web-common/Flex'
 import { useLazyFavicon } from '../useUnpaddedImageUrl'
 import { useChannelSubscribed, usePublisher, usePublisherFollowed } from './Context'
 import { getTranslatedChannelName } from './ChannelCard'

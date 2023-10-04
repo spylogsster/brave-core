@@ -8,7 +8,7 @@ import { FeedItemMetadata, UserEnabled } from "../../../../brave_new_tab_ui/api/
 import { channelIcons } from "../../../../brave_new_tab_ui/components/default/braveNews/customize/Icons"
 import styled from "styled-components";
 import * as React from "react";
-import Flex from "../../../../brave_new_tab_ui/components/Flex";
+import Flex from '$web-common/Flex'
 import ButtonMenu from "@brave/leo/react/buttonMenu";
 import Button from "@brave/leo/react/button";
 import Icon from "@brave/leo/react/icon";

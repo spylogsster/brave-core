@@ -7,7 +7,7 @@ import * as React from 'react'
 import styled from 'styled-components'
 import { getLocale } from '../../../../../common/locale'
 import Button from '../../../../../web-components/button'
-import Flex from '../../../Flex'
+import Flex from '$web-common/Flex'
 import { useBraveNews } from './Context'
 import { BackArrow } from './Icons'
 
