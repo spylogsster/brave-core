@@ -9926,6 +9926,12 @@ Check your passwords anytime in <ph name="GOOGLE_PASSWORD_MANAGER">$1<ex>Brave P
       <message name="IDS_TAB_ORGANIZATION_NOT_STARTED_BUTTON" desc="The label for the button in the not started state of the tab organization UI" translateable="false">
         Organize tabs
       </message>
+      <message name="IDS_TAB_ORGANIZATION_IN_PROGRESS_TITLE" desc="The header text for the in progress state in the tab organization UI" translateable="false">
+        Organizing…
+      </message>
+      <message name="IDS_TAB_ORGANIZATION_SUCCESS_TITLE" desc="The header text for the success state in the tab organization UI" translateable="false">
+        Tab organization found
+      </message>
 
       <!-- Strings for Window Titles in Menus -->
       <if expr="not use_titlecase">
@@ -13909,40 +13915,6 @@ Please help our engineers fix this problem. Tell us what happened right before y
       </message>
     </if>
 
-    <!-- Windows 10 toast strings -->
-    <if expr="is_win">
-      <message name="IDS_WIN10_TOAST_BROWSE_FAST" desc="Toast message variant: browse fast.">
-        Browse fast with Brave
-      </message>
-      <message name="IDS_WIN10_TOAST_BROWSE_SAFELY" desc="Toast message variant: browse safely.">
-        Browse safely with Brave
-      </message>
-      <message name="IDS_WIN10_TOAST_BROWSE_SMART" desc="Toast message variant: browse smart.">
-        Browse smart with Brave
-      </message>
-      <message name="IDS_WIN10_TOAST_SWITCH_FAST" desc="Toast message variant: switch to a fast browser.">
-        Switch to a fast browser
-      </message>
-      <message name="IDS_WIN10_TOAST_SWITCH_SMART" desc="Toast message variant: switch to a smart browser.">
-        Switch to a smart browser
-      </message>
-      <message name="IDS_WIN10_TOAST_SWITCH_SECURE" desc="Toast message variant: switch to a secure browser.">
-        Switch to a secure browser
-      </message>
-      <message name="IDS_WIN10_TOAST_SWITCH_SMART_AND_SECURE" desc="Toast message variant: switch to a smart and secure browser.">
-        Switch to a smart and secure browser
-      </message>
-      <message name="IDS_WIN10_TOAST_RECOMMENDATION" desc="Toast header label noting Brave recommends Brave.">
-        Brave recommends Brave
-      </message>
-      <message name="IDS_WIN10_TOAST_OPEN_CHROME" desc="The label on the button to dismiss the toast and launch Brave.">
-        Open Brave
-      </message>
-      <message name="IDS_WIN10_TOAST_NO_THANKS" desc="The label on the button to dismiss the toast without launching Brave.">
-        No thanks
-      </message>
-    </if>
-
     <!-- Consistent omnibox geolocation -->
     <if expr="is_android">
         <message name="IDS_SEARCH_GEOLOCATION_DISCLOSURE_INFOBAR_TEXT" desc="Text to put in the infobar disclosing the default search engine's usage of location. The message contains a link to a settings page. The link text is a separate string in the translation console and appears here as a placeholder text.">
@@ -15580,6 +15552,11 @@ Please help our engineers fix this problem. Tell us what happened right before y
     <!-- Infobar shown when Protected Audiences Debugging is enabled -->
     <message name="IDS_PROTECTED_AUDIENCE_DEBUGGING_DISCLAIMER" desc="Text of infobar that shows up when the consented debugging feature for Protected Audiences is enabled.">
       Protected Audiences Debugging is enabled.
+    </message>
+
+    <!-- Infobar shown when test-third-party-cookies switch is enabled -->
+    <message name="IDS_TEST_THIRD_PARTY_COOKIE_BLOCKING_PHASEOUT_INFO" desc="Text of infobar that shows up when the user starts Brave with the --test-third-party-cookie-phaseout command line flag">
+      You have enabled testing third-party cookie phaseout. This cannot be overridden by the settings page. If you want to re-enable third-party cookies, relaunch Brave with this feature disabled.
     </message>
 
     <!-- Experimental enterprise plus_addresses feature strings -->
