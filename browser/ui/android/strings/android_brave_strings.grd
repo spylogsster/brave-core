@@ -4050,6 +4050,12 @@ If you don't accept this request, VPN will not reconnect and your internet conne
     <message name="IDS_BRAVE_WALLET_REQUEST_ID" desc="Sign in with Brave Wallet Request ID label">
       Request ID
     </message>
+    <message name="IDS_LEO_SUMMARY" desc="Title for Brave Leo options.">
+      Leo is an AI-powered intelligent assistant, built right into the browser
+    </message>
+    <message name="IDS_LEO_RESET_DATA" desc="Title for Brave Leo Reset and clear data option.">
+        Reset and clear Leo data
+    </message>
   </messages>
   </release>
 </grit>
