@@ -1,0 +1,13 @@
+diff --git a/chrome/browser/resources/settings/appearance_page/appearance_page.ts b/chrome/browser/resources/settings/appearance_page/appearance_page.ts
+index 2ef72f805303ebf050f011824b370d3f477a847b..76c82f929b51e040e4863e6b609066fd7cbdeccb 100644
+--- a/chrome/browser/resources/settings/appearance_page/appearance_page.ts
++++ b/chrome/browser/resources/settings/appearance_page/appearance_page.ts
+@@ -471,7 +471,7 @@ export class SettingsAppearancePageElement extends
+   }
+ 
+   private showHr_(previousIsVisible: boolean, nextIsVisible: boolean): boolean {
+-    return previousIsVisible && nextIsVisible;
++    return false && previousIsVisible && nextIsVisible;
+   }
+ 
+   private onHoverCardImagesEnabledChange_(event: Event) {

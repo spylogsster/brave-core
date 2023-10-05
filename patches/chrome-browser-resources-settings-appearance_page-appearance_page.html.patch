@@ -1,0 +1,20 @@
+diff --git a/chrome/browser/resources/settings/appearance_page/appearance_page.html b/chrome/browser/resources/settings/appearance_page/appearance_page.html
+index 9f1a559f1cb7f9854c90200402dbdcbbc5248c0e..53a893c088d84528db37fe8a75a62f95539e2db1 100644
+--- a/chrome/browser/resources/settings/appearance_page/appearance_page.html
++++ b/chrome/browser/resources/settings/appearance_page/appearance_page.html
+@@ -181,6 +181,7 @@
+             inverted>
+         </settings-toggle-button>
+ </if>
++<div hidden="true">
+         <div class="cr-row">
+           <div class="flex cr-padded-text" aria-hidden="true">
+             $i18n{fontSize}
+@@ -208,6 +209,7 @@
+             </template>
+           </select>
+         </div>
++</div>
+         <template is="dom-if" if="[[showReaderModeOption_]]">
+           <settings-toggle-button
+               class="hr"
