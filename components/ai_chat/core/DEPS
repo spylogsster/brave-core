@@ -3,4 +3,5 @@ include_rules = [
   "+absl/types/optional.h",
   "+brave/components/skus/common",
   "+brave/components/ai_chat/common/mojom",
+  "+brave/brave_domains",
 ]
