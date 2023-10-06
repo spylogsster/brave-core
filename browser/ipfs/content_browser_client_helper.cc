@@ -29,6 +29,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/common/url_constants.h"
 #include "url/gurl.h"
+#include "base/debug/stack_trace.h"
 
 namespace {
 
@@ -49,6 +50,37 @@ bool HandleIPFSURLRewrite(GURL* url, content::BrowserContext* browser_context) {
   if (!brave::IsRegularProfile(browser_context)) {
     return false;
   }
+//     LOG(INFO) << "[IPFS] HandleIPFSURLRewrite 10"
+//   << "\r\n old_url:" << (*url)
+//   << "\r\nStack:\r\n" << base::debug::StackTrace()
+
+// ;
+
+    // std::string t = url->spec();
+    // if(t.back() == '/'  || t.back() == '\\')
+    //   t.pop_back();
+
+
+//     LOG(INFO) << "[IPFS] HandleIPFSURLRewrite 15 Check for"
+//     << "\r\n url:" << url->spec().c_str()
+//     << "\r\n t:" << t
+//     ;
+//     auto* tmp = browser_context->GetUserData(t.c_str());
+//     if(tmp != nullptr) {
+//       LOG(INFO) << "[IPFS] HandleIPFSURLRewrite 20"
+//   << "\r\n new_url:" << (*url)
+// ;
+//       //return true;
+//     }
+//   if(t == "ipns://k2k4r8ni09jro03sto91pyi070ww4x63iwub4x3sc13qn5pwkjxhfdt4" || t == "https://drweb.link/ipns/k2k4r8ni09jro03sto91pyi070ww4x63iwub4x3sc13qn5pwkjxhfdt4") {
+//     LOG(INFO) << "[IPFS] HandleIPFSURLRewrite 25"
+//   << "\r\n old_url:" << (*url)
+// ;
+// //*url = GURL("https://drweb.link/ipns/k2k4r8ni09jro03sto91pyi070ww4x63iwub4x3sc13qn5pwkjxhfdt4");
+//   return false;
+// }
+
+
   // This is needed for triggering ReverseRewrite later.
   if (url->SchemeIs("http") &&
       (base::EndsWith(url->host_piece(), kIpfsLocalhost) ||
@@ -69,8 +101,14 @@ bool HandleIPFSURLRewrite(GURL* url, content::BrowserContext* browser_context) {
       // We instead will translate the URL later.
       IsIPFSLocalGateway(prefs) &&
       (url->SchemeIs(kIPFSScheme) || url->SchemeIs(kIPNSScheme))) {
-    return TranslateIPFSURI(
-        *url, url, GetDefaultIPFSLocalGateway(chrome::GetChannel()), false);
+    
+    bool result(TranslateIPFSURI(
+        *url, url, GetDefaultIPFSLocalGateway(chrome::GetChannel()), false));
+//     LOG(INFO) << "[IPFS] HandleIPFSURLRewrite 30"
+//   << "\r\n new_url:" << (*url)
+//   << "\r\n result:" << result
+// ;
+    return result;
   }
 
   if (url->DomainIs(kLocalhostIP)) {
@@ -101,6 +139,10 @@ bool HandleIPFSURLRewrite(GURL* url, content::BrowserContext* browser_context) {
       return true;
     }
   }
+
+//     LOG(INFO) << "[IPFS] HandleIPFSURLRewrite 100"
+//   << "\r\n old_url:" << (*url)
+// ;
 
   return false;
 }
@@ -142,8 +184,14 @@ bool HandleIPFSURLReverseRewrite(GURL* url,
     host_replacements.ClearPort();
   }
 
+//   LOG(INFO) << "[IPFS] HandleIPFSURLReverseRewrite "
+//   << "\r\n old_url:" << (*url)
+// ;
   *url = url->ReplaceComponents(host_replacements);
   *url = url->ReplaceComponents(scheme_replacements);
+//   LOG(INFO) << "[IPFS] HandleIPFSURLReverseRewrite "
+//   << "\r\n new_url:" << (*url)
+// ;
   return true;
 }
 

@@ -25,6 +25,7 @@
 #include "components/prefs/pref_service.h"
 #include "components/user_prefs/user_prefs.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/navigation_handle.h"
 #include "content/public/browser/web_contents_delegate.h"
@@ -70,20 +71,36 @@ void SetupIPFSProtocolHandler(const std::string& protocol) {
       ->StartCheckIsDefault(base::BindOnce(isDefaultCallback, protocol));
 }
 
-class IpfsInitialNavigationDat : public base::SupportsUserData::Data {
+class IpfsInitialNavigationData : public base::SupportsUserData::Data {
  public:
-  IpfsInitialNavigationDat(const IpfsInitialNavigationDat&) = default;
-  IpfsInitialNavigationDat(IpfsInitialNavigationDat&&) = delete;
-  IpfsInitialNavigationDat& operator=(const IpfsInitialNavigationDat&) =
+  IpfsInitialNavigationData(const IpfsInitialNavigationData&) = default;
+  IpfsInitialNavigationData(IpfsInitialNavigationData&&) = delete;
+  IpfsInitialNavigationData& operator=(const IpfsInitialNavigationData&) =
       default;
-  IpfsInitialNavigationDat& operator=(IpfsInitialNavigationDat&&) = delete;
-  explicit IpfsInitialNavigationDat(const GURL& url)
+  IpfsInitialNavigationData& operator=(IpfsInitialNavigationData&&) = delete;
+  explicit IpfsInitialNavigationData(const GURL& url)
       : initial_navigation_url(url) {}
 
-  ~IpfsInitialNavigationDat() override = default;
+  ~IpfsInitialNavigationData() override = default;
 
   GURL initial_navigation_url;
 };
+
+class IpfsUrlTranslationFlagNavData : public base::SupportsUserData::Data {
+ public:
+  IpfsUrlTranslationFlagNavData(const IpfsUrlTranslationFlagNavData&) = default;
+  IpfsUrlTranslationFlagNavData(IpfsUrlTranslationFlagNavData&&) = delete;
+  IpfsUrlTranslationFlagNavData& operator=(const IpfsUrlTranslationFlagNavData&) =
+      default;
+  IpfsUrlTranslationFlagNavData& operator=(IpfsUrlTranslationFlagNavData&&) = delete;
+  explicit IpfsUrlTranslationFlagNavData(const bool& break_translation)
+      : break_ipfs_url_translation(break_translation) {}
+
+  ~IpfsUrlTranslationFlagNavData() override = default;
+
+  bool break_ipfs_url_translation;
+};
+
 
 }  // namespace
 
@@ -156,7 +173,7 @@ IPFSTabHelper::IPFSTabHelper(content::WebContents* web_contents)
 
 // static
 bool IPFSTabHelper::MaybeCreateForWebContents(
-    content::WebContents* web_contents) {
+    content::WebContents* web_contents) {      
   if (!ipfs::IpfsServiceFactory::GetForContext(
           web_contents->GetBrowserContext())) {
     return false;
@@ -167,6 +184,8 @@ bool IPFSTabHelper::MaybeCreateForWebContents(
 }
 
 void IPFSTabHelper::IPFSResourceLinkResolved(const GURL& ipfs) {
+    LOG(INFO) << "[IPFS] " << __func__ ;
+
   ipfs_resolved_url_ = ipfs.is_valid() ? ipfs : GURL();
   UpdateLocationBar();
 }
@@ -176,7 +195,14 @@ void IPFSTabHelper::DNSLinkResolved(const GURL& ipfs, bool is_gateway_url) {
   ipfs_resolved_url_ = ipfs.is_valid() ? ipfs : GURL();
   bool should_redirect =
       pref_service_->GetBoolean(kIPFSAutoRedirectToConfiguredGateway);
-  if (ipfs.is_valid() && should_redirect) {
+  
+  LOG(INFO) << "[IPFS] IPFSTabHelper::DNSLinkResolved "
+  << "\r\n should_redirect:" << should_redirect
+  << "\r\n auto_redirect_blocked_:" << auto_redirect_blocked_
+  << "\r\n  ipfs.is_valid():" << (ipfs.is_valid())
+  ;
+
+  if (ipfs.is_valid() && should_redirect && !auto_redirect_blocked_) {
     LoadUrl(GetIPFSResolvedURL());
     return;
   }
@@ -190,6 +216,8 @@ void IPFSTabHelper::HostResolvedCallback(
     absl::optional<std::string> x_ipfs_path_header,
     const std::string& host,
     const absl::optional<std::string>& dnslink) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   // Check if user hasn't redirected to another host while dnslink was resolving
   if (current.host() != web_contents()->GetVisibleURL().host() ||
       !current.SchemeIsHTTPOrHTTPS())
@@ -209,7 +237,7 @@ void IPFSTabHelper::LoadUrl(const GURL& gurl) {
     redirect_callback_for_testing_.Run(gurl);
     return;
   }
-
+LOG(INFO) << "[IPFS] IPFSTabHelper::LoadUrl gurl:" << gurl;
   content::OpenURLParams params(gurl, content::Referrer(),
                                 WindowOpenDisposition::CURRENT_TAB,
                                 ui::PAGE_TRANSITION_LINK, false);
@@ -238,6 +266,8 @@ void IPFSTabHelper::UpdateLocationBar() {
 }
 
 GURL IPFSTabHelper::GetCurrentPageURL() const {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   if (current_page_url_for_testing_.is_valid())
     return current_page_url_for_testing_;
   // We use GetLastCommittedURL as the current url for IPFS related checks
@@ -246,6 +276,8 @@ GURL IPFSTabHelper::GetCurrentPageURL() const {
 }
 
 GURL IPFSTabHelper::GetIPFSResolvedURL() const {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   if (!ipfs_resolved_url_.is_valid())
     return GURL();
   GURL current = GetCurrentPageURL();
@@ -259,6 +291,8 @@ void IPFSTabHelper::CheckDNSLinkRecord(
     const GURL& target,
     bool is_gateway_url,
     absl::optional<std::string> x_ipfs_path_header) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   if (!target.SchemeIsHTTPOrHTTPS())
     return;
 
@@ -298,6 +332,8 @@ bool IPFSTabHelper::IsAutoRedirectIPFSResourcesEnabled() const {
 }
 
 void IPFSTabHelper::UpdateDnsLinkButtonState() {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   if (!IsDNSLinkCheckEnabled()) {
     if (ipfs_resolved_url_.is_valid()) {
       ipfs_resolved_url_ = GURL();
@@ -314,6 +350,8 @@ void IPFSTabHelper::UpdateDnsLinkButtonState() {
 }
 
 bool IPFSTabHelper::CanResolveURL(const GURL& url) const {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   url::Origin url_origin = url::Origin::Create(url);
   bool resolve = url.SchemeIsHTTPOrHTTPS() &&
                  !IsAPIGateway(url_origin.GetURL(), chrome::GetChannel());
@@ -329,11 +367,15 @@ bool IPFSTabHelper::CanResolveURL(const GURL& url) const {
 // ipfs://<x-ipfs-path>
 GURL IPFSTabHelper::ResolveXIPFSPathUrl(
     const std::string& x_ipfs_path_header_value) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   return TranslateXIPFSPath(x_ipfs_path_header_value).value_or(GURL());
 }
 
 absl::optional<GURL> IPFSTabHelper::ResolveIPFSUrlFromGatewayLikeUrl(
     const GURL& gurl) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   bool api_gateway = IsAPIGateway(gurl, chrome::GetChannel());
   auto base_gateway =
       GetConfiguredBaseGateway(pref_service_, chrome::GetChannel());
@@ -348,6 +390,8 @@ absl::optional<GURL> IPFSTabHelper::ResolveIPFSUrlFromGatewayLikeUrl(
 
 // For _dnslink we just translate url to ipns:// scheme
 GURL IPFSTabHelper::ResolveDNSLinkUrl(const GURL& url) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   GURL::Replacements replacements;
   replacements.SetSchemeStr(kIPNSScheme);
   return url.ReplaceComponents(replacements);
@@ -355,10 +399,12 @@ GURL IPFSTabHelper::ResolveDNSLinkUrl(const GURL& url) {
 
 void IPFSTabHelper::MaybeCheckDNSLinkRecord(
     const net::HttpResponseHeaders* headers) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   UpdateDnsLinkButtonState();
   auto current_url = GetCurrentPageURL();
   auto dnslink_target = current_url;
-
+ 
   auto possible_redirect = ResolveIPFSUrlFromGatewayLikeUrl(current_url);
   if (possible_redirect && IsIPFSScheme(possible_redirect.value())) {
     if (IsAutoRedirectIPFSResourcesEnabled()) {
@@ -393,6 +439,8 @@ void IPFSTabHelper::MaybeCheckDNSLinkRecord(
 }
 
 void IPFSTabHelper::MaybeSetupIpfsProtocolHandlers(const GURL& url) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
+
   auto resolve_method = static_cast<ipfs::IPFSResolveMethodTypes>(
       pref_service_->GetInteger(kIPFSResolveMethod));
   if (resolve_method == ipfs::IPFSResolveMethodTypes::IPFS_ASK &&
@@ -416,11 +464,14 @@ void IPFSTabHelper::DidStartNavigation(content::NavigationHandle* handle) {
   if (!visible_url.SchemeIsHTTPOrHTTPS() && !IsIPFSScheme(visible_url)) {
     return;
   }
-
+LOG(INFO) << "[IPFS] IPFSTabHelper::DidStartNavigation visible_url:"  << visible_url
+//<< "\r\nStack:\r\n" << base::debug::StackTrace()
+;
   SetInitialNavigationData(visible_url);
 }
 
 void IPFSTabHelper::DidFinishNavigation(content::NavigationHandle* handle) {
+  LOG(INFO) << "[IPFS] " << __func__ ;
   DCHECK(handle);
   if (!handle->IsInMainFrame() || !handle->HasCommitted() ||
       handle->IsSameDocument()) {
@@ -436,7 +487,7 @@ void IPFSTabHelper::DidFinishNavigation(content::NavigationHandle* handle) {
   if (IsIPFSScheme(current_url) || IsLocalGatewayURL(current_url) ||
       ExtractSourceFromGateway(current_url).has_value()) {
     auto const* headers = handle->GetResponseHeaders();
-    const auto* init_navigation_data = static_cast<IpfsInitialNavigationDat*>(
+    const auto* init_navigation_data = static_cast<IpfsInitialNavigationData*>(
         web_contents()->GetUserData(kIpfsInitialNavigationDataKey));
     if ((init_navigation_data &&
          init_navigation_data->initial_navigation_url != GetCurrentPageURL()) &&
@@ -475,20 +526,38 @@ void IPFSTabHelper::SetFallbackAddress(const GURL& original_url) {
     return;
   }
 
-  entry->SetVirtualURL(original_url);
+  auto url_to_catch = ExtractSourceFromGateway(original_url);
 
-  if (ExtractSourceFromGateway(original_url).has_value()) {
+  if (url_to_catch.has_value()) {
+   // auto_redirect_blocked_ = true;
+    // std::string t = url_to_catch.value().spec();
+    // if(t.back() == '/'  || t.back() == '\\')
+    //   t.pop_back();
+
+    // LOG(INFO) << "[IPFS] IPFSTabHelper::SetFallbackAddress set"
+    // << "\r\nurl:" << original_url.spec().c_str()
+    // << "\r\n url_to_catch:" << (url_to_catch.has_value()?url_to_catch.value():GURL())
+    // << "\r\n url_to_catch.value().scheme():" << url_to_catch.value().scheme()
+    // << "\r\n url_to_catch.value().host()" << url_to_catch.value().host()
+    // << "\r\n url_to_catch.value().path()" << url_to_catch.value().path()
+    // << "\r\n t:" << t
+    // ;
+    // web_contents()->SetUserData("tttttttttttttt", std::make_unique<base::SupportsUserData::Data>());
+  }
+
+  LoadUrl(original_url);
+  if (url_to_catch.has_value()) {
     ipfs_resolved_url_ = web_contents()->GetVisibleURL();
   }
 
-  if (web_contents()->GetDelegate()) {
-    web_contents()->GetDelegate()->NavigationStateChanged(
-        web_contents(), content::INVALIDATE_TYPE_URL);
-  }
+  // if (web_contents()->GetDelegate()) {
+  //   web_contents()->GetDelegate()->NavigationStateChanged(
+  //       web_contents(), content::INVALIDATE_TYPE_URL);
+  // }
 }
 
 void IPFSTabHelper::SetInitialNavigationData(const GURL& url) {
-  auto nav_data = std::make_unique<IpfsInitialNavigationDat>(url);
+  auto nav_data = std::make_unique<IpfsInitialNavigationData>(url);
   web_contents()->SetUserData(kIpfsInitialNavigationDataKey,
                               std::move(nav_data));
 }

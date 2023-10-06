@@ -26,6 +26,7 @@
 #include "third_party/re2/src/re2/re2.h"
 #include "url/gurl.h"
 #include "url/origin.h"
+#include "base/debug/stack_trace.h"
 
 namespace {
 
@@ -224,6 +225,10 @@ absl::optional<GURL> TranslateXIPFSPath(const std::string& x_ipfs_path_header) {
   if (!result.is_valid()) {
     return absl::nullopt;
   }
+  LOG(INFO) << "[IPFS] TranslateXIPFSPath "
+  << "\r\n x_ipfs_path_header:" << x_ipfs_path_header
+  << "\r\n result:" << result
+  ;
   return result;
 }
 
@@ -421,6 +426,12 @@ bool TranslateIPFSURI(const GURL& url,
     return false;
   bool ipfs_scheme = url.scheme() == kIPFSScheme;
   bool ipns_scheme = url.scheme() == kIPNSScheme;
+LOG(INFO) << "[IPFS] " << __func__ << "\r\n old_url:" << url 
+        << "\r\n url.scheme():" << url.scheme()
+        << "\r\n ipfs_scheme:" << ipfs_scheme
+        << "\r\n ipns_scheme:" << ipns_scheme
+        << "\r\n kIPNSScheme:" << kIPNSScheme 
+        ;
   if ((ipfs_scheme && IsValidCID(cid)) || ipns_scheme) {
     // new_url would be:
     // https://dweb.link/ipfs/[cid]//wiki/Vincent_van_Gogh.html
@@ -441,6 +452,11 @@ bool TranslateIPFSURI(const GURL& url,
       replacements.SetPathStr(new_path);
       *new_url = url.ReplaceComponents(replacements);
       VLOG(1) << "[IPFS] " << __func__ << " new URL: " << *new_url;
+      LOG(INFO) << "[IPFS] " << __func__ << "\r\n new URL: " << *new_url << "\r\n old_url:" << url 
+        << "\r\n url.scheme():" << url.scheme()
+        << "\r\n ipfs_scheme:" << ipfs_scheme
+        << "\r\n ipns_scheme:" << ipns_scheme
+        << "\r\nStack:\r\n" << base::debug::StackTrace();
     }
 
     return true;
@@ -581,10 +597,21 @@ absl::optional<GURL> ExtractSourceFromGateway(const GURL& url) {
 
   auto result = ExtractSourceFromGatewayHost(url);
   if (result) {
+    LOG(INFO) << "[IPFS] ExtractSourceFromGateway"
+    << "\r\n url:" << url
+    << "\r\n result:" << (result.has_value() ? result.value() : GURL())
+//    << "\r\nStack:\r\n" << base::debug::StackTrace();
+    ;
     return result;
   }
 
-  return ExtractSourceFromGatewayPath(url);
+  auto r1 = ExtractSourceFromGatewayPath(url);
+    LOG(INFO) << "[IPFS] ExtractSourceFromGateway"
+    << "\r\n url:" << url
+    << "\r\n r1:" << (r1.has_value() ? r1.value() : GURL())
+//    << "\r\nStack:\r\n" << base::debug::StackTrace();
+    ;
+  return r1;
 }
 
 }  // namespace ipfs
