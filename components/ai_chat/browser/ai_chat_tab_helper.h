@@ -87,6 +87,7 @@ class AIChatTabHelper : public content::WebContentsObserver,
   void DisconnectPageContents();
   void ClearConversationHistory();
   mojom::APIError GetCurrentAPIError();
+  void ResetAPIError();
 
  private:
   friend class content::WebContentsUserData<AIChatTabHelper>;

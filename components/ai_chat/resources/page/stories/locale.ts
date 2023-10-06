@@ -59,5 +59,7 @@ provideStrings({
   optionUnsafeHarmful: 'Unsafe/harmful',
   optionOther: 'Other',
   ratingError: 'Your rating could not be submitted, please check network connection and try again',
-  feedbackError: 'Your feedback could not be submitted, please check network connection and try again'
+  feedbackError: 'Your feedback could not be submitted, please check network connection and try again',
+  clearChatButtonLabel: 'Clear chat',
+  errorContextLimitReaching: 'This conversation is long and Leo may start forgetting things soon. You can get longer conversations by switching to a premium model, or you can clear the chat to reset it'
 })

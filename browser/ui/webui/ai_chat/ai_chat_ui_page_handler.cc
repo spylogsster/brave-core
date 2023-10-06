@@ -212,6 +212,12 @@ void AIChatUIPageHandler::GetAPIResponseError(
   std::move(callback).Run(active_chat_tab_helper_->GetCurrentAPIError());
 }
 
+void AIChatUIPageHandler::ResetAPIError() {
+  if (active_chat_tab_helper_) {
+    active_chat_tab_helper_->ResetAPIError();
+  }
+}
+
 void AIChatUIPageHandler::GetHasUserDismissedPremiumPrompt(
     GetHasUserDismissedPremiumPromptCallback callback) {
   std::move(callback).Run(profile_->GetPrefs()->GetBoolean(

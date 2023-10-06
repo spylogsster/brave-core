@@ -67,7 +67,9 @@ base::span<const webui::LocalizedString> GetLocalizedStrings() {
       {"optionUnsafeHarmful", IDS_CHAT_UI_OPTION_UNSAFE_HARMFUL},
       {"optionOther", IDS_CHAT_UI_OPTION_OTHER},
       {"feedbackError", IDS_CHAT_UI_FEEDBACK_SUBMIT_ERROR},
-      {"ratingError", IDS_CHAT_UI_RATING_ERROR}};
+      {"ratingError", IDS_CHAT_UI_RATING_ERROR},
+      {"clearChatButtonLabel", IDS_CHAT_UI_CLEAR_CHAT_BUTTON_LABEL},
+      {"errorContextLimitReaching", IDS_CHAT_UI_ERROR_CONTEXT_LIMIT_REACHING}};
 
   return kLocalizedStrings;
 }

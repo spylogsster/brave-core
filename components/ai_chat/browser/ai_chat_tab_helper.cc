@@ -626,6 +626,10 @@ void AIChatTabHelper::SetAPIError(const mojom::APIError& error) {
   }
 }
 
+void AIChatTabHelper::ResetAPIError() {
+  SetAPIError(mojom::APIError::None);
+}
+
 void AIChatTabHelper::DocumentOnLoadCompletedInPrimaryMainFrame() {
   // We might have content here, so check.
   // TODO(petemill): If there are other navigation events to also
